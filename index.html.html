@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SESP / COPAL - Governo de Mato Grosso</title>
+    <!-- Fonte Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --sesp-blue: #0f2c59;
+            --sesp-dark-blue: #071731;
+            --sesp-accent: #1e40af;
+            --sesp-light-blue: #0066cc;
+            --bg-body: #f4f6f9;
+            --text-dark: #333333;
+            --border-color: #dcdcdc;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: url('imagens/imagem.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* --- BARRA SUPERIOR (MODIFICADA) --- */
+        .top-gov-bar {
+            background-color: var(--sesp-dark-blue);
+            color: var(--white);
+            padding: 0.5rem 2rem;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            font-size: 0.75rem;
+            gap: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .top-gov-bar a {
+            color: #d1d5db;
+            text-decoration: none;
+            transition: color 0.2s;
+            font-weight: 500;
+        }
+
+        .top-gov-bar a:hover {
+            color: var(--white);
+        }
+
+        /* --- CABEÇALHO SESP / LOGO --- */
+        header {
+            background-color: var(--sesp-blue);
+            color: var(--white);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .brand-titles {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-dept {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #93c5fd;
+            font-weight: 600;
+        }
+
+        .brand-main {
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .system-badge-tag {
+            background-color: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* --- BARRA DE NAVEGAÇÃO / MENU --- */
+        nav.main-nav {
+            background-color: var(--white);
+            border-bottom: 2px solid #e5e7eb;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li a {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.9rem 1.2rem;
+            color: #4b5563;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-links li a:hover, .nav-links li a.active {
+            color: var(--sesp-blue);
+            border-bottom-color: var(--sesp-blue);
+            background-color: #f8fafc;
+        }
+
+        /* --- CONTEÚDO PRINCIPAL --- */
+        main {
+            flex: 1;
+            max-width: 1300px;
+            width: 100%;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 2.2fr 1fr;
+            gap: 1.5rem;
+        }
+
+        /* PAINEL DO SISTEMA (SUBSTITUINDO A IMAGEM) */
+        .system-dashboard-panel {
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            background-color: var(--sesp-dark-blue);
+            color: var(--white);
+            padding: 1rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-body {
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        /* Cards de Métricas Rápidas */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .metric-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .metric-card .title {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .metric-card .value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--sesp-blue);
+        }
+
+        .metric-card .subtitle {
+            font-size: 0.7rem;
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        /* Tabela / Lista de Processos / Contratos do COPAL */
+        .system-table-container {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .system-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            text-align: left;
+        }
+
+        .system-table th {
+            background-color: #f1f5f9;
+            color: #334155;
+            padding: 0.75rem 1rem;
+            font-weight: 700;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .system-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .status-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .status-active { background-color: #dcfce7; color: #15803d; }
+        .status-pending { background-color: #fef9c3; color: #a16207; }
+
+        /* PAINEL LATERAL (NOTÍCIAS E AVISOS DA SESP) */
+        .sidebar-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+
+        /* RODAPÉ */
+        footer {
+            background-color: var(--sesp-dark-blue);
+            color: var(--white);
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.8rem;
+            margin-top: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 900px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR INSTITUCIONAL (ATUALIZADA) -->
+    <div class="top-gov-bar">
+        <a href="#">CONTATOS</a>
+        <a href="#">MAPA DE DISTRIBUIÇÃO</a>
+    </div>
+
+    <!-- CABEÇALHO DO SISTEMA / SESP -->
+    <header>
+        <div class="header-brand">
+            <div class="brand-titles">
+                <span class="brand-dept">Secretaria de Estado de Segurança Pública</span>
+                <span class="brand-main">Governo de Mato Grosso</span>
+            </div>
+        </div>
+        
+        <div class="system-badge-tag">
+            <i data-lucide="shield-check" style="width: 16px;"></i>
+            SISTEMA COPAL SESP
+        </div>
+    </header>
+
+    <!-- NAVEGAÇÃO PRINCIPAL (ATUALIZADA) -->
+    <nav class="main-nav">
+        <ul class="nav-links">
+            <li><a href="#" class="active"><i data-lucide="layout-dashboard" style="width: 15px;"></i> Painel Geral</a></li>
+            <li><a href="contratos.html.html"><i data-lucide="file-text" style="width: 15px;"></i> Processos</a></li>
+            <li><a href="dashboard.html.html"><i data-lucide="bar-chart-2" style="width: 15px;"></i> Dashboard</a></li>
+            <li><a href="unidade.html.html"><i data-lucide="building-2" style="width: 15px;"></i> Unidade</a></li>
+            <li><a href="cadastrouser.html.html"><i data-lucide="shield" style="width: 15px;"></i> Controle de Acesso</a></li>
+            <li><a href="iagovmt.html.html"><i data-lucide="cpu" style="width: 15px;"></i> IA GOV MT</a></li>
+            <li><a href="App mobile/copal-sesp-mobile.html"><i data-lucide="smartphone" style="width: 15px;"></i> App Mobile</a></li>
+            <li id="usuarioNavTab"><a href="cadastrouser.html.html" onclick="openUserRegistration(event)"><i data-lucide="user-plus" style="width: 15px;"></i> Usuário</a></li>
+            <li id="userNavTab" style="display:none;"><a href="#developerUsersPanel"><i data-lucide="users" style="width: 15px;"></i> Usuários</a></li>
+        </ul>
+    </nav>
+
+    <!-- CONTEÚDO DA HOME -->
+    <main>
+
+        <section id="developerToolsPanel" class="system-dashboard-panel" style="display:none;">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i data-lucide="code" style="width: 18px;"></i>
+                    Painel do Desenvolvedor
+                </div>
+                <span style="font-size: 0.75rem; color: #93c5fd;">Acesso exclusivo do desenvolvedor</span>
+            </div>
+            <div class="panel-body">
+                <p style="color: #334155; font-size: 0.9rem; line-height: 1.5; margin-bottom: 1rem;">
+                    Esta área contém ferramentas e sistemas que apenas o desenvolvedor pode acessar.
+                </p>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="title">Logs de Sistema</span>
+                        <span class="value">Liberado</span>
+                        <span class="subtitle">Visualize erros e eventos internos</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="title">Ambiente de Teste</span>
+                        <span class="value">Ativo</span>
+                        <span class="subtitle">Recursos exclusivos para dev</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="title">Configurações Avançadas</span>
+                        <span class="value">Disponível</span>
+                        <span class="subtitle">Alterações restritas</span>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; display: grid; gap: 0.75rem;">
+                    <button id="openUsersBtn" type="button" class="btn-more" style="background-color: var(--sesp-blue);">Ver Usuários Cadastrados</button>
+                    <a href="#" class="btn-more" style="background-color: var(--sesp-accent);">Abrir Recursos Exclusivos</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="developerUsersPanel" class="system-dashboard-panel" style="display:none;">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i data-lucide="users" style="width: 18px;"></i>
+                    Usuários Cadastrados
+                </div>
+                <span style="font-size: 0.75rem; color: #93c5fd;">Visualização exclusiva de desenvolvedor</span>
+            </div>
+            <div class="panel-body">
+                <div class="system-table-container">
+                    <table class="system-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>E-mail</th>
+                                <th>Nome</th>
+                                <th>Verificado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO LATERAL: NOTÍCIAS -->
+    </main>
+
+    <!-- RODAPÉ -->
+    <footer>
+        <p>COPAL SESP - Secretaria de Estado de Segurança Pública de Mato Grosso</p>
+    </footer>
+
+    <!-- Scripts de Ícones -->
+    <script>
+        lucide.createIcons();
+    let authToken = localStorage.getItem('accessToken');
+    let userRole = localStorage.getItem('userRole') || 'standard';
+    const usuarioNavTab = document.getElementById('usuarioNavTab');
+    const userNavTab = document.getElementById('userNavTab');
+
+    // Acesso liberado temporariamente sem login/senha.
+
+    async function loadCurrentUser() {
+        if (!authToken) {
+            configureAccess();
+            return;
+        }
+        try {
+            const res = await fetch('/auth/me', {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            if (!res.ok) {
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('userRole');
+                authToken = null;
+                userRole = 'standard';
+                configureAccess();
+                return;
+            }
+            const data = await res.json();
+            if (data.user) {
+                userRole = data.user.role || 'standard';
+                localStorage.setItem('userRole', userRole);
+                configureAccess();
+            }
+        } catch (err) {
+            console.error('Falha ao carregar usuário atual:', err);
+        }
+    }
+
+    function configureAccess() {
+        if (userRole !== 'developer' && userRole !== 'admin' && usuarioNavTab) {
+            usuarioNavTab.style.opacity = '0.6';
+            usuarioNavTab.style.pointerEvents = 'none';
+        }
+        if (userRole === 'developer' || userRole === 'admin') {
+            document.getElementById('developerToolsPanel').style.display = 'block';
+            if (userNavTab) {
+                userNavTab.style.display = 'block';
+            }
+            const openUsersBtn = document.getElementById('openUsersBtn');
+            if (openUsersBtn) {
+                openUsersBtn.addEventListener('click', loadUsers);
+            }
+        }
+    }
+
+    configureAccess();
+    loadCurrentUser();
+        function openUserRegistration(event) {
+            event.preventDefault();
+            window.location.href = 'cadastrouser.html.html';
+        }
+
+        async function loadUsers() {
+            const usersPanel = document.getElementById('developerUsersPanel');
+            usersPanel.style.display = 'block';
+
+            try {
+                const res = await fetch('/auth/users', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    console.error(data.message || 'Erro ao carregar usuários.');
+                    return;
+                }
+
+                const tbody = document.getElementById('usersTableBody');
+                tbody.innerHTML = data.users.map(user => `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.email}</td>
+                        <td>${user.name || '-'}</td>
+                        <td>${user.verified ? 'Sim' : 'Não'}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error('Erro ao carregar usuários:', err);
+            }
+        }
+    </script>
+</body>
+</html>
+

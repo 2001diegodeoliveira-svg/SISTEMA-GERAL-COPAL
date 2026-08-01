@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SESP / COPAL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-body: #070b19;
+            --bg-panel: rgba(16, 24, 49, 0.92);
+            --bg-card: rgba(10, 16, 35, 0.96);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-faint: #64748b;
+            --border: rgba(148, 163, 184, 0.18);
+            --accent: #7c3aed;
+            --accent-2: #22c55e;
+            --accent-3: #38bdf8;
+            --danger: #f97316;
+            --shadow: 0 30px 60px rgba(0, 0, 0, 0.32);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at top left, rgba(124, 58, 237, 0.12), transparent 22%),
+                        linear-gradient(180deg, #060913 0%, #05070f 100%);
+            color: var(--text-primary);
+        }
+
+        .top-gov-bar {
+            background: rgba(6, 12, 25, 0.96);
+            color: var(--text-secondary);
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1.5rem;
+            font-size: 0.78rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+        }
+
+        .top-gov-bar a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        header {
+            background: rgba(8, 16, 36, 0.98);
+            color: var(--text-primary);
+            padding: 1.1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+        }
+
+        .header-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .brand-dept {
+            font-size: 0.82rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .brand-main {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .system-badge-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border-radius: 999px;
+            background: rgba(124, 58, 237, 0.14);
+            color: #c7d2fe;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .main-nav {
+            background: transparent;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+            padding: 0 2rem;
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 0.6rem;
+            padding: 1rem 0;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            padding: 0.75rem 1rem;
+            border-radius: 999px;
+            transition: background-color 0.2s, color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            border: 1px solid transparent;
+        }
+
+        .nav-links a.active,
+        .nav-links a:hover {
+            background-color: rgba(124, 58, 237, 0.18);
+            color: var(--text-primary);
+            border-color: rgba(124, 58, 237, 0.28);
+        }
+
+        main {
+            padding: 2rem;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .panel-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            padding: 1.6rem;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            margin-bottom: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 1.05rem;
+        }
+
+        .panel-title span {
+            letter-spacing: 0.02em;
+        }
+
+        .panel-subtitle {
+            color: var(--text-secondary);
+            margin-top: 0.4rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.25rem;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+
+        .metric-row {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            margin-top: 1.3rem;
+        }
+
+        .metric-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            border-radius: 1.25rem;
+            padding: 1.25rem;
+            min-height: 120px;
+            display: grid;
+            gap: 0.65rem;
+        }
+
+        .metric-card .title {
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .metric-card .value {
+            color: var(--text-primary);
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+
+        .metric-card .subtitle {
+            color: var(--text-faint);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .dashboard-filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+
+        .filter-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            border-radius: 1.2rem;
+            padding: 1.15rem 1.2rem;
+        }
+
+        .filter-card label {
+            display: block;
+            margin-bottom: 0.7rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .filter-card input,
+        .filter-card select {
+            width: 100%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(148,163,184,0.12);
+            color: var(--text-primary);
+            border-radius: 0.95rem;
+            padding: 0.85rem 1rem;
+            font-size: 0.95rem;
+        }
+
+        .filter-card input::placeholder,
+        .filter-card select {
+            color: var(--text-secondary);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 0.9rem;
+        }
+
+        .button-primary,
+        .button-secondary {
+            border: none;
+            border-radius: 999px;
+            padding: 0.95rem 1.3rem;
+            cursor: pointer;
+            font-weight: 700;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            color: #fff;
+            box-shadow: 0 18px 30px rgba(124, 58, 237, 0.24);
+        }
+
+        .button-secondary {
+            background: rgba(255,255,255,0.06);
+            color: var(--text-primary);
+            border: 1px solid rgba(148,163,184,0.18);
+        }
+
+        .button-primary:hover,
+        .button-secondary:hover {
+            transform: translateY(-1px);
+        }
+
+        .chart-grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: 1.4fr 0.9fr;
+        }
+
+        .chart-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            border-radius: 1.4rem;
+            padding: 1.4rem;
+            min-height: 300px;
+        }
+
+        .chart-card .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .chart-note {
+            color: var(--text-faint);
+            font-size: 0.9rem;
+        }
+
+        .status-bars {
+            display: grid;
+            gap: 0.85rem;
+            margin-top: 1rem;
+        }
+
+        .status-row {
+            display: grid;
+            grid-template-columns: 0.7fr 1fr auto;
+            gap: 0.8rem;
+            align-items: center;
+        }
+
+        .status-label {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .status-bar {
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.08);
+            overflow: hidden;
+        }
+
+        .status-fill {
+            height: 100%;
+            border-radius: 999px;
+        }
+
+        .status-value {
+            color: var(--text-primary);
+            font-size: 0.92rem;
+            text-align: right;
+            min-width: 52px;
+            font-weight: 700;
+        }
+
+        .trend-bars {
+            display: grid;
+            gap: 0.9rem;
+            margin-top: 1.4rem;
+        }
+
+        .trend-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .trend-name {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            min-width: 130px;
+        }
+
+        .trend-meter {
+            flex: 1;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.08);
+            margin-right: 0.9rem;
+        }
+
+        .trend-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #38bdf8, #60a5fa);
+        }
+
+        .rank-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 0.85rem;
+        }
+
+        .rank-item {
+            display: grid;
+            grid-template-columns: 1.4fr auto;
+            gap: 0.8rem;
+            align-items: center;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(148,163,184,0.1);
+            border-radius: 1rem;
+            padding: 0.95rem 1rem;
+        }
+
+        .rank-item span {
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 0.94rem;
+        }
+
+        .rank-value {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .table-overflow {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+
+        th,
+        td {
+            padding: 0.95rem 1rem;
+            text-align: left;
+            color: var(--text-primary);
+            border-bottom: 1px solid rgba(148,163,184,0.08);
+            font-size: 0.94rem;
+        }
+
+        th {
+            color: var(--text-secondary);
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        tbody tr:hover {
+            background: rgba(255,255,255,0.04);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.4rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .badge-active { background: rgba(34, 197, 94, 0.12); color: #86efac; }
+        .badge-analise { background: rgba(251, 191, 36, 0.12); color: #facc15; }
+        .badge-encerrado { background: rgba(248, 113, 28, 0.12); color: #fb923c; }
+
+        .footer-note {
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 1.5rem 2rem;
+            font-size: 0.92rem;
+        }
+
+        @media (max-width: 960px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-filters,
+            .metric-row {
+                grid-template-columns: 1fr;
+            }
+
+            .table-overflow {
+                min-width: auto;
+            }
+
+            table {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-gov-bar">
+        <a href="#">CONTATOS</a>
+        <a href="#">MAPA DE DISTRIBUIÇÃO</a>
+    </div>
+
+    <header>
+        <div class="header-brand">
+            <span class="brand-dept">Secretaria de Estado de Segurança Pública</span>
+            <span class="brand-main">Governo de Mato Grosso</span>
+        </div>
+        <div class="system-badge-tag">
+            <i data-lucide="shield-check" style="width: 16px;"></i>
+            DASHBOARD COPAL SESP
+        </div>
+    </header>
+
+    <nav class="main-nav">
+        <ul class="nav-links">
+            <li><a href="home.html.html"><i data-lucide="layout-dashboard" style="width: 15px;"></i> Home</a></li>
+            <li><a href="dashboard.html.html" class="active"><i data-lucide="bar-chart-2" style="width: 15px;"></i> Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section class="panel-card">
+            <div class="panel-title">
+                <i data-lucide="bar-chart-2" style="width: 20px;"></i>
+                <span>Resumo de Contratos</span>
+            </div>
+            <p class="panel-subtitle">
+                Um painel em tempo real para acompanhar contratos ativos, valores, unidades atendidas e desempenho por mês.
+                Use os filtros para localizar contratos por empresa, ano, mês ou unidade responsável.
+            </p>
+            <div class="metric-row">
+                <div class="metric-card">
+                    <span class="title">Contratos Ativos</span>
+                    <span id="metricActiveContracts" class="value">0</span>
+                    <span class="subtitle">Contratos com vigência aberta ou em andamento.</span>
+                </div>
+                <div class="metric-card">
+                    <span class="title">Valor Total</span>
+                    <span id="metricTotalValue" class="value">R$ 0,00</span>
+                    <span class="subtitle">Somatório dos valores globais dos contratos filtrados.</span>
+                </div>
+                <div class="metric-card">
+                    <span class="title">Unidades Atendidas</span>
+                    <span id="metricUnits" class="value">0</span>
+                    <span class="subtitle">Quantidade de unidades distintas vinculadas.</span>
+                </div>
+                <div class="metric-card">
+                    <span class="title">Empresas em Foco</span>
+                    <span id="metricCompanies" class="value">0</span>
+                    <span class="subtitle">Credores distintos nos contratos filtrados.</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel-card" style="margin-top: 1.5rem;">
+            <div class="panel-title">
+                <i data-lucide="filter" style="width: 20px;"></i>
+                <span>Filtros de Busca</span>
+            </div>
+            <div class="dashboard-filters">
+                <div class="filter-card">
+                    <label for="filterCompany">Empresa / Credor</label>
+                    <input id="filterCompany" type="text" placeholder="Digite nome da empresa" oninput="applyFilters()" />
+                </div>
+                <div class="filter-card">
+                    <label for="filterYear">Ano</label>
+                    <select id="filterYear" onchange="applyFilters()"></select>
+                </div>
+                <div class="filter-card">
+                    <label for="filterMonth">Mês</label>
+                    <select id="filterMonth" onchange="applyFilters()">
+                        <option value="">Todos</option>
+                        <option value="1">Janeiro</option>
+                        <option value="2">Fevereiro</option>
+                        <option value="3">Março</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Maio</option>
+                        <option value="6">Junho</option>
+                        <option value="7">Julho</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Setembro</option>
+                        <option value="10">Outubro</option>
+                        <option value="11">Novembro</option>
+                        <option value="12">Dezembro</option>
+                    </select>
+                </div>
+                <div class="filter-card">
+                    <label for="filterUnit">Unidade Atendendo</label>
+                    <select id="filterUnit" onchange="applyFilters()">
+                        <option value="">Todas as unidades</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button class="button-secondary" onclick="resetFilters()">Limpar filtros</button>
+                <button class="button-primary" onclick="loadDashboardData()">Atualizar agora</button>
+            </div>
+        </section>
+
+        <section class="panel-card" style="margin-top: 1.5rem;">
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">Distribuição de Status</div>
+                        <div class="chart-note">Atualiza com os contratos filtrados.</div>
+                    </div>
+                    <div class="status-bars" id="statusBars"></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">Top Unidades</div>
+                        <div class="chart-note">Unidades com maior número de contratos.</div>
+                    </div>
+                    <ul class="rank-list" id="topUnits"></ul>
+                </div>
+            </div>
+            <div class="chart-grid" style="margin-top: 1rem;">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">Tendência Mensal</div>
+                        <div class="chart-note">Volume de contratos por mês.</div>
+                    </div>
+                    <div class="trend-bars" id="monthlyTrend"></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">Top Empresas</div>
+                        <div class="chart-note">Credores com maior número de contratos.</div>
+                    </div>
+                    <ul class="rank-list" id="topCompanies"></ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel-card" style="margin-top: 1.5rem;">
+            <div class="panel-title">
+                <i data-lucide="list-check" style="width: 20px;"></i>
+                <span>Contratos Ativos Detalhados</span>
+            </div>
+            <div class="table-overflow">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nº do Contrato</th>
+                            <th>Empresa / Credor</th>
+                            <th>Unidade</th>
+                            <th>Valor Global</th>
+                            <th>Início</th>
+                            <th>Fim</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contractsTableBody">
+                        <tr><td colspan="7" style="color: var(--text-secondary);">Carregando contratos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div class="footer-note">Painel atualizado automaticamente a cada 20 segundos. Os dados são buscados diretamente do banco de contratos cadastrados.</div>
+
+    <footer>
+        <p>SESP COPAL - Secretaria de Estado de Segurança Pública de Mato Grosso</p>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        const state = {
+            contracts: [],
+            filtered: []
+        };
+
+        function parseCurrency(value) {
+            if (!value) return 0;
+            const normalized = value.toString().replace(/[R$\.\s]/g, '').replace(',', '.');
+            const number = parseFloat(normalized);
+            return Number.isFinite(number) ? number : 0;
+        }
+
+        function formatCurrency(value) {
+            return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 2 });
+        }
+
+        function normalizeUnit(unit) {
+            return (unit || '').toString().trim().toUpperCase();
+        }
+
+        function getContractUnits(contract) {
+            const raw = contract.unidades || [];
+            if (!raw) return [];
+            return raw.map((item) => {
+                if (typeof item === 'string') return normalizeUnit(item);
+                if (item && typeof item === 'object') return normalizeUnit(item.unidade || item.name || item.code);
+                return '';
+            }).filter(Boolean);
+        }
+
+        function getContractYear(contract) {
+            const dateString = contract.dtInicial || contract.dtFinal || '';
+            const date = new Date(dateString);
+            return Number.isFinite(date.getFullYear()) ? date.getFullYear() : null;
+        }
+
+        function getContractMonth(contract) {
+            const dateString = contract.dtInicial || contract.dtFinal || '';
+            const date = new Date(dateString);
+            return Number.isFinite(date.getMonth()) ? date.getMonth() + 1 : null;
+        }
+
+        function contractStatus(contract) {
+            const status = (contract.status || '').toString().trim().toLowerCase();
+            if (status) return status;
+            const now = new Date();
+            const end = new Date(contract.dtFinal || '2100-01-01');
+            return end >= now ? 'ativo' : 'encerrado';
+        }
+
+        function setFilterOptions() {
+            const yearSelect = document.getElementById('filterYear');
+            const unitSelect = document.getElementById('filterUnit');
+            const years = new Set();
+            const units = new Set();
+
+            state.contracts.forEach((contract) => {
+                const year = getContractYear(contract);
+                if (year) years.add(year);
+                getContractUnits(contract).forEach((unit) => units.add(unit));
+            });
+
+            yearSelect.innerHTML = '<option value="">Todos</option>' + [...years].sort((a, b) => b - a).map((year) => `<option value="${year}">${year}</option>`).join('');
+            unitSelect.innerHTML = '<option value="">Todas as unidades</option>' + [...units].sort().map((unit) => `<option value="${unit}">${unit}</option>`).join('');
+        }
+
+        function applyFilters() {
+            const companyFilter = document.getElementById('filterCompany').value.toLowerCase().trim();
+            const yearFilter = document.getElementById('filterYear').value;
+            const monthFilter = document.getElementById('filterMonth').value;
+            const unitFilter = document.getElementById('filterUnit').value;
+
+            state.filtered = state.contracts.filter((contract) => {
+                const credor = (contract.credor || '').toString().toLowerCase();
+                const numContrato = (contract.numContrato || '').toString().toLowerCase();
+                const companyMatch = companyFilter ? credor.includes(companyFilter) || numContrato.includes(companyFilter) : true;
+
+                const year = getContractYear(contract);
+                const yearMatch = yearFilter ? String(year) === yearFilter : true;
+
+                const month = getContractMonth(contract);
+                const monthMatch = monthFilter ? String(month) === monthFilter : true;
+
+                const units = getContractUnits(contract);
+                const unitMatch = unitFilter ? units.includes(unitFilter) : true;
+
+                return companyMatch && yearMatch && monthMatch && unitMatch;
+            });
+
+            renderDashboard();
+        }
+
+        function resetFilters() {
+            document.getElementById('filterCompany').value = '';
+            document.getElementById('filterYear').value = '';
+            document.getElementById('filterMonth').value = '';
+            document.getElementById('filterUnit').value = '';
+            applyFilters();
+        }
+
+        function renderDashboard() {
+            const contracts = state.filtered;
+            const activeContracts = contracts.filter((contract) => contractStatus(contract) !== 'encerrado');
+            const totalValue = activeContracts.reduce((sum, contract) => sum + parseCurrency(contract.valorGlobal || contract.valor || '0'), 0);
+            const uniqueUnits = new Set();
+            const companyCounts = new Map();
+            const statusCounts = new Map();
+            const monthlyCounts = new Map();
+
+            activeContracts.forEach((contract) => {
+                getContractUnits(contract).forEach((unit) => uniqueUnits.add(unit));
+                const companyKey = (contract.credor || 'Sem Empresa').trim();
+                companyCounts.set(companyKey, (companyCounts.get(companyKey) || 0) + 1);
+                const status = contractStatus(contract);
+                statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
+
+                const date = new Date(contract.dtInicial || contract.dtFinal || '');
+                if (Number.isFinite(date.getTime())) {
+                    const monthKey = `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+                    monthlyCounts.set(monthKey, (monthlyCounts.get(monthKey) || 0) + 1);
+                }
+            });
+
+            document.getElementById('metricActiveContracts').textContent = activeContracts.length;
+            document.getElementById('metricTotalValue').textContent = formatCurrency(totalValue);
+            document.getElementById('metricUnits').textContent = uniqueUnits.size;
+            document.getElementById('metricCompanies').textContent = companyCounts.size;
+
+            renderStatusBars(statusCounts, activeContracts.length);
+            renderTopList('topUnits', mapTopUnits(activeContracts));
+            renderTopList('topCompanies', [...companyCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6));
+            renderMonthlyTrend(monthlyCounts);
+            renderContractsTable(activeContracts);
+        }
+
+        function mapTopUnits(contracts) {
+            const unitCount = new Map();
+            contracts.forEach((contract) => {
+                getContractUnits(contract).forEach((unit) => {
+                    if (!unit) return;
+                    unitCount.set(unit, (unitCount.get(unit) || 0) + 1);
+                });
+            });
+            return [...unitCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
+        }
+
+        function renderStatusBars(statusCounts, total) {
+            const container = document.getElementById('statusBars');
+            if (!container) return;
+            const statuses = ['ativo', 'analise', 'encerrado'];
+            const labels = {
+                ativo: 'Ativo',
+                analise: 'Em análise',
+                encerrado: 'Encerrado'
+            };
+            const colors = {
+                ativo: 'linear-gradient(90deg, #22c55e, #84cc16)',
+                analise: 'linear-gradient(90deg, #facc15, #f59e0b)',
+                encerrado: 'linear-gradient(90deg, #fb923c, #f97316)'
+            };
+
+            container.innerHTML = statuses.map((status) => {
+                const count = statusCounts.get(status) || 0;
+                const width = total ? Math.max((count / total) * 100, 2) : 2;
+                return `
+                    <div class="status-row">
+                        <div class="status-label">${labels[status] || status}</div>
+                        <div class="status-bar"><div class="status-fill" style="width:${width}%; background:${colors[status]};"></div></div>
+                        <div class="status-value">${count}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTopList(containerId, items) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            if (!items.length) {
+                container.innerHTML = '<li class="rank-item"><span>Nenhum registro encontrado</span></li>';
+                return;
+            }
+            container.innerHTML = items.map(([label, value]) => `
+                <li class="rank-item">
+                    <span>${label}</span>
+                    <span class="rank-value">${value} contratos</span>
+                </li>
+            `).join('');
+        }
+
+        function renderMonthlyTrend(monthlyCounts) {
+            const container = document.getElementById('monthlyTrend');
+            const sorted = [...monthlyCounts.entries()].sort((a, b) => {
+                const [mA, yA] = a[0].split('/').map(Number);
+                const [mB, yB] = b[0].split('/').map(Number);
+                return yA !== yB ? yA - yB : mA - mB;
+            }).slice(-6);
+
+            container.innerHTML = sorted.map(([label, value]) => {
+                const maxValue = sorted.length ? Math.max(...sorted.map(([, v]) => v || 1)) : 1;
+                const width = Math.min(Math.max((value / maxValue) * 100, 18), 100);
+                return `
+                    <div class="trend-row">
+                        <div class="trend-name">${label}</div>
+                        <div class="trend-meter"><div class="trend-fill" style="width:${width}%"></div></div>
+                        <div class="status-value">${value}</div>
+                    </div>
+                `;
+            }).join('');
+
+            if (!sorted.length) {
+                container.innerHTML = '<div class="trend-row"><div class="trend-name">Sem dados</div></div>';
+            }
+        }
+
+        function renderContractsTable(contracts) {
+            const body = document.getElementById('contractsTableBody');
+            if (!contracts.length) {
+                body.innerHTML = '<tr><td colspan="7" style="color: var(--text-secondary);">Nenhum contrato encontrado para os filtros selecionados.</td></tr>';
+                return;
+            }
+            body.innerHTML = contracts.map((contract) => {
+                const units = getContractUnits(contract).slice(0, 3).join(', ');
+                const status = contractStatus(contract);
+                const badge = status === 'ativo' ? 'badge-active' : status === 'analise' ? 'badge-analise' : 'badge-encerrado';
+                return `
+                    <tr>
+                        <td>${contract.numContrato || '-'}</td>
+                        <td>${contract.credor || '-'}</td>
+                        <td>${units || '-'}</td>
+                        <td>${formatCurrency(parseCurrency(contract.valorGlobal || contract.valor || '0'))}</td>
+                        <td>${contract.dtInicial || '-'}</td>
+                        <td>${contract.dtFinal || '-'}</td>
+                        <td><span class="badge ${badge}">${status.toUpperCase()}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('/api/contracts');
+                const data = await response.json();
+                state.contracts = data.contracts || [];
+                state.filtered = state.contracts.slice();
+                setFilterOptions();
+                applyFilters();
+            } catch (error) {
+                console.error('Falha ao carregar contratos:', error);
+                document.getElementById('contractsTableBody').innerHTML = '<tr><td colspan="7" style="color: var(--text-secondary);">Não foi possível carregar os contratos.</td></tr>';
+            }
+        }
+
+        loadDashboardData();
+        setInterval(loadDashboardData, 20000);
+    </script>
+</body>
+</html>

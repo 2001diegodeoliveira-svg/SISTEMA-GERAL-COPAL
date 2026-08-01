@@ -1,0 +1,531 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COPAL SESP Mobile — Protótipo (Consulta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-1:#0c1a37;
+    --navy-2:#16294f;
+    --navy-3:#1e3a5f;
+    --indigo:#635bff;
+    --indigo-deep:#4c3ff0;
+    --bg-app:#f2f4f9;
+    --card:#ffffff;
+    --border:#e4e8f1;
+    --text-1:#12172b;
+    --text-2:#616b85;
+    --green:#16a34a;
+    --green-bg:#e8f8ee;
+    --amber:#d97706;
+    --amber-bg:#fef3e2;
+    --gray-bg:#eef0f5;
+    --orange:#f2711c;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:#dfe3ec; font-family:'Inter',sans-serif; color:var(--text-1); }
+
+  .stage{
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; padding:36px 16px;
+  }
+  .stage-label{ font-family:'Manrope',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; color:#48506b; text-transform:uppercase; }
+  .stage-sub{ font-size:12.5px; color:#7883a3; margin-top:-8px; }
+
+  /* ---------- PHONE FRAME ---------- */
+  .phone{
+    width:380px; height:820px; background: linear-gradient(180deg, #080f1f 0%, #101a34 100%);
+    border-radius:54px;
+    padding:18px;
+    box-shadow: 0 34px 80px -28px rgba(9,17,37,0.55), 0 0 0 1px rgba(255,255,255,0.06);
+    position:relative;
+  }
+  .screen{
+    width:100%; height:100%; background: radial-gradient(circle at top center, rgba(255,255,255,0.18), transparent 30%), linear-gradient(180deg, #f5f7fb 0%, #eef3fa 100%);
+    border-radius:40px; overflow:hidden;
+    position:relative; display:flex; flex-direction:column;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+  }
+  .notch{
+    position:absolute; top:18px; left:50%; transform:translateX(-50%);
+    width:128px; height:22px; background:rgba(8,15,31,0.95); border-radius:14px; z-index:50;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.08);
+  }
+
+  .home-btn{
+    background: linear-gradient(135deg, #4c3ff0, #3d54d8);
+    border: none;
+    border-radius:999px;
+    padding:12px 18px;
+    font-size:13px;
+    font-weight:800;
+    color:#fff;
+    cursor:pointer;
+    box-shadow:0 16px 38px rgba(76,63,240,0.18);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    transition: transform .25s ease, box-shadow .25s ease, opacity .25s ease;
+  }
+  .home-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 24px 44px rgba(76,63,240,0.26);
+  }
+
+  .stage-actions{
+    width:min(100%, 380px);
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px;
+    justify-content:center;
+    align-items:center;
+    margin-bottom:-12px;
+  }
+
+  /* ---------- VIEWS ---------- */
+  .view{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    background:var(--bg-app);
+    transform: translateX(100%); opacity:0; transition: transform .32s ease, opacity .32s ease;
+    pointer-events:none;
+  }
+  .view.active{ transform:translateX(0); opacity:1; pointer-events:auto; z-index:5; }
+  .view.tab-view.active{ z-index:2; }
+  .view.detail-view.active{ z-index:10; }
+
+  .app-header{
+    background:linear-gradient(160deg, var(--navy-1), var(--navy-2));
+    padding:38px 18px 16px; flex-shrink:0; color:#fff;
+  }
+  .app-header .eyebrow{ font-size:9.5px; letter-spacing:1.6px; color:#7fa8ff; font-weight:700; text-transform:uppercase; }
+  .app-header .title-row{ display:flex; align-items:center; justify-content:space-between; margin-top:3px; }
+  .app-header h1{ font-family:'Manrope',sans-serif; font-size:17px; font-weight:800; margin:0; }
+  .ro-badge{
+    font-size:9px; font-weight:700; letter-spacing:0.6px; background:rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.22); color:#cfd8ff; padding:3px 8px; border-radius:20px;
+  }
+
+  .back-row{ display:flex; align-items:center; gap:10px; margin-top:14px; }
+  .back-btn{ width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+  .back-btn svg{ width:15px; height:15px; stroke:#fff; }
+
+  .download-card{ background:rgba(255,255,255,0.98); border:1px solid rgba(99,95,255,0.18); border-radius:22px; padding:18px 18px 18px 16px; display:flex; gap:14px; align-items:center; margin-bottom:16px; box-shadow:0 18px 34px rgba(32,43,85,0.08); width:100%; max-width:280px; }
+  .download-card img{ width:108px; height:108px; border-radius:18px; border:1px solid rgba(99,95,255,0.14); object-fit:cover; }
+  .download-card-content{ display:flex; flex-direction:column; gap:6px; }
+  .download-card-title{ font-family:'Manrope',sans-serif; font-size:14px; font-weight:800; color:var(--text-1); }
+  .download-card-text{ font-size:12.5px; color:var(--text-2); line-height:1.4; }
+  .download-card-note{ font-size:11px; color:var(--green); font-weight:700; }
+
+  .scroll{ flex:1; overflow-y:auto; padding:20px 18px 100px; }
+  .scroll::-webkit-scrollbar{ display:none; }
+
+  .section-title{ font-family:'Manrope',sans-serif; font-weight:800; font-size:14px; margin:20px 0 14px; color:var(--text-1); display:flex; justify-content:space-between; align-items:center; }
+  .section-title .link{ font-size:12px; color:var(--indigo); font-weight:700; cursor:pointer; }
+
+  .kpi-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px; }
+  .kpi-card{ background:linear-gradient(180deg, #ffffff, #f7f9fc); border:1px solid rgba(76,63,240,0.12); border-radius:18px; padding:16px; box-shadow:0 12px 24px rgba(17,32,83,0.06); }
+  .kpi-card .kpi-label{ font-size:10px; color:var(--text-2); font-weight:700; letter-spacing:0.4px; text-transform:uppercase; margin-bottom:6px; }
+  .kpi-card .kpi-value{ font-family:'Manrope',sans-serif; font-size:24px; font-weight:800; margin-top:0; color:var(--text-1); }
+  .kpi-card .kpi-delta{ font-size:11px; color:var(--green); margin-top:6px; font-weight:700; }
+
+  .chart-card{ background:var(--card); border:1px solid rgba(99,95,255,0.15); border-radius:18px; padding:18px; box-shadow:0 12px 26px rgba(16,31,79,0.06); }
+  .bar-row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .bar-row .b-label{ width:68px; font-size:11px; color:var(--text-2); font-weight:700; flex-shrink:0; letter-spacing:0.2px; }
+  .bar-track{ flex:1; height:10px; background:rgba(99,95,255,0.12); border-radius:6px; overflow:hidden; }
+  .bar-fill{ height:100%; border-radius:6px; background:linear-gradient(90deg, var(--indigo-deep), var(--indigo)); }
+  .bar-row .b-val{ width:30px; font-size:11px; font-weight:700; color:var(--text-1); text-align:right; flex-shrink:0; }
+
+  .list-card{ background:var(--card); border:1px solid rgba(99,95,255,0.14); border-radius:18px; padding:16px; margin-bottom:12px; display:flex; gap:14px; align-items:flex-start; cursor:pointer; box-shadow:0 10px 26px rgba(18,33,83,0.05); }
+  .list-icon{ width:42px; height:42px; border-radius:14px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#fff; }
+  .list-body{ flex:1; min-width:0; }
+  .list-title{ font-weight:700; font-size:14px; color:var(--text-1); }
+  .list-sub{ font-size:12px; color:var(--text-2); margin-top:2px; }
+  .list-meta{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+  .value-tag{ font-family:'Manrope',sans-serif; font-size:12px; font-weight:800; color:var(--text-1); }
+  .status-pill{ font-size:10px; font-weight:700; padding:4px 10px; border-radius:999px; }
+  .status-ativo{ background:var(--green-bg); color:var(--green); }
+  .status-analise{ background:var(--amber-bg); color:var(--amber); }
+  .status-encerrado{ background:var(--gray-bg); color:var(--text-2); }
+  .chev{ align-self:center; color:#b7bfd4; flex-shrink:0; }
+
+  .search-bar{ display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.92); border:1px solid rgba(99,95,255,0.18); border-radius:14px; padding:12px 14px; margin-bottom:18px; box-shadow: inset 0 1px 2px rgba(22,31,70,0.04); }
+  .search-bar svg{ width:15px; height:15px; stroke:var(--text-2); flex-shrink:0; }
+  .search-bar span{ font-size:12.5px; color:var(--text-2); }
+
+  .filter-row{ display:flex; gap:10px; margin-bottom:16px; overflow-x:auto; }
+  .filter-chip{ font-size:11px; font-weight:700; padding:7px 14px; border-radius:999px; background:rgba(255,255,255,0.92); border:1px solid rgba(99,95,255,0.15); color:var(--text-2); white-space:nowrap; }
+  .filter-chip.active{ background:linear-gradient(135deg, rgba(76,63,240,0.2), rgba(76,63,240,0.08)); color:var(--indigo); border-color:rgba(76,63,240,0.2); }
+
+  .detail-block{ background:var(--card); border:1px solid rgba(99,95,255,0.14); border-radius:18px; padding:18px; margin-bottom:16px; box-shadow:0 12px 26px rgba(18,33,83,0.05); }
+  .detail-block .db-title{ font-size:10.5px; font-weight:800; letter-spacing:0.8px; color:var(--indigo); text-transform:uppercase; margin-bottom:12px; }
+  .field-row{ display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px dashed rgba(99,95,255,0.14); font-size:13px; }
+  .field-row:last-child{ border-bottom:none; }
+  .field-row .f-label{ color:var(--text-2); font-weight:600; }
+  .field-row .f-val{ color:var(--text-1); font-weight:700; text-align:right; }
+
+  .bottom-nav{ position:absolute; bottom:0; left:0; right:0; height:82px; background:rgba(255,255,255,0.96); border-top:1px solid rgba(99,95,255,0.12); display:flex; padding-bottom:18px; z-index:20; }
+  .nav-item{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; }
+  .nav-item svg{ width:20px; height:20px; stroke:var(--text-2); fill:none; }
+  .nav-item span{ font-size:10px; font-weight:700; color:var(--text-2); }
+  .nav-item.active svg{ stroke:var(--indigo); }
+  .nav-item.active span{ color:var(--indigo); }
+
+  .profile-card{ background:var(--card); border:1px solid rgba(99,95,255,0.14); border-radius:18px; padding:20px; text-align:center; margin-bottom:16px; box-shadow:0 14px 28px rgba(18,33,83,0.05); }
+  .avatar{ width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg, var(--indigo), var(--navy-3)); margin:0 auto 12px; display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Manrope',sans-serif; font-weight:800; font-size:19px; }
+  .profile-name{ font-family:'Manrope',sans-serif; font-weight:800; font-size:16px; }
+  .profile-role{ font-size:12px; color:var(--text-2); margin-top:4px; }
+  .info-note{ background:rgba(238,243,250,0.95); border-radius:16px; padding:14px 16px; font-size:12.5px; color:var(--text-2); line-height:1.6; }
+
+  @media (max-width:420px){
+    .phone{ width:100vw; height:100vh; border-radius:0; padding:0; }
+    .screen{ border-radius:0; }
+    .stage{ padding:0; }
+  }
+
+  .kpi-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .kpi-card{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; }
+  .kpi-card .kpi-label{ font-size:10.5px; color:var(--text-2); font-weight:600; letter-spacing:0.3px; }
+  .kpi-card .kpi-value{ font-family:'Manrope',sans-serif; font-size:22px; font-weight:800; margin-top:4px; color:var(--text-1); }
+  .kpi-card .kpi-delta{ font-size:10.5px; color:var(--green); margin-top:2px; font-weight:600; }
+
+  .section-title{ font-family:'Manrope',sans-serif; font-weight:800; font-size:13.5px; margin:18px 0 10px; color:var(--text-1); display:flex; justify-content:space-between; align-items:center; }
+  .section-title .link{ font-size:11.5px; color:var(--indigo); font-weight:700; }
+
+  .chart-card{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
+  .bar-row{ display:flex; align-items:center; gap:10px; margin-bottom:11px; }
+  .bar-row .b-label{ width:64px; font-size:11px; color:var(--text-2); font-weight:600; flex-shrink:0; }
+  .bar-track{ flex:1; height:8px; background:var(--gray-bg); border-radius:5px; overflow:hidden; }
+  .bar-fill{ height:100%; border-radius:5px; background:linear-gradient(90deg, var(--indigo-deep), var(--indigo)); }
+  .bar-row .b-val{ width:26px; font-size:11px; font-weight:700; color:var(--text-1); text-align:right; flex-shrink:0; }
+
+  /* ---------- LIST CARDS (contratos / unidades) ---------- */
+  .list-card{
+    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px;
+    margin-bottom:10px; display:flex; gap:12px; align-items:flex-start; cursor:pointer;
+  }
+  .list-icon{ width:38px; height:38px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#fff; }
+  .list-icon svg{ width:18px; height:18px; }
+  .list-body{ flex:1; min-width:0; }
+  .list-title{ font-weight:700; font-size:14px; color:var(--text-1); }
+  .list-sub{ font-size:11.5px; color:var(--text-2); margin-top:1px; }
+  .list-meta{ display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
+  .value-tag{ font-family:'Manrope',sans-serif; font-size:12.5px; font-weight:800; color:var(--text-1); }
+  .status-pill{ font-size:9.5px; font-weight:700; padding:3px 8px; border-radius:20px; }
+  .status-ativo{ background:var(--green-bg); color:var(--green); }
+  .status-analise{ background:var(--amber-bg); color:var(--amber); }
+  .status-encerrado{ background:var(--gray-bg); color:var(--text-2); }
+  .chev{ align-self:center; color:#b7bfd4; flex-shrink:0; }
+
+  .search-bar{
+    display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--border);
+    border-radius:12px; padding:10px 12px; margin-bottom:14px;
+  }
+  .search-bar svg{ width:15px; height:15px; stroke:var(--text-2); flex-shrink:0; }
+  .search-bar span{ font-size:12.5px; color:var(--text-2); }
+
+  .filter-row{ display:flex; gap:8px; margin-bottom:14px; overflow-x:auto; }
+  .filter-chip{ font-size:11px; font-weight:700; padding:6px 12px; border-radius:20px; background:var(--card); border:1px solid var(--border); color:var(--text-2); white-space:nowrap; }
+  .filter-chip.active{ background:var(--navy-2); color:#fff; border-color:var(--navy-2); }
+
+  /* ---------- DETAIL VIEW ---------- */
+  .detail-block{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:14px; }
+  .detail-block .db-title{ font-size:10.5px; font-weight:800; letter-spacing:0.8px; color:var(--indigo); text-transform:uppercase; margin-bottom:12px; }
+  .field-row{ display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px dashed var(--border); font-size:12.5px; }
+  .field-row:last-child{ border-bottom:none; }
+  .field-row .f-label{ color:var(--text-2); font-weight:500; }
+  .field-row .f-val{ color:var(--text-1); font-weight:700; text-align:right; }
+
+  /* ---------- BOTTOM NAV ---------- */
+  .bottom-nav{
+    position:absolute; bottom:0; left:0; right:0; height:78px;
+    background:#fff; border-top:1px solid var(--border);
+    display:flex; padding-bottom:16px; z-index:20;
+  }
+  .nav-item{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; }
+  .nav-item svg{ width:20px; height:20px; stroke:var(--text-2); fill:none; }
+  .nav-item span{ font-size:9.5px; font-weight:700; color:var(--text-2); }
+  .nav-item.active svg{ stroke:var(--indigo); }
+  .nav-item.active span{ color:var(--indigo); }
+
+  /* ---------- PROFILE ---------- */
+  .profile-card{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; text-align:center; margin-bottom:14px; }
+  .avatar{ width:58px; height:58px; border-radius:50%; background:linear-gradient(135deg, var(--indigo), var(--navy-3)); margin:0 auto 10px; display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Manrope',sans-serif; font-weight:800; font-size:19px; }
+  .profile-name{ font-family:'Manrope',sans-serif; font-weight:800; font-size:15px; }
+  .profile-role{ font-size:11.5px; color:var(--text-2); margin-top:2px; }
+  .info-note{ background:var(--gray-bg); border-radius:12px; padding:12px 14px; font-size:11.5px; color:var(--text-2); line-height:1.5; }
+
+  @media (max-width:420px){
+    .phone{ width:100vw; height:100vh; border-radius:0; padding:0; }
+    .screen{ border-radius:0; }
+    .stage{ padding:0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="stage-label">Protótipo · App COPAL SESP Mobile</div>
+  <div class="stage-sub">Somente consulta — dashboard, contratos e unidades. Toque nos elementos para navegar.</div>
+  <div class="stage-actions">
+    <div class="download-card">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://localhost:3000/App%20mobile/download.html" alt="QR code para baixar o app" />
+      <div class="download-card-content">
+        <div class="download-card-title">Baixe o app COPAL SESP</div>
+        <div class="download-card-text">Escaneie o QR code para abrir a página de download do app mobile.</div>
+        <div class="download-card-note">Abra no celular para baixar ou visualizar o app.</div>
+      </div>
+    </div>
+    <button class="home-btn" onclick="window.location.href='../home.html.html'">🏠 Home</button>
+  </div>
+  <div class="phone">
+
+      <!-- ===================== DASHBOARD ===================== -->
+      <div class="view tab-view active" id="view-dashboard">
+        <div class="app-header">
+          <div class="eyebrow">SECRETARIA DE ESTADO DE SEGURANÇA PÚBLICA</div>
+          <div class="title-row">
+            <h1>Governo de Mato Grosso</h1>
+            <span class="ro-badge">SOMENTE LEITURA</span>
+          </div>
+        </div>
+        <div class="scroll">
+          <div class="section-title">Visão geral</div>
+          <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-label">CONTRATOS ATIVOS</div><div class="kpi-value">114</div><div class="kpi-delta">+6 este mês</div></div>
+            <div class="kpi-card"><div class="kpi-label">PROCESSOS EM ANDAMENTO</div><div class="kpi-value">25</div><div class="kpi-delta">3 em análise</div></div>
+            <div class="kpi-card"><div class="kpi-label">UNIDADES VINCULADAS</div><div class="kpi-value">08</div><div class="kpi-delta">Todas ativas</div></div>
+            <div class="kpi-card"><div class="kpi-label">VALOR TOTAL CONTRATADO</div><div class="kpi-value">R$ 42,8M</div><div class="kpi-delta">Exercício 2026</div></div>
+          </div>
+
+          <div class="section-title">Contratos por unidade</div>
+          <div class="chart-card">
+            <div class="bar-row"><div class="b-label">PM-MT</div><div class="bar-track"><div class="bar-fill" style="width:88%"></div></div><div class="b-val">52</div></div>
+            <div class="bar-row"><div class="b-label">PJC-MT</div><div class="bar-track"><div class="bar-fill" style="width:64%"></div></div><div class="b-val">38</div></div>
+            <div class="bar-row"><div class="b-label">CBM-MT</div><div class="bar-track"><div class="bar-fill" style="width:41%"></div></div><div class="b-val">24</div></div>
+            <div class="bar-row"><div class="b-label">GEFRON</div><div class="bar-track"><div class="bar-fill" style="width:24%"></div></div><div class="b-val">14</div></div>
+            <div class="bar-row"><div class="b-label">POLITEC</div><div class="bar-track"><div class="bar-fill" style="width:16%"></div></div><div class="b-val">09</div></div>
+          </div>
+
+          <div class="section-title">Atualizados recentemente <span class="link" onclick="showTab('contratos')">ver todos</span></div>
+          <div id="dash-recent"></div>
+        </div>
+      </div>
+
+      <!-- ===================== CONTRATOS (lista) ===================== -->
+      <div class="view tab-view" id="view-contratos">
+        <div class="app-header">
+          <div class="eyebrow">CONSULTA</div>
+          <div class="title-row"><h1>Contratos</h1><span class="ro-badge">114 registros</span></div>
+        </div>
+        <div class="scroll">
+          <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <span>Buscar por número, unidade ou credor...</span>
+          </div>
+          <div class="filter-row">
+            <div class="filter-chip active">Todos</div>
+            <div class="filter-chip">Ativos</div>
+            <div class="filter-chip">Em análise</div>
+            <div class="filter-chip">Encerrados</div>
+          </div>
+          <div id="contratos-list"></div>
+        </div>
+      </div>
+
+      <!-- ===================== UNIDADES (lista) ===================== -->
+      <div class="view tab-view" id="view-unidades">
+        <div class="app-header">
+          <div class="eyebrow">CONSULTA</div>
+          <div class="title-row"><h1>Unidades</h1><span class="ro-badge">08 vinculadas</span></div>
+        </div>
+        <div class="scroll" id="unidades-list"></div>
+      </div>
+
+      <!-- ===================== PERFIL ===================== -->
+      <div class="view tab-view" id="view-perfil">
+        <div class="app-header">
+          <div class="eyebrow">CONTA</div>
+          <div class="title-row"><h1>Perfil</h1><span class="ro-badge">VISUALIZAÇÃO</span></div>
+        </div>
+        <div class="scroll">
+          <div class="profile-card">
+            <div class="avatar">CP</div>
+            <div class="profile-name">COPAL</div>
+            <div class="profile-role">App de consulta</div>
+          </div>
+          <div class="section-title">Sobre este app</div>
+          <div class="info-note">
+            Este aplicativo é uma extensão somente leitura do Sistema COPAL SESP.
+            Consultas de contratos, processos e unidades são atualizadas automaticamente
+            a partir do sistema web. Edições, aprovações e cadastros continuam sendo
+            feitos exclusivamente pelo computador.
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== DETALHE DO CONTRATO ===================== -->
+      <div class="view detail-view" id="view-detalhe">
+        <div class="app-header">
+          <div class="back-row">
+            <div class="back-btn" onclick="closeDetail()">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            </div>
+            <div class="eyebrow" style="margin:0;">DETALHE DO CONTRATO</div>
+          </div>
+          <div class="title-row" style="margin-top:8px;">
+            <h1 id="det-numero">045/2026/SESP</h1>
+          </div>
+        </div>
+        <div class="scroll">
+          <div class="detail-block">
+            <div class="db-title">Identificação</div>
+            <div class="field-row"><span class="f-label">Processo aquisitivo</span><span class="f-val" id="det-processo">SESP-PRO-2026/00045</span></div>
+            <div class="field-row"><span class="f-label">Unidade</span><span class="f-val" id="det-unidade">PM-MT</span></div>
+            <div class="field-row"><span class="f-label">Status</span><span class="f-val" id="det-status">Ativo</span></div>
+          </div>
+          <div class="detail-block">
+            <div class="db-title">Contratada</div>
+            <div class="field-row"><span class="f-label">Credor</span><span class="f-val" id="det-credor">Tech Suprimentos Ltda</span></div>
+            <div class="field-row"><span class="f-label">CNPJ</span><span class="f-val" id="det-cnpj">12.345.678/0001-90</span></div>
+            <div class="field-row"><span class="f-label">Cidade / UF</span><span class="f-val">Cuiabá / MT</span></div>
+          </div>
+          <div class="detail-block">
+            <div class="db-title">Execução</div>
+            <div class="field-row"><span class="f-label">Assinatura</span><span class="f-val" id="det-data">14/02/2026</span></div>
+            <div class="field-row"><span class="f-label">Vigência</span><span class="f-val">12 meses</span></div>
+            <div class="field-row"><span class="f-label">Valor total</span><span class="f-val" id="det-valor">R$ 1.250.000,00</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== BOTTOM NAV ===================== -->
+      <div class="bottom-nav">
+        <div class="nav-item active" data-tab="dashboard" onclick="showTab('dashboard')">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+          <span>Início</span>
+        </div>
+        <div class="nav-item" data-tab="contratos" onclick="showTab('contratos')">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg>
+          <span>Contratos</span>
+        </div>
+        <div class="nav-item" data-tab="unidades" onclick="showTab('unidades')">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path d="M4 21V8l8-5 8 5v13"/><path d="M9 21v-6h6v6"/></svg>
+          <span>Unidades</span>
+        </div>
+        <div class="nav-item" data-tab="perfil" onclick="showTab('perfil')">
+          <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 6-6 8-6s6.5 2 8 6"/></svg>
+          <span>Perfil</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const contratos = [
+  { num:'045/2026/SESP', processo:'SESP-PRO-2026/00045', unidade:'PM-MT', credor:'Tech Suprimentos Ltda', cnpj:'12.345.678/0001-90', data:'14/02/2026', valor:'R$ 1.250.000,00', status:'ativo' },
+  { num:'032/2026/SESP', processo:'SESP-PRO-2026/00032', unidade:'CBM-MT', credor:'Equipa Proteção EPI Ltda', cnpj:'22.456.789/0001-11', data:'02/03/2026', valor:'R$ 480.000,00', status:'ativo' },
+  { num:'067/2026/SESP', processo:'SESP-PRO-2026/00067', unidade:'GEFRON', credor:'Fronteira Veículos S.A.', cnpj:'33.567.890/0001-22', data:'19/04/2026', valor:'R$ 690.000,00', status:'ativo' },
+  { num:'009/2026/SESP', processo:'SESP-PRO-2026/00009', unidade:'POLITEC', credor:'LabForense Equipamentos', cnpj:'44.678.901/0001-33', data:'28/01/2026', valor:'R$ 155.000,00', status:'analise' },
+  { num:'018/2025/SESP', processo:'SESP-PRO-2025/00018', unidade:'PJC-MT', credor:'Segurança Digital MT', cnpj:'55.789.012/0001-44', data:'10/06/2025', valor:'R$ 210.000,00', status:'encerrado' },
+  { num:'091/2026/SESP', processo:'SESP-PRO-2026/00091', unidade:'CIOPAER', credor:'Aero Manutenção Ltda', cnpj:'66.890.123/0001-55', data:'05/05/2026', valor:'R$ 2.100.000,00', status:'ativo' },
+];
+
+const unidades = [
+  { sigla:'CBM-MT', nome:'CORPO DE BOMBEIROS MILITAR', resp:'Ten. Cel. Silva', contratos:24, processos:6, color:'#f2711c' },
+  { sigla:'PM-MT', nome:'POLÍCIA MILITAR', resp:'Maj. Oliveira', contratos:52, processos:12, color:'#16294f' },
+  { sigla:'PJC-MT', nome:'POLÍCIA JUDICIÁRIA CIVIL', resp:'Dr. Santos', contratos:38, processos:7, color:'#374151' },
+  { sigla:'GEFRON', nome:'GRUPO ESPECIAL DE FRONTEIRA', resp:'Cap. Ramos', contratos:14, processos:3, color:'#b45309' },
+  { sigla:'POLITEC', nome:'PERÍCIA OFICIAL E IDENTIFICAÇÃO TÉCNICA', resp:'Dra. Almeida', contratos:9, processos:2, color:'#0e7490' },
+  { sigla:'CIOPAER', nome:'OPERAÇÕES AÉREAS', resp:'Ten. Cel. Farias', contratos:6, processos:1, color:'#4338ca' },
+];
+
+const statusMeta = {
+  ativo:{ label:'Ativo', cls:'status-ativo' },
+  analise:{ label:'Em análise', cls:'status-analise' },
+  encerrado:{ label:'Encerrado', cls:'status-encerrado' }
+};
+
+function contractIcon(){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg>';
+}
+function unitIcon(){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 21V8l8-5 8 5v13"/><path d="M9 21v-6h6v6"/></svg>';
+}
+function chevron(){
+  return '<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>';
+}
+
+function renderContratos(list, targetId){
+  const el = document.getElementById(targetId);
+  el.innerHTML = list.map((c, i) => {
+    const s = statusMeta[c.status];
+    return `
+    <div class="list-card" onclick="openDetail(${contratos.indexOf(c)})">
+      <div class="list-icon" style="background:var(--navy-2);">${contractIcon()}</div>
+      <div class="list-body">
+        <div class="list-title">Contrato ${c.num}</div>
+        <div class="list-sub">${c.unidade} · ${c.credor}</div>
+        <div class="list-meta">
+          <span class="value-tag">${c.valor}</span>
+          <span class="status-pill ${s.cls}">${s.label}</span>
+        </div>
+      </div>
+      ${chevron()}
+    </div>`;
+  }).join('');
+}
+
+function renderUnidades(){
+  const el = document.getElementById('unidades-list');
+  el.innerHTML = unidades.map(u => `
+    <div class="list-card" style="cursor:default;">
+      <div class="list-icon" style="background:${u.color};">${unitIcon()}</div>
+      <div class="list-body">
+        <div class="list-title">${u.sigla}</div>
+        <div class="list-sub">${u.nome}</div>
+        <div class="list-sub" style="margin-top:4px;">Responsável: ${u.resp}</div>
+        <div class="list-meta">
+          <span class="value-tag" style="font-size:11px;color:var(--text-2);font-weight:600;">${u.contratos} contratos · ${u.processos} processos</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+renderContratos(contratos, 'contratos-list');
+renderContratos(contratos.slice(0,3), 'dash-recent');
+renderUnidades();
+
+function showTab(name){
+  document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === name));
+  closeDetail(true);
+}
+
+function openDetail(index){
+  const c = contratos[index];
+  document.getElementById('det-numero').textContent = 'Contrato ' + c.num;
+  document.getElementById('det-processo').textContent = c.processo;
+  document.getElementById('det-unidade').textContent = c.unidade;
+  document.getElementById('det-status').textContent = statusMeta[c.status].label;
+  document.getElementById('det-credor').textContent = c.credor;
+  document.getElementById('det-cnpj').textContent = c.cnpj;
+  document.getElementById('det-data').textContent = c.data;
+  document.getElementById('det-valor').textContent = c.valor;
+  document.getElementById('view-detalhe').classList.add('active');
+}
+
+function closeDetail(silent){
+  document.getElementById('view-detalhe').classList.remove('active');
+}
+</script>
+
+</body>
+</html>

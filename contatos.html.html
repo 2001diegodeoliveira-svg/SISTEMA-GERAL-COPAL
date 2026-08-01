@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SESP / COPAL - Guia Rápido de Contatos e Ramais</title>
+    <!-- Fonte Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --sesp-blue: #0f2c59;
+            --sesp-dark-blue: #071731;
+            --sesp-light-blue: #0066cc;
+            --bg-body: #f4f6f9;
+            --text-dark: #1e293b;
+            --border-color: #cbd5e1;
+            --white: #ffffff;
+            --required-red: #ef4444;
+            --success-green: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* BARRA SUPERIOR INSTITUCIONAL */
+        .top-gov-bar {
+            background-color: var(--sesp-dark-blue);
+            color: var(--white);
+            padding: 0.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .top-gov-bar span {
+            color: #d1d5db;
+            font-weight: 500;
+        }
+
+        /* CABEÇALHO SESP */
+        header {
+            background-color: var(--sesp-blue);
+            color: var(--white);
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .brand-titles {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-dept {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #93c5fd;
+            font-weight: 600;
+        }
+
+        .brand-main {
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .system-badge {
+            background-color: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* CONTEÚDO PRINCIPAL */
+        main {
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* BARRA DE FERRAMENTAS / BUSCA E BOTÃO NOVO */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background-color: var(--white);
+            padding: 1.2rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.6rem 0.9rem;
+            flex: 1;
+            max-width: 480px;
+            gap: 0.6rem;
+        }
+
+        .search-container input {
+            border: none;
+            background: transparent;
+            outline: none;
+            width: 100%;
+            font-size: 0.85rem;
+            color: var(--text-dark);
+        }
+
+        .btn-add-sector {
+            background-color: var(--sesp-light-blue);
+            color: var(--white);
+            border: none;
+            padding: 0.65rem 1.2rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-add-sector:hover {
+            background-color: #0052a3;
+        }
+
+        /* LISTA / GRID DE CONTATOS */
+        .contacts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .sector-card {
+            background-color: var(--white);
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .sector-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.06);
+        }
+
+        .sector-header {
+            background-color: var(--sesp-dark-blue);
+            color: var(--white);
+            padding: 0.9rem 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sector-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .unit-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .sector-body {
+            padding: 1.1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            flex: 1;
+        }
+
+        .contact-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 6px;
+            border-left: 4px solid var(--sesp-light-blue);
+        }
+
+        .contact-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+        }
+
+        .contact-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .contact-phone {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--sesp-blue);
+        }
+
+        .contact-ramal {
+            font-size: 0.75rem;
+            font-weight: 700;
+            background-color: #e2e8f0;
+            color: #334155;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+        }
+
+        .sector-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.4rem;
+            padding: 0.6rem 1rem;
+            background: #f1f5f9;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .btn-action-icon {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0.4rem;
+            border-radius: 4px;
+            color: #64748b;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-action-icon:hover {
+            color: var(--sesp-blue);
+            background: #e2e8f0;
+        }
+
+        .btn-action-icon.delete:hover {
+            color: var(--required-red);
+            background: #fee2e2;
+        }
+
+        /* MODAIS DE AUTENTICAÇÃO E FORMULÁRIO */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(7, 23, 49, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 1.8rem;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-card h3 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--sesp-dark-blue);
+        }
+
+        .modal-card p {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.65rem 0.8rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--sesp-light-blue);
+            box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.15);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.8rem;
+            margin-top: 1.2rem;
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-submit {
+            background-color: var(--sesp-light-blue);
+            border: none;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* RODAPÉ */
+        footer {
+            background-color: var(--sesp-dark-blue);
+            color: var(--white);
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.8rem;
+            margin-top: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 640px) {
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-container {
+                max-width: 100%;
+            }
+            .contacts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR INSTITUCIONAL -->
+    <div class="top-gov-bar">
+        <span>Secretaria de Estado de Segurança Pública - MT</span>
+        <span>Atendimento e Lista Telefônica Interna</span>
+    </div>
+
+    <!-- CABEÇALHO DEDICADO -->
+    <header>
+        <div class="header-brand">
+            <div class="brand-titles">
+                <span class="brand-dept">Governo do Estado de Mato Grosso</span>
+                <span class="brand-main">Guia Rápido de Contatos e Ramais</span>
+            </div>
+        </div>
+        
+        <div class="system-badge">
+            <i data-lucide="phone-call" style="width: 16px;"></i>
+            COPAL / SESP-MT
+        </div>
+    </header>
+
+    <!-- CONTEÚDO DA APLICAÇÃO -->
+    <main>
+        <!-- BARRA DE FERRAMENTAS -->
+        <div class="toolbar">
+            <div class="search-container">
+                <i data-lucide="search" style="width: 18px; color: #64748b;"></i>
+                <input type="text" id="searchInput" placeholder="Buscar por setor, unidade, telefone ou ramal..." oninput="filterSectors()">
+            </div>
+            
+            <button class="btn-add-sector" onclick="executeWithAdmin(openCreateModal)">
+                <i data-lucide="plus-circle" style="width: 18px;"></i>
+                Cadastrar Setor / Ramal
+            </button>
+        </div>
+
+        <!-- LISTA DE CARDS DE SETORES E RAMAIS -->
+        <div class="contacts-grid" id="contactsGrid">
+            <!-- Os setores serão injetados dinamicamente via JS -->
+        </div>
+    </main>
+
+    <!-- MODAL 1: AUTENTICAÇÃO DO ADMINISTRADOR -->
+    <div class="modal-overlay" id="adminAuthModal">
+        <div class="modal-card">
+            <h3><i data-lucide="lock" style="width: 20px;"></i> Autenticação Requerida</h3>
+            <p>Informe as credenciais do Administrador para gerenciar os setores e ramais.</p>
+            
+            <form id="adminAuthForm">
+                <div class="form-group">
+                    <label>Login de Administrador</label>
+                    <input type="text" id="adminUser" placeholder="Informe o Login" required>
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="adminPass" placeholder="Informe a Senha" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeAdminModal()">Cancelar</button>
+                    <button type="submit" class="btn-submit">Autenticar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: CADASTRO / EDIÇÃO DE SETOR -->
+    <div class="modal-overlay" id="sectorFormModal">
+        <div class="modal-card">
+            <h3 id="modalTitle"><i data-lucide="building-2" style="width: 20px;"></i> Cadastrar Setor</h3>
+            <p>Preencha as informações do setor e seus respectivos dados de contato.</p>
+            
+            <form id="sectorForm">
+                <input type="hidden" id="sectorId">
+
+                <div class="form-group">
+                    <label>Unidade / Órgão</label>
+                    <select id="inputUnidade" required>
+                        <option value="COPAL">COPAL</option>
+                        <option value="SESP">SESP</option>
+                        <option value="PM-MT">PM-MT</option>
+                        <option value="PJC-MT">PJC-MT</option>
+                        <option value="CBM-MT">CBM-MT</option>
+                        <option value="OUTROS">OUTROS</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Nome do Setor</label>
+                    <input type="text" id="inputSetor" placeholder="Ex: Coordenação de Licitações" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Telefone / Contato Principal</label>
+                    <input type="text" id="inputTelefone" placeholder="Ex: (65) 3613-0000" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Ramal (Opcional)</label>
+                    <input type="text" id="inputRamal" placeholder="Ex: 204 / 205">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeSectorModal()">Cancelar</button>
+                    <button type="submit" class="btn-submit">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- RODAPÉ INSTITUCIONAL -->
+    <footer>
+        <p>COPAL SESP - Secretaria de Estado de Segurança Pública de Mato Grosso</p>
+    </footer>
+
+    <!-- SCRIPT DE LÓGICA -->
+    <script>
+        lucide.createIcons();
+
+        // Base de Dados Inicial
+        let sectorsList = [];
+        let isAdminAuthenticated = false;
+
+        async function loadContacts() {
+            try {
+                const res = await fetch('/api/contacts');
+                const data = await res.json();
+                sectorsList = data.contacts || [];
+                renderSectors();
+            } catch (err) {
+                console.error('Erro ao carregar contatos:', err);
+                sectorsList = [];
+                renderSectors();
+            }
+        }
+        let pendingAction = null;
+
+        // Renderizar Cards de Setores
+        function renderSectors(data = sectorsList) {
+            const grid = document.getElementById('contactsGrid');
+            grid.innerHTML = '';
+
+            if (data.length === 0) {
+                grid.innerHTML = '<p style="font-size: 0.9rem; color: #64748b; grid-column: 1/-1; text-align: center; padding: 2rem;">Nenhum setor ou contato foi localizado.</p>';
+                return;
+            }
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'sector-card';
+                card.innerHTML = `
+                    <div class="sector-header">
+                        <span class="sector-title">
+                            <i data-lucide="building-2" style="width: 16px;"></i> ${item.setor}
+                        </span>
+                        <span class="unit-badge">${item.unidade}</span>
+                    </div>
+                    <div class="sector-body">
+                        <div class="contact-box">
+                            <div class="contact-details">
+                                <span class="contact-label">Telefone</span>
+                                <span class="contact-phone">${item.telefone}</span>
+                            </div>
+                            ${item.ramal ? `<span class="contact-ramal">Ramal: ${item.ramal}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="sector-footer">
+                        <button class="btn-action-icon" title="Editar Setor" onclick="executeWithAdmin(() => openEditModal(${item.id}))">
+                            <i data-lucide="edit-2" style="width: 16px;"></i>
+                        </button>
+                        <button class="btn-action-icon delete" title="Excluir Setor" onclick="executeWithAdmin(() => deleteSector(${item.id}))">
+                            <i data-lucide="trash-2" style="width: 16px;"></i>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        // Filtro de Busca
+        function filterSectors() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = sectorsList.filter(item => 
+                item.setor.toLowerCase().includes(query) ||
+                item.unidade.toLowerCase().includes(query) ||
+                item.telefone.toLowerCase().includes(query) ||
+                (item.ramal && item.ramal.toLowerCase().includes(query))
+            );
+            renderSectors(filtered);
+        }
+
+        // Controle de Autenticação Administrativa
+        function executeWithAdmin(action) {
+            if (isAdminAuthenticated) {
+                action();
+            } else {
+                pendingAction = action;
+                document.getElementById('adminAuthModal').classList.add('active');
+            }
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminAuthModal').classList.remove('active');
+            pendingAction = null;
+        }
+
+        // Submissão de Auth Admin (LOGIN: ADM | SENHA: COPAL@2026)
+        document.getElementById('adminAuthForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const user = document.getElementById('adminUser').value.trim();
+            const pass = document.getElementById('adminPass').value;
+
+            if (user === "ADM" && pass === "COPAL@2026") {
+                isAdminAuthenticated = true;
+                closeAdminModal();
+                if (pendingAction) {
+                    pendingAction();
+                    pendingAction = null;
+                }
+                document.getElementById('adminAuthForm').reset();
+            } else {
+                alert("Credenciais de Administrador inválidas!");
+            }
+        });
+
+        // Modais de Criação e Edição
+        function openCreateModal() {
+            document.getElementById('modalTitle').innerHTML = '<i data-lucide="building-2" style="width: 20px;"></i> Cadastrar Novo Setor';
+            document.getElementById('sectorId').value = '';
+            document.getElementById('sectorForm').reset();
+            document.getElementById('sectorFormModal').classList.add('active');
+            lucide.createIcons();
+        }
+
+        function openEditModal(id) {
+            const item = sectorsList.find(s => s.id === id);
+            if (!item) return;
+
+            document.getElementById('modalTitle').innerHTML = '<i data-lucide="edit-3" style="width: 20px;"></i> Editar Setor / Ramal';
+            document.getElementById('sectorId').value = item.id;
+            document.getElementById('inputUnidade').value = item.unidade;
+            document.getElementById('inputSetor').value = item.setor;
+            document.getElementById('inputTelefone').value = item.telefone;
+            document.getElementById('inputRamal').value = item.ramal || '';
+
+            document.getElementById('sectorFormModal').classList.add('active');
+            lucide.createIcons();
+        }
+
+        function closeSectorModal() {
+            document.getElementById('sectorFormModal').classList.remove('active');
+        }
+
+        // Salvar Setor
+        document.getElementById('sectorForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const id = document.getElementById('sectorId').value;
+            const unidade = document.getElementById('inputUnidade').value;
+            const setor = document.getElementById('inputSetor').value;
+            const telefone = document.getElementById('inputTelefone').value;
+            const ramal = document.getElementById('inputRamal').value;
+
+            try {
+                const payload = { unidade, setor, telefone, ramal };
+
+                if (id) {
+                    await fetch(`/api/contacts/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    await fetch('/api/contacts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                closeSectorModal();
+                document.getElementById('sectorForm').reset();
+                await loadContacts();
+            } catch (err) {
+                console.error('Erro ao salvar contato:', err);
+                alert('Não foi possível salvar o contato. Tente novamente.');
+            }
+        });
+
+        // Excluir Setor
+        async function deleteSector(id) {
+            if (!confirm("Deseja realmente remover este setor da lista de contatos?")) return;
+
+            try {
+                await fetch(`/api/contacts/${id}`, { method: 'DELETE' });
+                await loadContacts();
+            } catch (err) {
+                console.error('Erro ao excluir contato:', err);
+                alert('Não foi possível excluir o contato. Tente novamente.');
+            }
+        }
+
+        // Renderização Inicial
+        loadContacts();
+    </script>
+</body>
+</html>

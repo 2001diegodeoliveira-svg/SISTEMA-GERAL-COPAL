@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Autenticação Seguro</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body id="bgContainer" class="bg-slate-900 text-white min-h-screen flex items-center justify-center bg-cover bg-center transition-all duration-500">
+  <!-- Overlay escuro para dar contraste ao texto independente da imagem de fundo escolhida -->
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+
+  <!-- Container Principal -->
+  <div class="relative z-10 w-full max-w-md p-8 bg-slate-800/90 rounded-2xl shadow-2xl border border-slate-700">
+    
+    <!-- Caixa de Alerta (Feedback de Sucesso e Erro) -->
+    <div id="alertBox" class="hidden p-4 mb-4 text-sm rounded-lg transition-all" role="alert"></div>
+
+    <!-- VIEW 1: LOGIN -->
+    <div id="loginView">
+      <h2 class="text-3xl font-bold mb-2 text-center text-indigo-400">Entrar na Conta</h2>
+      <p class="text-sm text-slate-400 text-center mb-6">Autenticação segura via E-mail</p>
+      
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label for="loginEmail" class="block text-sm font-medium mb-1 text-slate-300">E-mail</label>
+          <input type="email" id="loginEmail" required placeholder="seu@email.com" class="w-full px-4 py-2 bg-slate-700/80 border border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white transition">
+        </div>
+        <div>
+          <label for="loginPassword" class="block text-sm font-medium mb-1 text-slate-300">Senha</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full px-4 py-2 bg-slate-700/80 border border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white transition">
+        </div>
+        <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-semibold transition duration-200 text-white shadow-lg shadow-indigo-500/30">
+          Entrar
+        </button>
+      </form>
+      <p class="mt-4 text-center text-sm text-slate-400">
+        Não tem uma conta? <a href="#" onclick="switchView('registerView')" class="text-indigo-400 hover:underline">Cadastre-se</a>
+      </p>
+    </div>
+
+    <!-- VIEW 2: REGISTRO DE USUÁRIO -->
+    <div id="registerView" class="hidden">
+      <h2 class="text-3xl font-bold mb-2 text-center text-indigo-400">Criar Conta</h2>
+      <p class="text-sm text-slate-400 text-center mb-6">Insira seus dados para se registrar</p>
+      
+      <form id="registerForm" class="space-y-4">
+        <div>
+          <label for="regEmail" class="block text-sm font-medium mb-1 text-slate-300">E-mail</label>
+          <input type="email" id="regEmail" required placeholder="seu@email.com" class="w-full px-4 py-2 bg-slate-700/80 border border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white transition">
+        </div>
+        <div>
+          <label for="regPassword" class="block text-sm font-medium mb-1 text-slate-300">Senha</label>
+          <input type="password" id="regPassword" required placeholder="••••••••" class="w-full px-4 py-2 bg-slate-700/80 border border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white transition">
+          <p class="text-xs text-slate-400 mt-1">Mínimo de 8 caracteres com maiúsculas, números e símbolos.</p>
+        </div>
+        <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-semibold transition duration-200 text-white shadow-lg shadow-indigo-500/30">
+          Cadastrar
+        </button>
+      </form>
+      <p class="mt-4 text-center text-sm text-slate-400">
+        Já possui conta? <a href="#" onclick="switchView('loginView')" class="text-indigo-400 hover:underline">Fazer Login</a>
+      </p>
+    </div>
+
+    <!-- VIEW 3: VERIFICAÇÃO DE E-MAIL -->
+    <div id="verifyView" class="hidden">
+      <h2 class="text-2xl font-bold mb-2 text-center text-emerald-400">Verificar E-mail</h2>
+      <p class="text-sm text-slate-400 text-center mb-6">Insira o token recebido no seu e-mail para ativar a conta.</p>
+      
+      <form id="verifyForm" class="space-y-4">
+        <div>
+          <label for="verifyToken" class="block text-sm font-medium mb-1 text-slate-300">Token de Verificação</label>
+          <input type="text" id="verifyToken" required placeholder="Cole o token aqui" class="w-full px-4 py-2 bg-slate-700/80 border border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-white transition font-mono text-sm">
+        </div>
+        <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-semibold transition duration-200 text-white shadow-lg shadow-emerald-500/30">
+          Confirmar E-mail
+        </button>
+      </form>
+    </div>
+
+    <!-- VIEW 4: DASHBOARD (LOGADO) -->
+    <div id="dashboardView" class="hidden space-y-6">
+      <div class="text-center">
+        <h2 class="text-2xl font-bold text-indigo-400">Painel do Usuário</h2>
+        <p id="userEmailDisplay" class="text-sm text-slate-300 font-mono mt-1 break-all"></p>
+      </div>
+
+      <!-- Upload de Imagem de Fundo -->
+      <div class="border-t border-slate-700 pt-5">
+        <label for="bgInput" class="block text-sm font-medium mb-2 text-slate-300">Alterar Imagem de Fundo:</label>
+        <input type="file" id="bgInput" accept="image/png, image/jpeg, image/webp" class="block w-full text-sm text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer file:transition">
+        <p class="text-xs text-slate-500 mt-2">Suporta PNG, JPG ou WEBP (Máx. 5MB).</p>
+      </div>
+
+      <button onclick="logout()" class="w-full py-2.5 bg-red-600/80 hover:bg-red-700 rounded-lg font-semibold transition text-white">
+        Sair da Conta
+      </button>
+    </div>
+
+  </div>
+  <!-- SCRIPT DE INTERAÇÃO COM A API NESTJS -->
+  <script>
+    let accessToken = localStorage.getItem('accessToken');
+
+    // Utilitário de Alertas na Interface
+    function showAlert(msg, isError = false) {
+      const alert = document.getElementById('alertBox');
+      alert.className = `p-4 mb-4 text-sm rounded-lg ${isError ? 'bg-red-900/80 border border-red-700 text-red-200' : 'bg-emerald-900/80 border border-emerald-700 text-emerald-200'}`;
+      alert.innerText = msg;
+      alert.classList.remove('hidden');
+    }
+
+    // Alternar entre Telas
+    function switchView(viewId) {
+      ['loginView', 'registerView', 'verifyView', 'dashboardView'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(viewId).classList.remove('hidden');
+      document.getElementById('alertBox').classList.add('hidden');
+    }
+
+    // Aplica a imagem de fundo na página
+    function setBackground(url) {
+      if (url) {
+        document.getElementById('bgContainer').style.backgroundImage = `url('${url}')`;
+      }
+    }
+
+    // --- SUBMISSÃO DOS FORMULÁRIOS ---
+
+    // 1. Registro de Usuário
+    document.getElementById('registerForm').onsubmit = async (e) => {
+      e.preventDefault();
+      try {
+        const res = await fetch('/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('regEmail').value,
+            password: document.getElementById('regPassword').value
+          })
+        });
+
+        const data = await res.json();
+        
+        if (res.ok) {
+          showAlert(data.message + (data.devVerificationToken ? ` [DEV TOKEN: ${data.devVerificationToken}]` : ''));
+          if (data.devVerificationToken) {
+            document.getElementById('verifyToken').value = data.devVerificationToken;
+          }
+          setTimeout(() => switchView('verifyView'), 2000);
+        } else {
+          showAlert(Array.isArray(data.message) ? data.message.join(', ') : data.message, true);
+        }
+      } catch (err) {
+        showAlert('Erro ao se conectar ao servidor.', true);
+      }
+    };
+
+    // 2. Verificação de E-mail
+    document.getElementById('verifyForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const token = document.getElementById('verifyToken').value;
+      try {
+        const res = await fetch(`/auth/verify-email?token=${encodeURIComponent(token)}`, { method: 'POST' });
+        const data = await res.json();
+        
+        if (res.ok) {
+          showAlert(data.message);
+          setTimeout(() => switchView('loginView'), 1500);
+        } else {
+          showAlert(data.message, true);
+        }
+      } catch (err) {
+        showAlert('Erro ao confirmar o e-mail.', true);
+      }
+    };
+
+    // 3. Login
+    document.getElementById('loginForm').onsubmit = async (e) => {
+      e.preventDefault();
+      try {
+        const res = await fetch('/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('loginEmail').value,
+            password: document.getElementById('loginPassword').value
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          accessToken = data.accessToken;
+          localStorage.setItem('accessToken', accessToken);
+          
+          document.getElementById('userEmailDisplay').innerText = data.user.email;
+          if (data.user.backgroundImage) {
+            setBackground(data.user.backgroundImage);
+          }
+          switchView('dashboardView');
+        } else {
+          showAlert(data.message || 'Credenciais inválidas.', true);
+        }
+      } catch (err) {
+        showAlert('Erro ao efetuar login.', true);
+      }
+    };
+
+    // 4. Upload da Imagem de Fundo
+    document.getElementById('bgInput').onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('/auth/upload-background', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          setBackground(data.backgroundImage);
+          showAlert('Imagem de fundo atualizada com sucesso!');
+        } else {
+          showAlert(data.message || 'Erro ao enviar a imagem.', true);
+        }
+      } catch (err) {
+        showAlert('Erro de envio do arquivo.', true);
+      }
+    };
+
+    // 5. Encerrar Sessão
+    function logout() {
+      localStorage.removeItem('accessToken');
+      location.reload();
+    }
+  </script>
+</body>
+</html>

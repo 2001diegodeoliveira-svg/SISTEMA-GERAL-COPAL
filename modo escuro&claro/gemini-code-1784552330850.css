@@ -1,0 +1,74 @@
+<style>
+  /* 1. Variáveis de Cores */
+  :root {
+    --bg-primary: #ffffff;
+    --text-primary: #1e293b;
+    --btn-bg: #f1f5f9;
+    --btn-border: #cbd5e1;
+    --btn-text: #334155;
+    --btn-glow: rgba(59, 130, 246, 0.25); /* Glow azul suave */
+  }
+
+  /* Modo Escuro: Azul Escuro (#0a192f) com Texto Branco */
+  body.dark-mode {
+    --bg-primary: #0a192f;
+    --text-primary: #ffffff;
+    --btn-bg: #172a45;
+    --btn-border: #303c55;
+    --btn-text: #ffffff;
+    --btn-glow: rgba(100, 255, 218, 0.25); /* Glow ciano/esverdeado suave */
+  }
+
+  /* 2. Transição do Fundo da Página */
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* 3. Botão com Animação e Hover Interativo */
+  .theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--btn-text);
+    background-color: var(--btn-bg);
+    border: 1px solid var(--btn-border);
+    border-radius: 30px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Efeito Hover: Elevação + Pulsar do Brilho (Glow) */
+  .theme-toggle-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px -4px var(--btn-glow), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .theme-toggle-btn:active {
+    transform: translateY(-1px) scale(0.98);
+  }
+
+  /* 4. Animação de Giro e Escala do Ícone ao Trocar */
+  .theme-icon {
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  }
+
+  /* Classe acionada via JS na troca para disparar a animação */
+  .theme-icon.rotate-anim {
+    transform: rotate(360deg) scale(1.2);
+  }
+
+  /* 5. Blindagem de Logos e Imagens */
+  img, svg:not(.theme-icon), .logo {
+    filter: none !important;
+  }
+</style>

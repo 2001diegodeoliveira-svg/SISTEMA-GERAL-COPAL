@@ -1,0 +1,2183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SESP / COPAL - Unidades</title>
+    <!-- Fonte Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --sesp-blue: #0f2c59;
+            --sesp-dark-blue: #071731;
+            --sesp-accent: #1e40af;
+            --sesp-light-blue: #0066cc;
+            --bg-body: #f4f6f9;
+            --text-dark: #333333;
+            --border-color: #dcdcdc;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* BARRA SUPERIOR */
+        .top-gov-bar {
+            background-color: var(--sesp-dark-blue);
+            color: var(--white);
+            padding: 0.5rem 2rem;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            font-size: 0.75rem;
+            gap: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .top-gov-bar a {
+            color: #d1d5db;
+            text-decoration: none;
+            transition: color 0.2s;
+            font-weight: 500;
+        }
+
+        .top-gov-bar a:hover {
+            color: var(--white);
+        }
+
+        /* CABEÇALHO SESP */
+        header {
+            background-color: var(--sesp-blue);
+            color: var(--white);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .brand-titles {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-dept {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #93c5fd;
+            font-weight: 600;
+        }
+
+        .brand-main {
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .system-badge-tag {
+            background-color: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* BARRA DE NAVEGAÇÃO */
+        nav.main-nav {
+            background-color: var(--white);
+            border-bottom: 2px solid #e5e7eb;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li a {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.9rem 1.2rem;
+            color: #4b5563;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-links li a:hover, .nav-links li a.active {
+            color: var(--sesp-blue);
+            border-bottom-color: var(--sesp-blue);
+            background-color: #f8fafc;
+        }
+
+        /* CONTEÚDO PRINCIPAL */
+        main {
+            flex: 1;
+            max-width: 1300px;
+            width: 100%;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* BARRA DE AÇÕES DA PÁGINA DE UNIDADES */
+        .page-actions-bar {
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title-group h2 {
+            font-size: 1.2rem;
+            color: var(--sesp-dark-blue);
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .page-title-group p {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .action-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .search-input {
+            padding: 0.5rem 0.8rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            width: 240px;
+            outline: none;
+        }
+
+        .btn-add-unit {
+            background-color: var(--sesp-light-blue);
+            color: var(--white);
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.2s;
+        }
+
+        .btn-add-unit:hover {
+            background-color: #0052a3;
+        }
+
+        /* GRID DE UNIDADES */
+        .units-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .unit-card {
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .unit-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+        }
+
+        .unit-card-header {
+            background-color: var(--sesp-dark-blue);
+            color: var(--white);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .unit-badge-icon {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 0.6rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .unit-name-box h3 {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .unit-name-box span {
+            font-size: 0.7rem;
+            color: #93c5fd;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .unit-card-body {
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .unit-info-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .unit-info-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #475569;
+        }
+
+        .unit-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.8rem;
+            background-color: #f8fafc;
+            padding: 0.8rem;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-item label {
+            font-size: 0.68rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .stat-item span {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--sesp-blue);
+        }
+
+        .unit-card-footer {
+            padding: 0.8rem 1.2rem;
+            background-color: #f1f5f9;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-view-details {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--sesp-light-blue);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            cursor: pointer;
+        }
+
+        .btn-view-details:hover {
+            text-decoration: underline;
+        }
+
+        /* ESTILOS DA ABA DE DETALHES DA UNIDADE */
+        .detail-container {
+            display: none;
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 1rem;
+        }
+
+        .detail-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .btn-back {
+            background-color: #e2e8f0;
+            color: #334155;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: background 0.2s;
+        }
+
+        .btn-back:hover {
+            background-color: #cbd5e1;
+        }
+
+        .btn-req-tab {
+            background-color: #0284c7;
+            color: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: background 0.2s;
+        }
+
+        .btn-req-tab:hover {
+            background-color: #0369a1;
+        }
+
+        /* CONTRATOS */
+        .contracts-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .contracts-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .contracts-header-bar h3 {
+            font-size: 1rem;
+            color: var(--sesp-dark-blue);
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .contract-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .contract-item-card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid var(--sesp-light-blue);
+            border-radius: 6px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+
+        .contract-item-card:hover {
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .contract-info-main {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .contract-num {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--sesp-dark-blue);
+            letter-spacing: 0.3px;
+        }
+
+        .contract-object {
+            font-size: 0.8rem;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .contract-company {
+            font-size: 0.75rem;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .contract-meta {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .meta-col {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .meta-col label {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .meta-col span {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        .badge-status-active {
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        /* DETALHES COMPLETOS DO CONTRATO */
+        .contract-full-detail {
+            display: none;
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 1.5rem;
+            flex-direction: column;
+            gap: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .contract-full-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 1rem;
+        }
+
+        .section-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.2rem;
+        }
+
+        .info-box-card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .info-box-card h4 {
+            font-size: 0.85rem;
+            color: var(--sesp-dark-blue);
+            font-weight: 800;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .data-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            font-size: 0.78rem;
+        }
+
+        .data-row label {
+            font-size: 0.68rem;
+            color: #64748b;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .data-row span {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .balance-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .balance-table th {
+            background-color: var(--sesp-dark-blue);
+            color: var(--white);
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+
+        .balance-table td {
+            padding: 0.6rem 0.8rem;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+        }
+
+        .balance-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        /* ESTILOS DO FORMULÁRIO DE REQUISIÇÃO (ANEXO V) */
+        .requisition-container {
+            display: none;
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .req-title-box {
+            border-bottom: 2px solid var(--sesp-blue);
+            padding-bottom: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .req-title-box h2 {
+            font-size: 1.2rem;
+            color: var(--sesp-dark-blue);
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .req-grid-form {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .col-span-1 { grid-column: span 1; }
+        .col-span-2 { grid-column: span 2; }
+        .col-span-3 { grid-column: span 3; }
+        .col-span-4 { grid-column: span 4; }
+
+        .req-field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .req-field-group label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--sesp-dark-blue);
+            text-transform: uppercase;
+        }
+
+        .req-field-group input, .req-field-group select, .req-field-group textarea {
+            padding: 0.55rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            outline: none;
+            background-color: #fcfcfd;
+        }
+
+        .req-field-group input:focus, .req-field-group textarea:focus {
+            border-color: var(--sesp-light-blue);
+            background-color: #ffffff;
+        }
+
+        /* TABELA DINÂMICA DE ITENS */
+        .req-table-items {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .req-table-items th {
+            background-color: var(--sesp-dark-blue);
+            color: var(--white);
+            padding: 0.6rem;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            border: 1px solid #1e293b;
+        }
+
+        .req-table-items td {
+            border: 1px solid #cbd5e1;
+            padding: 0.4rem;
+        }
+
+        .req-table-items input {
+            width: 100%;
+            border: none;
+            padding: 0.4rem;
+            font-size: 0.8rem;
+            outline: none;
+            background: transparent;
+        }
+
+        .btn-table-action {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .btn-add-row {
+            background-color: #f1f5f9;
+            color: var(--sesp-blue);
+            border: 1px dashed var(--sesp-light-blue);
+            padding: 0.5rem;
+            border-radius: 5px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
+        }
+
+        .btn-add-row:hover {
+            background-color: #e2e8f0;
+        }
+
+        /* TERMO DECLARATÓRIO */
+        .req-statement-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 1rem;
+            font-size: 0.8rem;
+            color: #334155;
+            line-height: 1.5;
+        }
+
+        .req-statement-box input[type="text"], .req-statement-box input[type="number"] {
+            border: none;
+            border-bottom: 1px solid #334155;
+            background: transparent;
+            font-weight: 700;
+            text-align: center;
+            outline: none;
+            padding: 0 0.2rem;
+        }
+
+        /* SEÇÃO DE ASSINATURAS E DATAS */
+        .signatures-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .signature-box {
+            border-top: 1px solid #94a3b8;
+            padding-top: 0.5rem;
+            text-align: center;
+            font-size: 0.78rem;
+        }
+
+        .signature-box span {
+            display: block;
+            font-weight: 700;
+            color: var(--sesp-dark-blue);
+        }
+
+        /* INSTRUÇÕES E USO EXCLUSIVO DO FORNECEDOR */
+        .instructions-box {
+            background-color: #fffbebfb;
+            border: 1px solid #fef08a;
+            border-radius: 6px;
+            padding: 1rem;
+            font-size: 0.75rem;
+            color: #713f12;
+        }
+
+        .instructions-box h5 {
+            font-size: 0.78rem;
+            font-weight: 800;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+        }
+
+        .instructions-box ul {
+            list-style: decimal;
+            margin-left: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .vendor-box {
+            border: 2px dashed #cbd5e1;
+            padding: 1rem;
+            border-radius: 6px;
+            background-color: #f8fafc;
+        }
+
+        .vendor-box h5 {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: var(--sesp-dark-blue);
+            margin-bottom: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-container {
+            background-color: var(--white);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            background-color: var(--sesp-dark-blue);
+            color: var(--white);
+            padding: 1rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-body {
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .form-group label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        .form-group input, .form-group select {
+            padding: 0.6rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            outline: none;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.2rem;
+            background-color: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.8rem;
+        }
+
+        .btn-cancel {
+            background-color: #e2e8f0;
+            color: #334155;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-save {
+            background-color: var(--sesp-light-blue);
+            color: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* ESTILOS DE USUÁRIOS DA UNIDADE */
+        .users-management-card {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        .users-table th {
+            background-color: var(--sesp-dark-blue);
+            color: var(--white);
+            padding: 0.6rem;
+            text-align: left;
+            font-size: 0.75rem;
+        }
+
+        .users-table td {
+            padding: 0.6rem;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+        }
+
+        .btn-delete-user {
+            background-color: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            transition: background 0.2s;
+        }
+
+        .btn-delete-user:hover {
+            background-color: #fca5a5;
+            color: #991b1b;
+        }
+
+        /* RODAPÉ */
+        footer {
+            background-color: var(--sesp-dark-blue);
+            color: var(--white);
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.8rem;
+            margin-top: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .units-grid, .req-grid-form, .section-grid-2, .signatures-grid {
+                grid-template-columns: 1fr;
+            }
+            .col-span-1, .col-span-2, .col-span-3, .col-span-4 {
+                grid-column: span 1;
+            }
+            .detail-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR INSTITUCIONAL -->
+    <div class="top-gov-bar">
+        <a href="#">CONTATOS</a>
+        <a href="#">MAPA DE DISTRIBUIÇÃO</a>
+    </div>
+
+    <!-- CABEÇALHO DO SISTEMA / SESP -->
+    <header>
+        <div class="header-brand">
+            <div class="brand-titles">
+                <span class="brand-dept">Secretaria de Estado de Segurança Pública</span>
+                <span class="brand-main">Governo de Mato Grosso</span>
+            </div>
+        </div>
+        
+        <div class="system-badge-tag">
+            <i data-lucide="shield-check" style="width: 16px;"></i>
+            SISTEMA COPAL SESP
+        </div>
+    </header>
+
+    <!-- NAVEGAÇÃO PRINCIPAL -->
+    <nav class="main-nav">
+        <ul class="nav-links">
+            <li><a id="navHomeBtn" href="home.html.html"><i data-lucide="home" style="width: 15px;"></i> Home</a></li>
+            <li><a id="navUnitsBtn" class="active"><i data-lucide="building-2" style="width: 15px;"></i> Unidade</a></li>
+        </ul>
+    </nav>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main>
+
+        <!-- VISÃO 1: LISTA DE UNIDADES -->
+        <div id="listView" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="page-actions-bar">
+                <div class="page-title-group">
+                    <h2><i data-lucide="building-2" style="width: 22px;"></i> Unidades da Segurança Pública</h2>
+                    <p>Gestão e acompanhamento dos órgãos vinculados à SESP-MT</p>
+                </div>
+
+                <div class="action-controls">
+                    <input type="text" class="search-input" id="unitSearch" placeholder="Buscar unidade por sigla ou nome...">
+                    <button class="btn-add-unit" id="openModalBtn">
+                        <i data-lucide="plus" style="width: 16px;"></i> Adicionar Unidade
+                    </button>
+                </div>
+            </div>
+
+            <div class="units-grid" id="unitsGrid">
+
+                <!-- 1. CBM-MT -->
+                <div class="unit-card" data-unit-code="CBM-MT">
+                    <div class="unit-card-header">
+                        <div class="unit-badge-icon">
+                            <i data-lucide="flame" style="width: 24px;"></i>
+                        </div>
+                        <div class="unit-name-box">
+                            <h3>CBM-MT</h3>
+                            <span>Corpo de Bombeiros Militar</span>
+                        </div>
+                    </div>
+                    <div class="unit-card-body">
+                        <ul class="unit-info-list">
+                            <li><i data-lucide="map-pin" style="width: 14px;"></i> QG / Comandos Regionais - MT</li>
+                            <li><i data-lucide="user-check" style="width: 14px;"></i> Responsável COPAL: Ten. Cel. Silva</li>
+                        </ul>
+                        <div class="unit-stats">
+                            <div class="stat-item">
+                                <label>Contratos</label>
+                                <span>24</span>
+                            </div>
+                            <div class="stat-item">
+                                <label>Processos</label>
+                                <span>06</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="unit-card-footer">
+                        <span style="font-size: 0.7rem; color: #16a34a; font-weight: 700;">Status: Ativo</span>
+                        <a class="btn-view-details">Acessar <i data-lucide="chevron-right" style="width: 14px;"></i></a>
+                    </div>
+                </div>
+
+                <!-- 2. PM-MT -->
+                <div class="unit-card" data-unit-code="PM-MT">
+                    <div class="unit-card-header">
+                        <div class="unit-badge-icon">
+                            <i data-lucide="shield" style="width: 24px;"></i>
+                        </div>
+                        <div class="unit-name-box">
+                            <h3>PM-MT</h3>
+                            <span>Polícia Militar</span>
+                        </div>
+                    </div>
+                    <div class="unit-card-body">
+                        <ul class="unit-info-list">
+                            <li><i data-lucide="map-pin" style="width: 14px;"></i> Quartel do Comando Geral - Cuiabá/MT</li>
+                            <li><i data-lucide="user-check" style="width: 14px;"></i> Responsável COPAL: Maj. Oliveira</li>
+                        </ul>
+                        <div class="unit-stats">
+                            <div class="stat-item">
+                                <label>Contratos</label>
+                                <span>52</span>
+                            </div>
+                            <div class="stat-item">
+                                <label>Processos</label>
+                                <span>12</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="unit-card-footer">
+                        <span style="font-size: 0.7rem; color: #16a34a; font-weight: 700;">Status: Ativo</span>
+                        <a class="btn-view-details">Acessar <i data-lucide="chevron-right" style="width: 14px;"></i></a>
+                    </div>
+                </div>
+
+                <!-- 3. PJC-MT -->
+                <div class="unit-card" data-unit-code="PJC-MT">
+                    <div class="unit-card-header">
+                        <div class="unit-badge-icon">
+                            <i data-lucide="badge-alert" style="width: 24px;"></i>
+                        </div>
+                        <div class="unit-name-box">
+                            <h3>PJC-MT</h3>
+                            <span>Polícia Judiciária Civil</span>
+                        </div>
+                    </div>
+                    <div class="unit-card-body">
+                        <ul class="unit-info-list">
+                            <li><i data-lucide="map-pin" style="width: 14px;"></i> Diretoria Geral - Cuiabá/MT</li>
+                            <li><i data-lucide="user-check" style="width: 14px;"></i> Responsável COPAL: Dr. Santos</li>
+                        </ul>
+                        <div class="unit-stats">
+                            <div class="stat-item">
+                                <label>Contratos</label>
+                                <span>38</span>
+                            </div>
+                            <div class="stat-item">
+                                <label>Processos</label>
+                                <span>07</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="unit-card-footer">
+                        <span style="font-size: 0.7rem; color: #16a34a; font-weight: 700;">Status: Ativo</span>
+                        <a class="btn-view-details">Acessar <i data-lucide="chevron-right" style="width: 14px;"></i></a>
+                    </div>
+                </div>
+
+                <!-- 4. POLITEC -->
+                <div class="unit-card" data-unit-code="POLITEC">
+                    <div class="unit-card-header">
+                        <div class="unit-badge-icon">
+                            <i data-lucide="microscope" style="width: 24px;"></i>
+                        </div>
+                        <div class="unit-name-box">
+                            <h3>POLITEC</h3>
+                            <span>Perícia Oficial e Identificação Técnica</span>
+                        </div>
+                    </div>
+                    <div class="unit-card-body">
+                        <ul class="unit-info-list">
+                            <li><i data-lucide="map-pin" style="width: 14px;"></i> Sede Central POLITEC - Cuiabá/MT</li>
+                            <li><i data-lucide="user-check" style="width: 14px;"></i> Responsável COPAL: Perita Souza</li>
+                        </ul>
+                        <div class="unit-stats">
+                            <div class="stat-item">
+                                <label>Contratos</label>
+                                <span>18</span>
+                            </div>
+                            <div class="stat-item">
+                                <label>Processos</label>
+                                <span>02</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="unit-card-footer">
+                        <span style="font-size: 0.7rem; color: #16a34a; font-weight: 700;">Status: Ativo</span>
+                        <a class="btn-view-details">Acessar <i data-lucide="chevron-right" style="width: 14px;"></i></a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- VISÃO 2: ABA DE DETALHES DA UNIDADE -->
+        <div id="detailView" class="detail-container">
+            <div class="detail-header">
+                <div>
+                    <h2 id="selectedUnitTitle" style="color: var(--sesp-dark-blue); font-weight: 800;">Nome da Unidade</h2>
+                    <p id="selectedUnitSub" style="font-size: 0.85rem; color: #64748b;">Aba de Detalhes da Unidade</p>
+                </div>
+                <!-- BOTÃO REQUISIÇÃO E CADASTRAR USUÁRIO AO LADO DE VOLTAR -->
+                <div class="detail-header-actions">
+                    <button class="btn-req-tab" id="btnOpenRequisition">
+                        <i data-lucide="clipboard-list" style="width: 16px;"></i> Requisição
+                    </button>
+                    <button class="btn-add-unit" id="btnOpenUserModal" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+                        <i data-lucide="user-plus" style="width: 16px;"></i> Cadastrar Usuário
+                    </button>
+                    <button class="btn-back" id="btnBackToList">
+                        <i data-lucide="arrow-left" style="width: 16px;"></i> Voltar para Unidades
+                    </button>
+                </div>
+            </div>
+
+            <!-- PAINEL EXCLUSIVO: GESTÃO E LISTAGEM DE USUÁRIOS DA UNIDADE (EXCLUSIVO ADM) -->
+            <div class="users-management-card" id="usersManagementSection">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.6rem;">
+                    <h3 style="font-size: 1rem; color: var(--sesp-dark-blue); font-weight: 800; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="users" style="width: 18px;"></i> Usuários Cadastrados da Unidade (Acesso Restrito do ADM)
+                    </h3>
+                </div>
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>Nome Completo (Login)</th>
+                            <th>Matrícula / CPF</th>
+                            <th>E-mail</th>
+                            <th>Telefone</th>
+                            <th>Cargo</th>
+                            <th style="width: 100px; text-align: center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="unitUsersTableBody">
+                        <!-- Inserido dinamicamente via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- SEÇÃO DE CONTRATOS DA UNIDADE -->
+            <div class="contracts-section" id="contractsListSection">
+                <div class="contracts-header-bar">
+                    <h3><i data-lucide="file-check" style="width: 20px;"></i> Contratos Vinculados</h3>
+                    <div style="display: flex; gap: 0.8rem;">
+                        <input type="text" class="search-input" id="contractSearch" placeholder="Filtrar contratos...">
+                    </div>
+                </div>
+
+                <div class="contract-list" id="contractListContainer">
+                    <!-- Gerado via JS -->
+                </div>
+            </div>
+
+            <!-- DETALHAMENTO DO CONTRATO -->
+            <div class="contract-full-detail" id="contractFullDetailView">
+                <div class="contract-full-header">
+                    <div>
+                        <h3 id="detContractNumber" style="color: var(--sesp-dark-blue); font-weight: 800; font-size: 1.1rem;">Nº DO CONTRATO</h3>
+                        <p style="font-size: 0.8rem; color: #64748b;">Detalhamento Completo do Contrato e Saldos da Unidade</p>
+                    </div>
+                    <button class="btn-back" id="btnBackToContractList" style="font-size: 0.75rem; padding: 0.4rem 0.8rem;">
+                        <i data-lucide="x" style="width: 14px;"></i> Fechar Detalhes
+                    </button>
+                </div>
+
+                <div class="section-grid-2">
+                    <div class="info-box-card">
+                        <h4><i data-lucide="folder" style="width: 16px;"></i> Processo & Licitação</h4>
+                        <div class="data-row">
+                            <label>Nº do Processo Aquisitivo</label>
+                            <span id="detProcNum">SESP-PRO-2025/08491</span>
+                        </div>
+                        <div class="data-row">
+                            <label>Tipo de Procedimento Licitatório</label>
+                            <span id="detLicType">Pregão Eletrônico SRP Nº 014/2025</span>
+                        </div>
+                    </div>
+
+                    <div class="info-box-card">
+                        <h4><i data-lucide="building" style="width: 16px;"></i> Empresa / Credor</h4>
+                        <div class="data-row">
+                            <label>Razão Social</label>
+                            <span id="detRazaoSocial">Auto Rescue Equipamentos Eireli</span>
+                        </div>
+                        <div class="data-row">
+                            <label>Credor / CNPJ</label>
+                            <span id="detCredorCnpj">Credor #40912 - CNPJ: 12.345.678/0001-90</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box-card">
+                    <h4><i data-lucide="file-text" style="width: 16px;"></i> Objeto & Vigência Global</h4>
+                    <div class="data-row">
+                        <label>Objeto do Contrato</label>
+                        <span id="detObjeto">Manutenção preventiva e corretiva de viaturas operacionais.</span>
+                    </div>
+                </div>
+
+                <div class="info-box-card">
+                    <h4><i data-lucide="pie-chart" style="width: 16px;"></i> Tabela de Saldos e Controle de Itens da Unidade</h4>
+                    <table class="balance-table">
+                        <thead>
+                            <tr>
+                                <th>Item / Descrição</th>
+                                <th>Qtd. Alocada</th>
+                                <th>Qtd. Utilizada</th>
+                                <th>Qtd. Disponível</th>
+                                <th>Valor Unitário</th>
+                                <th>Saldo Financeiro Restante</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detTableBody">
+                            <!-- Gerado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- VISÃO 3: ABA DE REQUISIÇÃO DE MATERIAIS E/OU SERVIÇOS (ANEXO V) -->
+        <div id="requisitionView" class="requisition-container">
+            <div class="req-title-box">
+                <h2>ANEXO V - REQUISIÇÃO DE MATERIAIS E/OU SERVIÇOS</h2>
+                <button class="btn-back" id="btnBackToUnitFromReq">
+                    <i data-lucide="arrow-left" style="width: 16px;"></i> Voltar para Unidade
+                </button>
+            </div>
+
+            <!-- FORMULÁRIO DE REQUISIÇÃO -->
+            <form id="reqForm">
+                <div class="req-grid-form">
+                    
+                    <div class="req-field-group col-span-1">
+                        <label>Nº Requisição / Ano</label>
+                        <input type="text" id="reqNumberYear" placeholder="Ex: 001/2026" required>
+                    </div>
+
+                    <div class="req-field-group col-span-1">
+                        <label>Unid. Demandante</label>
+                        <input type="text" id="reqUnitDemand" placeholder="Ex: CBM-MT / 1º BBM" required>
+                    </div>
+
+                    <div class="req-field-group col-span-1">
+                        <label>Contrato Nº</label>
+                        <input type="text" id="reqContractNum" placeholder="Ex: 085/2025/SESP" required>
+                    </div>
+
+                    <div class="req-field-group col-span-1">
+                        <label>Data da Emissão</label>
+                        <input type="date" id="reqIssueDate" required>
+                    </div>
+
+                    <div class="req-field-group col-span-2">
+                        <label>Contratada (Razão Social)</label>
+                        <input type="text" id="reqCompany" placeholder="Nome da empresa contratada" required>
+                    </div>
+
+                    <div class="req-field-group col-span-1">
+                        <label>E-mail da Contratada</label>
+                        <input type="email" id="reqCompanyEmail" placeholder="email@empresa.com" required>
+                    </div>
+
+                    <div class="req-field-group col-span-1">
+                        <label>CNPJ da Contratada</label>
+                        <input type="text" id="reqCnpj" placeholder="00.000.000/0001-00" required>
+                    </div>
+
+                    <!-- TABELA DE ITENS DA REQUISIÇÃO -->
+                    <div class="col-span-4" style="margin-top: 1rem;">
+                        <label style="font-size: 0.75rem; font-weight: 800; color: var(--sesp-dark-blue); text-transform: uppercase;">
+                            Itens Solicitados
+                        </label>
+                        
+                        <table class="req-table-items">
+                            <thead>
+                                <tr>
+                                    <th style="width: 8%;">Lote</th>
+                                    <th style="width: 8%;">Item</th>
+                                    <th style="width: 10%;">Qtde.</th>
+                                    <th>Descrição Sintética do Item</th>
+                                    <th style="width: 15%;">Valor Unit. (R$)</th>
+                                    <th style="width: 15%;">Valor Total (R$)</th>
+                                    <th style="width: 5%;">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reqItemsBody">
+                                <tr>
+                                    <td><input type="text" class="item-lote" placeholder="01"></td>
+                                    <td><input type="text" class="item-num" placeholder="01"></td>
+                                    <td><input type="number" class="item-qty" value="1" min="1" onchange="calculateTotals()"></td>
+                                    <td><input type="text" class="item-desc" placeholder="Descrição do material ou serviço..."></td>
+                                    <td><input type="number" step="0.01" class="item-price" placeholder="0.00" onchange="calculateTotals()"></td>
+                                    <td><input type="text" class="item-total" value="R$ 0,00" readonly></td>
+                                    <td>
+                                        <button type="button" class="btn-table-action" onclick="removeReqRow(this)">
+                                            <i data-lucide="trash-2" style="width: 16px;"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <button type="button" class="btn-add-row" onclick="addReqRow()">
+                            <i data-lucide="plus" style="width: 15px;"></i> Adicionar Novo Item
+                        </button>
+                    </div>
+
+                    <!-- VALOR TOTAL -->
+                    <div class="col-span-4" style="display: flex; justify-content: flex-end; align-items: center; gap: 1rem; background-color: #f1f5f9; padding: 0.8rem; border-radius: 5px; margin-top: 0.5rem;">
+                        <span style="font-size: 0.85rem; font-weight: 800; color: var(--sesp-dark-blue); text-transform: uppercase;">VALOR TOTAL DA REQUISIÇÃO:</span>
+                        <span id="reqTotalSum" style="font-size: 1.2rem; font-weight: 800; color: var(--sesp-light-blue);">R$ 0,00</span>
+                    </div>
+
+                    <!-- TERMO E REGRAS DE ENTREGA -->
+                    <div class="col-span-4 req-statement-box">
+                        Solicito a entrega do material/prestação do serviço acima descrito, no prazo máximo de 
+                        <input type="number" id="reqDeadlineDays" value="15" style="width: 50px;"> 
+                        dias 
+                        <select id="reqDaysType" style="border: none; border-bottom: 1px solid #334155; background: transparent; font-weight: 700;">
+                            <option value="úteis">úteis</option>
+                            <option value="corridos">corridos</option>
+                        </select>, 
+                        a partir do envio desta requisição, caso seja por e-mail e, a partir do recebimento caso o documento seja assinado fisicamente, conforme previsto no Instrumento Contratual supracitado.
+                        <br><br>
+                        Os materiais deverão ser entregues ou os serviços deverão ser prestados no endereço:
+                        <input type="text" id="reqAddress" placeholder="(Completo, com indicação do órgão/instituição, nome do logradouro, número, ponto de referência, bairro, cidade, CEP...)" style="width: 100%; border-bottom: 1px solid #94a3b8; font-weight: 500; font-size: 0.8rem; margin-top: 0.3rem;" required>
+                        <br><br>
+                        No horário comercial 
+                        <input type="text" id="reqBusinessHours" value="das 08 as 12 e das 14 as 18h" style="width: 250px;">, 
+                        e recebidos pelo Fiscal do Contrato 
+                        <input type="text" id="reqFiscalName" placeholder="(Nome Completo do Fiscal)" style="width: 280px;" required>, 
+                        que deve ser contatado pelo telefone 
+                        <input type="text" id="reqFiscalPhone" placeholder="(DDD e Número)" style="width: 160px;" required>.
+                    </div>
+
+                    <div class="req-field-group col-span-2">
+                        <label>Servidor Solicitante</label>
+                        <input type="text" id="reqRequesterName" placeholder="Nome completo do servidor solicitante" required>
+                    </div>
+                    <div class="req-field-group col-span-1">
+                        <label>Matrícula</label>
+                        <input type="text" id="reqRequesterMatricula" placeholder="000000" required>
+                    </div>
+                    <div class="req-field-group col-span-1">
+                        <label>E-mail do Servidor</label>
+                        <input type="email" id="reqRequesterEmail" placeholder="seu.email@empresa.com" required>
+                    </div>
+                    <div class="req-field-group col-span-2" style="display:flex; flex-direction:column; gap: 0.35rem;">
+                        <label>Código Temporário</label>
+                        <input type="text" id="reqVerificationCode" placeholder="000000" style="width: 180px;">
+                        <small id="reqCodeHelp" style="color: #334155;">Após clicar em Emitir Requisição, um código será enviado ao e-mail do servidor.</small>
+                    </div>
+
+                    <!-- INSTRUÇÕES DE PREENCHIMENTO -->
+                    <div class="col-span-4 instructions-box">
+                        <h5>INSTRUÇÕES DE PREENCHIMENTO</h5>
+                        <ul>
+                            <li>Usar 01 (um) formulário a cada pedido de entrega de materiais e/ou serviços.</li>
+                            <li>É obrigatória a utilização deste documento.</li>
+                            <li>A presente requisição deverá acompanhar a Nota Fiscal e/ou Fatura, sendo parte integrante do processo de pagamento.</li>
+                            <li>Ao ser expedida a requisição, a Unidade Demandante deverá numerá-la de modo a possibilitar o controle de suas requisições.</li>
+                            <li>O Fiscal do contrato deverá tomar ciência da requisição.</li>
+                        </ul>
+                    </div>
+
+                    <!-- CANHOTO DO FORNECEDOR -->
+                    <div class="col-span-4 vendor-box">
+                        <h5>Uso exclusivo do Fornecedor</h5>
+                        <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                            <div class="req-field-group" style="flex: 1;">
+                                <label>RECEBI EM:</label>
+                                <input type="date" id="vendorRecDate">
+                            </div>
+                            <div class="req-field-group" style="flex: 2;">
+                                <label>Nome por extenso do Recebedor:</label>
+                                <input type="text" id="vendorRecName" placeholder="Nome completo do responsável do fornecedor">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ANEXAR PDF -->
+                    <div class="col-span-4" style="margin-top: 1rem;">
+                        <label for="reqPdfAttachment" style="font-weight: 600;">Anexar arquivo em PDF</label>
+                        <input type="file" id="reqPdfAttachment" accept="application/pdf" style="margin-top: 0.4rem; width: 100%;" />
+                    </div>
+
+                    <!-- BOTÕES DE AÇÃO -->
+                    <div class="col-span-4" style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
+                        <button type="button" class="btn-cancel" onclick="resetReqForm()">Limpar Formulário</button>
+                        <button type="submit" class="btn-save" style="display: flex; align-items: center; gap: 0.4rem;">
+                            <i data-lucide="send" style="width: 16px;"></i> Emitir Requisição
+                        </button>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+
+    </main>
+
+    <!-- MODAL DE ADICIONAR UNIDADE -->
+    <div class="modal-overlay" id="addUnitModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i data-lucide="building-2" style="width: 18px;"></i> Cadastrar Nova Unidade</h3>
+                <button class="close-modal" id="closeModalBtn"><i data-lucide="x" style="width: 18px;"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Sigla da Unidade (ex: CBM-MT, PM-MT)</label>
+                    <input type="text" id="unitSigla" placeholder="Digite a sigla...">
+                </div>
+                <div class="form-group">
+                    <label>Nome Completo da Unidade</label>
+                    <input type="text" id="unitName" placeholder="Ex: Corpo de Bombeiros Militar">
+                </div>
+                <div class="form-group">
+                    <label>Localização / Endereço Principal</label>
+                    <input type="text" id="unitLocation" placeholder="Ex: Cuiabá - MT">
+                </div>
+                <div class="form-group">
+                    <label>Responsável COPAL</label>
+                    <input type="text" id="unitResponsible" placeholder="Nome do responsável pelo acompanhamento">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancelModalBtn">Cancelar</button>
+                <button class="btn-save" id="saveUnitBtn">Salvar Unidade</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: LOGIN AUTENTICAÇÃO (ADM OU USUÁRIO CADASTRADO) -->
+    <div class="modal-overlay" id="adminLoginModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i data-lucide="lock" style="width: 18px;"></i> Acesso Restrito à Unidade</h3>
+                <button class="close-modal" id="closeLoginModalBtn">
+                    <i data-lucide="x" style="width: 18px;"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.8rem; color: #64748b;">Informe o login (ADM ou seu Nome Completo de usuário) e sua senha.</p>
+                <div class="form-group">
+                    <label>Login / Nome do Usuário</label>
+                    <input type="text" id="loginUsername" placeholder="Ex: ADM ou João da Silva">
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="loginPassword" placeholder="******">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancelLoginModalBtn">Cancelar</button>
+                <button class="btn-save" id="submitLoginBtn">Autenticar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ALTERAÇÃO DE CREDENCIAIS DE PRIMEIRO ACESSO -->
+    <div class="modal-overlay" id="changePasswordModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i data-lucide="key-round" style="width: 18px;"></i> Atualizar Credenciais Iniciais</h3>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.8rem; color: #b91c1c; font-weight: 600;">Este é o seu primeiro acesso. Altere suas credenciais padrão antes de prosseguir.</p>
+                <div class="form-group">
+                    <label>Novo Login</label>
+                    <input type="text" id="newLoginUsername" placeholder="Digite o novo login">
+                </div>
+                <div class="form-group">
+                    <label>Nova Senha</label>
+                    <input type="password" id="newLoginPassword" placeholder="Digite a nova senha">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-save" id="saveNewCredentialsBtn">Salvar e Continuar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CADASTRO DE NOVO USUÁRIO DA UNIDADE (EXCLUSIVO ADM) -->
+    <div class="modal-overlay" id="addUserModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i data-lucide="user-plus" style="width: 18px;"></i> Cadastrar Usuário da Unidade</h3>
+                <button class="close-modal" id="closeUserModalBtn"><i data-lucide="x" style="width: 18px;"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nome Completo (Será o Login do Usuário)</label>
+                    <input type="text" id="uFullName" placeholder="Digite o nome completo">
+                </div>
+                <div class="form-group">
+                    <label>Matrícula ou CPF</label>
+                    <input type="text" id="uDoc" placeholder="Digite a matrícula ou CPF">
+                </div>
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="uEmail" placeholder="exemplo@sesp.mt.gov.br">
+                </div>
+                <div class="form-group">
+                    <label>Telefone</label>
+                    <input type="text" id="uPhone" placeholder="(65) 99999-9999">
+                </div>
+                <div class="form-group">
+                    <label>Cargo</label>
+                    <input type="text" id="uRole" placeholder="Ex: Fiscal de Contrato / Agente">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancelUserModalBtn">Cancelar</button>
+                <button class="btn-save" id="saveUserBtn">Cadastrar Usuário</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RODAPÉ -->
+    <footer>
+        <p>COPAL SESP - Secretaria de Estado de Segurança Pública de Mato Grosso</p>
+    </footer>
+
+    <!-- SCRIPTS INTERATIVOS -->
+    <script>
+        lucide.createIcons();
+
+        // Base de Dados Simulada
+        const mockContracts = {
+            'CBM-MT': [
+                { 
+                    number: 'CONTRATO Nº 085/2025/SESP', 
+                    object: 'Manutenção preventiva e corretiva de viaturas operacionais de combate a incêndio', 
+                    company: 'Auto Rescue Equipamentos Eireli', 
+                    value: 'R$ 1.450.000,00', 
+                    validity: '12/2026', 
+                    status: 'Ativo',
+                    processNumber: 'SESP-PRO-2025/08491',
+                    licitationType: 'Pregão Eletrônico SRP Nº 014/2025',
+                    razaoSocial: 'Auto Rescue Equipamentos Eireli',
+                    cnpj: '12.345.678/0001-90',
+                    items: [
+                        { name: 'Revisão Geral de Caminhão Auto Bomba Tanque (ABT)', allocated: 10, used: 4, available: 6, unitPrice: 'R$ 25.000,00', remainingBalance: 'R$ 150.000,00' },
+                        { name: 'Troca de Conjunto de Manguotes e Vedações Hídricas', allocated: 25, used: 10, available: 15, unitPrice: 'R$ 8.000,00', remainingBalance: 'R$ 120.000,00' }
+                    ]
+                }
+            ]
+        };
+
+        // Cache local de unidades e usuários carregados do servidor
+        let unitsCache = [];
+        let unitUsersCache = {};
+
+        let pendingUnitCode = null;
+        let activeUnitCode = null;
+        let authenticatedUserRef = null; // Armazena a referência do usuário logado (ADM ou Usuário Cadastrado)
+
+        let pendingRequisitionCode = null;
+        let currentRequesterEmail = '';
+        let currentRequesterMatricula = '';
+
+        async function loadUnits() {
+            try {
+                const res = await fetch('/api/units');
+                const data = await res.json();
+                unitsCache = data.units || [];
+                renderUnitsGrid();
+            } catch (error) {
+                console.error('Falha ao carregar unidades:', error);
+            }
+        }
+
+        function renderUnitsGrid() {
+            const grid = document.getElementById('unitsGrid');
+            grid.innerHTML = '';
+
+            if (!unitsCache.length) {
+                grid.innerHTML = '<p style="color:#64748b;">Nenhuma unidade cadastrada ainda. Cadastre uma nova unidade para começar.</p>';
+                return;
+            }
+
+            unitsCache.forEach(unit => {
+                const cardHTML = `
+                    <div class="unit-card" data-unit-code="${unit.code}">
+                        <div class="unit-card-header">
+                            <div class="unit-badge-icon">
+                                <i data-lucide="building" style="width: 24px;"></i>
+                            </div>
+                            <div class="unit-name-box">
+                                <h3>${unit.code}</h3>
+                                <span>${unit.name}</span>
+                            </div>
+                        </div>
+                        <div class="unit-card-body">
+                            <ul class="unit-info-list">
+                                <li><i data-lucide="map-pin" style="width: 14px;"></i> ${unit.location || 'Não informado'}</li>
+                                <li><i data-lucide="user-check" style="width: 14px;"></i> Responsável COPAL: ${unit.responsible || 'Pendente'}</li>
+                            </ul>
+                            <div class="unit-stats">
+                                <div class="stat-item"><label>Contratos</label><span>0</span></div>
+                                <div class="stat-item"><label>Processos</label><span>0</span></div>
+                            </div>
+                        </div>
+                        <div class="unit-card-footer">
+                            <span style="font-size: 0.7rem; color: #16a34a; font-weight: 700;">Status: ${unit.status || 'Ativo'}</span>
+                            <a class="btn-view-details">Acessar <i data-lucide="chevron-right" style="width: 14px;"></i></a>
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', cardHTML);
+            });
+            lucide.createIcons();
+        }
+
+        async function loadUnitUsers(unitCode) {
+            if (!unitCode) return;
+
+            try {
+                const res = await fetch(`/api/unit-users/${encodeURIComponent(unitCode)}`);
+                const data = await res.json();
+                unitUsersCache[unitCode] = data.users || [];
+                renderUnitUsersTable(unitCode, authenticatedUserRef && authenticatedUserRef.login === 'ADM');
+            } catch (error) {
+                console.error('Falha ao carregar usuários da unidade:', error);
+                unitUsersCache[unitCode] = [];
+            }
+        }
+
+        // CONTROLE DE NAVEGAÇÃO
+        const listView = document.getElementById('listView');
+        const detailView = document.getElementById('detailView');
+        const requisitionView = document.getElementById('requisitionView');
+        const navUnitsBtn = document.getElementById('navUnitsBtn');
+
+        function setActiveTab(activeNav) {
+            document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+            activeNav.classList.add('active');
+        }
+
+        navUnitsBtn.addEventListener('click', () => {
+            setActiveTab(navUnitsBtn);
+            requisitionView.style.display = 'none';
+            detailView.style.display = 'none';
+            listView.style.display = 'flex';
+        });
+
+        // ABRIR ABA DE REQUISIÇÃO A PARTIR DA UNIDADE
+        document.getElementById('btnOpenRequisition').addEventListener('click', () => {
+            detailView.style.display = 'none';
+            requisitionView.style.display = 'flex';
+            
+            // Preenche automaticamente a Unidade Demandante
+            const unitDemandField = document.getElementById('reqUnitDemand');
+            if (activeUnitCode) {
+                unitDemandField.value = activeUnitCode;
+            }
+        });
+
+        // VOLTAR PARA A UNIDADE A PARTIR DA REQUISIÇÃO
+        document.getElementById('btnBackToUnitFromReq').addEventListener('click', () => {
+            requisitionView.style.display = 'none';
+            detailView.style.display = 'flex';
+        });
+
+        // LÓGICA DA TABELA DINÂMICA DE REQUISIÇÃO (ANEXO V)
+        function addReqRow() {
+            const tbody = document.getElementById('reqItemsBody');
+            const rowCount = tbody.children.length + 1;
+            const newRow = document.createElement('tr');
+            
+            newRow.innerHTML = `
+                <td><input type="text" class="item-lote" placeholder="01"></td>
+                <td><input type="text" class="item-num" value="${String(rowCount).padStart(2, '0')}"></td>
+                <td><input type="number" class="item-qty" value="1" min="1" onchange="calculateTotals()"></td>
+                <td><input type="text" class="item-desc" placeholder="Descrição do material ou serviço..."></td>
+                <td><input type="number" step="0.01" class="item-price" placeholder="0.00" onchange="calculateTotals()"></td>
+                <td><input type="text" class="item-total" value="R$ 0,00" readonly></td>
+                <td>
+                    <button type="button" class="btn-table-action" onclick="removeReqRow(this)">
+                        <i data-lucide="trash-2" style="width: 16px;"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(newRow);
+            lucide.createIcons();
+        }
+
+        function removeReqRow(button) {
+            const tbody = document.getElementById('reqItemsBody');
+            if (tbody.children.length > 1) {
+                button.closest('tr').remove();
+                calculateTotals();
+            } else {
+                alert('A requisição deve conter pelo menos 01 item.');
+            }
+        }
+
+        function calculateTotals() {
+            const rows = document.querySelectorAll('#reqItemsBody tr');
+            let grandTotal = 0;
+
+            rows.forEach(row => {
+                const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                const total = qty * price;
+
+                row.querySelector('.item-total').value = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                grandTotal += total;
+            });
+
+            document.getElementById('reqTotalSum').innerText = grandTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        document.getElementById('reqForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const requesterName = document.getElementById('reqRequesterName').value.trim();
+            const requesterMatricula = document.getElementById('reqRequesterMatricula').value.trim();
+            const requesterEmail = document.getElementById('reqRequesterEmail').value.trim();
+            const verificationCode = document.getElementById('reqVerificationCode').value.trim();
+
+            if (!requesterName || !requesterMatricula || !requesterEmail) {
+                alert('Preencha o nome, matrícula e e-mail do servidor solicitante antes de prosseguir.');
+                return;
+            }
+
+            if (!verificationCode || verificationCode.length !== 6) {
+                try {
+                    const res = await fetch('/api/request-requisition-code', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            requesterName,
+                            requesterMatricula,
+                            requesterEmail,
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) {
+                        alert(data.message || 'Não foi possível enviar o código temporário. Verifique o e-mail do servidor.');
+                        return;
+                    }
+
+                    pendingRequisitionCode = true;
+                    currentRequesterEmail = requesterEmail;
+                    currentRequesterMatricula = requesterMatricula;
+                    document.getElementById('reqCodeHelp').innerText = 'Código temporário enviado ao e-mail do servidor. Digite-o acima e clique novamente em Emitir Requisição para validar e enviar o documento.';
+                    alert('Código temporário enviado. Confira seu e-mail e digite o código no campo correspondente.');
+                } catch (error) {
+                    console.error('Erro ao solicitar código temporário:', error);
+                    alert('Erro de conexão ao servidor ao solicitar o código temporário.');
+                }
+                return;
+            }
+
+            if (!pendingRequisitionCode || currentRequesterEmail !== requesterEmail || currentRequesterMatricula !== requesterMatricula) {
+                alert('Solicite o código temporário primeiro.');
+                return;
+            }
+
+            const pdfFile = document.getElementById('reqPdfAttachment').files[0];
+            const formData = new FormData();
+            formData.append('reqNumberYear', document.getElementById('reqNumberYear').value.trim());
+            formData.append('reqUnitDemand', document.getElementById('reqUnitDemand').value.trim());
+            formData.append('reqContractNum', document.getElementById('reqContractNum').value.trim());
+            formData.append('reqIssueDate', document.getElementById('reqIssueDate').value.trim());
+            formData.append('reqCompany', document.getElementById('reqCompany').value.trim());
+            formData.append('reqCompanyEmail', document.getElementById('reqCompanyEmail').value.trim());
+            formData.append('reqCnpj', document.getElementById('reqCnpj').value.trim());
+            formData.append('reqDeadlineDays', document.getElementById('reqDeadlineDays').value.trim());
+            formData.append('reqDaysType', document.getElementById('reqDaysType').value.trim());
+            formData.append('reqAddress', document.getElementById('reqAddress').value.trim());
+            formData.append('reqBusinessHours', document.getElementById('reqBusinessHours').value.trim());
+            formData.append('reqFiscalName', document.getElementById('reqFiscalName').value.trim());
+            formData.append('reqFiscalPhone', document.getElementById('reqFiscalPhone').value.trim());
+            formData.append('reqRequesterName', requesterName);
+            formData.append('reqRequesterMatricula', requesterMatricula);
+            formData.append('reqRequesterEmail', requesterEmail);
+            formData.append('reqVerificationCode', verificationCode);
+            if (pdfFile) {
+                formData.append('pdfAttachment', pdfFile);
+            }
+
+            try {
+                const res = await fetch('/api/submit-requisition', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.message || 'Não foi possível enviar a requisição. Verifique os dados e tente novamente.');
+                    return;
+                }
+
+                alert(data.message || 'Requisição validada e enviada com sucesso!');
+                resetReqForm();
+            } catch (error) {
+                console.error('Erro ao enviar requisição:', error);
+                alert('Erro de conexão ao servidor ao enviar a requisição.');
+            }
+        });
+
+        function resetReqForm() {
+            document.getElementById('reqForm').reset();
+            calculateTotals();
+            pendingRequisitionCode = null;
+            currentRequesterEmail = '';
+            currentRequesterMatricula = '';
+            document.getElementById('reqCodeHelp').innerText = 'Após clicar em Emitir Requisição, um código será enviado ao e-mail do servidor.';
+        }
+
+        // Lógica do Modal de Cadastro de Unidades
+        const modal = document.getElementById('addUnitModal');
+        const openModalBtn = document.getElementById('openModalBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const cancelModalBtn = document.getElementById('cancelModalBtn');
+        const saveUnitBtn = document.getElementById('saveUnitBtn');
+
+        openModalBtn.addEventListener('click', () => modal.classList.add('active'));
+        closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
+        cancelModalBtn.addEventListener('click', () => modal.classList.remove('active'));
+
+        saveUnitBtn.addEventListener('click', async () => {
+            const sigla = document.getElementById('unitSigla').value.toUpperCase();
+            const name = document.getElementById('unitName').value;
+            const location = document.getElementById('unitLocation').value;
+            const responsible = document.getElementById('unitResponsible').value;
+
+            if (!sigla || !name) {
+                alert('Por favor, preencha a sigla e o nome da unidade!');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/units', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: sigla, name, location, responsible, status: 'Ativo' })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.message || 'Erro ao cadastrar unidade.');
+                    return;
+                }
+                document.getElementById('unitSigla').value = '';
+                document.getElementById('unitName').value = '';
+                document.getElementById('unitLocation').value = '';
+                document.getElementById('unitResponsible').value = '';
+                modal.classList.remove('active');
+                await loadUnits();
+                alert('Unidade cadastrada com sucesso.');
+            } catch (error) {
+                console.error('Erro ao cadastrar unidade:', error);
+                alert('Erro de conexão ao servidor.');
+            }
+        });
+
+        document.getElementById('unitSearch').addEventListener('keyup', (e) => {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('.unit-card').forEach(card => {
+                card.style.display = card.textContent.toLowerCase().includes(term) ? 'flex' : 'none';
+            });
+        });
+
+        // MODAIS E FLUXOS DE AUTENTICAÇÃO
+        const adminLoginModal = document.getElementById('adminLoginModal');
+        const changePasswordModal = document.getElementById('changePasswordModal');
+        const addUserModal = document.getElementById('addUserModal');
+
+        // Abrir acesso direto à unidade ao clicar em Acessar
+        document.getElementById('unitsGrid').addEventListener('click', async (e) => {
+            const accessBtn = e.target.closest('.btn-view-details');
+            if (accessBtn) {
+                const card = accessBtn.closest('.unit-card');
+                pendingUnitCode = card.getAttribute('data-unit-code');
+                await loadUnitUsers(pendingUnitCode);
+                grantUnitAccess(pendingUnitCode, true);
+            }
+        });
+
+        // BOTÃO X E CANCELAR DO LOGIN (mantidos apenas como backup)
+        document.getElementById('closeLoginModalBtn').addEventListener('click', () => adminLoginModal.classList.remove('active'));
+        document.getElementById('cancelLoginModalBtn').addEventListener('click', () => adminLoginModal.classList.remove('active'));
+
+        // AUTENTICAÇÃO DESATIVADA TEMPORARIAMENTE
+        document.getElementById('submitLoginBtn').addEventListener('click', () => {
+            if (!pendingUnitCode) return;
+            adminLoginModal.classList.remove('active');
+            grantUnitAccess(pendingUnitCode, true);
+        });
+
+        // SALVAR NOVAS CREDENCIAIS DE PRIMEIRO ACESSO (não utilizado enquanto login está desativado)
+        document.getElementById('saveNewCredentialsBtn').addEventListener('click', async () => {
+            const newU = document.getElementById('newLoginUsername').value.trim();
+            const newP = document.getElementById('newLoginPassword').value.trim();
+
+            if (!newU || !newP) {
+                alert('Preencha o novo login e a nova senha.');
+                return;
+            }
+
+            if (!authenticatedUserRef || !authenticatedUserRef.id) {
+                alert('Erro interno: usuário não encontrado.');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/unit-users/${authenticatedUserRef.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        login: newU,
+                        pass: newP,
+                        name: authenticatedUserRef.name || newU,
+                        doc: authenticatedUserRef.doc || '',
+                        email: authenticatedUserRef.email || '',
+                        phone: authenticatedUserRef.phone || '',
+                        role: authenticatedUserRef.role || '',
+                        is_default: 0
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.message || 'Erro ao atualizar credenciais.');
+                    return;
+                }
+
+                authenticatedUserRef.login = newU;
+                authenticatedUserRef.pass = newP;
+                authenticatedUserRef.is_default = 0;
+                if (authenticatedUserRef.name) authenticatedUserRef.name = newU;
+
+                changePasswordModal.classList.remove('active');
+                alert('Credenciais alteradas com sucesso!');
+                const isAdm = newU.toUpperCase() === 'ADM';
+                grantUnitAccess(pendingUnitCode, isAdm);
+            } catch (error) {
+                console.error('Erro ao atualizar credenciais:', error);
+                alert('Erro de conexão ao servidor.');
+            }
+        });
+
+        // CONCEDER ACESSO À UNIDADE
+        function grantUnitAccess(code, isAdm) {
+            activeUnitCode = code;
+            const card = document.querySelector(`.unit-card[data-unit-code="${code}"]`);
+            const title = card ? card.querySelector('.unit-name-box h3').innerText : code;
+            const sub = card ? card.querySelector('.unit-name-box span').innerText : 'Aba de Detalhes da Unidade';
+
+            document.getElementById('selectedUnitTitle').innerText = title;
+            document.getElementById('selectedUnitSub').innerText = sub;
+
+            // O Botão de Cadastrar Usuário e a lista de usuários só ficam visíveis para o ADM
+            const btnOpenUserModal = document.getElementById('btnOpenUserModal');
+            const usersSection = document.getElementById('usersManagementSection');
+
+            if (isAdm) {
+                btnOpenUserModal.style.display = 'flex';
+                usersSection.style.display = 'flex';
+            } else {
+                btnOpenUserModal.style.display = 'none';
+                usersSection.style.display = 'none';
+            }
+
+            renderUnitUsersTable(code, isAdm);
+
+            listView.style.display = 'none';
+            detailView.style.display = 'flex';
+        }
+
+        // GESTÃO DE USUÁRIOS DA UNIDADE
+        document.getElementById('btnOpenUserModal').addEventListener('click', () => addUserModal.classList.add('active'));
+        document.getElementById('closeUserModalBtn').addEventListener('click', () => addUserModal.classList.remove('active'));
+        document.getElementById('cancelUserModalBtn').addEventListener('click', () => addUserModal.classList.remove('active'));
+
+        document.getElementById('saveUserBtn').addEventListener('click', async () => {
+            const name = document.getElementById('uFullName').value.trim();
+            const doc = document.getElementById('uDoc').value.trim();
+            const email = document.getElementById('uEmail').value.trim();
+            const phone = document.getElementById('uPhone').value.trim();
+            const role = document.getElementById('uRole').value.trim();
+
+            if (!name || !doc) {
+                alert('Por favor, preencha o Nome Completo e a Matrícula/CPF.');
+                return;
+            }
+
+            if (!activeUnitCode) {
+                alert('Selecione uma unidade para cadastrar o usuário.');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/unit-users/${encodeURIComponent(activeUnitCode)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        login: name,
+                        pass: '123456',
+                        name,
+                        doc,
+                        email,
+                        phone,
+                        role,
+                        is_default: true
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.message || 'Erro ao cadastrar usuário da unidade.');
+                    return;
+                }
+                document.getElementById('uFullName').value = '';
+                document.getElementById('uDoc').value = '';
+                document.getElementById('uEmail').value = '';
+                document.getElementById('uPhone').value = '';
+                document.getElementById('uRole').value = '';
+                addUserModal.classList.remove('active');
+                await loadUnitUsers(activeUnitCode);
+                alert(`Usuário ${name} cadastrado com sucesso! Senha inicial: 123456`);
+            } catch (error) {
+                console.error('Erro ao cadastrar usuário da unidade:', error);
+                alert('Erro de conexão ao servidor.');
+            }
+        });
+
+        // EXCLUSÃO DE USUÁRIO (APENAS ADM)
+        async function deleteUser(id) {
+            if (!id || !activeUnitCode) return;
+            if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
+
+            try {
+                const res = await fetch(`/api/unit-users/${id}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.message || 'Erro ao excluir usuário.');
+                    return;
+                }
+                await loadUnitUsers(activeUnitCode);
+            } catch (error) {
+                console.error('Erro ao excluir usuário da unidade:', error);
+                alert('Erro de conexão ao servidor.');
+            }
+        }
+
+        function renderUnitUsersTable(code, isAdm) {
+            const tbody = document.getElementById('unitUsersTableBody');
+            tbody.innerHTML = '';
+            const list = unitUsersCache[code] || [];
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8;">Nenhum usuário cadastrado para esta unidade.</td></tr>`;
+                return;
+            }
+
+            list.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${u.name}</strong></td>
+                    <td>${u.doc || '-'}</td>
+                    <td>${u.email || '-'}</td>
+                    <td>${u.phone || '-'}</td>
+                    <td>${u.role || '-'}</td>
+                    <td style="text-align: center;">
+                        ${isAdm ? `<button class="btn-delete-user" onclick="deleteUser(${u.id})"><i data-lucide="trash-2" style="width: 14px;"></i> Excluir</button>` : '-'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        document.getElementById('btnBackToList').addEventListener('click', () => {
+            detailView.style.display = 'none';
+            listView.style.display = 'flex';
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadUnits();
+        });
+    </script>
+</body>
+</html>
