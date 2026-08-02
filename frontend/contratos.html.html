@@ -1091,6 +1091,10 @@
                                 <option value="12">Dezembro</option>
                             </select>
                         </div>
+                        <div class="filter-group">
+                            <label for="overviewContractNumber">Nº do Contrato</label>
+                            <input type="text" id="overviewContractNumber" placeholder="Ex.: 123/2026" oninput="renderOverviewDashboard(); renderOverviewTable();">
+                        </div>
                         <div class="filter-group filter-wide">
                             <label for="overviewCompany">Nome da Empresa</label>
                             <input type="text" id="overviewCompany" placeholder="Busque por credor ou empresa" oninput="renderOverviewDashboard(); renderOverviewTable();">
@@ -1142,6 +1146,11 @@
                                 <tr><td colspan="7" style="text-align:center; color: var(--text-muted);">Nenhum contrato encontrado.</td></tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <div id="overviewDetailsPanel" class="step-card" style="display:none; margin-top: 1rem; background: #f8fafc;">
+                        <div class="overview-recap-title">Detalhes do contrato</div>
+                        <div id="overviewDetailsContent" style="color: var(--text-muted); line-height: 1.6;"></div>
                     </div>
                 </div>
             </section>
@@ -1571,8 +1580,9 @@
         // Inicialização de Ícones Lucide
         lucide.createIcons();
 
-        // Cache local de contratos para acelerar buscas
         let DB_CONTRATOS = {};
+
+        // Cache local de contratos para acelerar buscas
 
         async function fetchContract(numContrato) {
             if (!numContrato) return null;
@@ -2368,6 +2378,9 @@
             populateOverviewFilters();
             renderOverviewDashboard();
             renderOverviewTable();
+            document.getElementById('overviewYear').value = '';
+            document.getElementById('overviewMonth').value = '';
+            document.getElementById('overviewCompany').value = '';
         }
 
         function getContractDate(contract) {
@@ -2396,15 +2409,18 @@
         function filterOverviewContracts() {
             const year = document.getElementById('overviewYear').value;
             const month = document.getElementById('overviewMonth').value;
+            const contractNumber = document.getElementById('overviewContractNumber').value.trim().toLowerCase();
             const company = document.getElementById('overviewCompany').value.trim().toLowerCase();
 
             return overviewContractsCache.filter(contract => {
                 const contractYear = getContractYear(contract);
                 const contractMonth = getContractMonth(contract);
                 const companyName = getCompanyName(contract).toLowerCase();
+                const currentContractNumber = (contract.numContrato || '').toLowerCase();
 
                 if (year && contractYear !== year) return false;
                 if (month && contractMonth !== month) return false;
+                if (contractNumber && !currentContractNumber.includes(contractNumber)) return false;
                 if (company && !companyName.includes(company)) return false;
                 return true;
             });
@@ -2465,7 +2481,7 @@
                     return new Date(Math.max(...valid.map(d => d.getTime()))).toLocaleDateString('pt-BR');
                 })();
 
-                return `<tr>
+                return `<tr onclick="showOverviewContractDetails('${contract.numContrato || ''}')" style="cursor:pointer;">
                     <td>${contract.numContrato || '-'}</td>
                     <td>${getCompanyName(contract) || '-'}</td>
                     <td>${year}</td>
@@ -2475,6 +2491,33 @@
                     <td>${lastUpdate}</td>
                 </tr>`;
             }).join('');
+        }
+
+        function showOverviewContractDetails(numContrato) {
+            const contract = DB_CONTRATOS[numContrato];
+            const panel = document.getElementById('overviewDetailsPanel');
+            const content = document.getElementById('overviewDetailsContent');
+
+            if (!contract) {
+                panel.style.display = 'none';
+                return;
+            }
+
+            const unidades = (contract.unidades || []).map(u => u.unidade || u).filter(Boolean);
+            const aditivos = (contract.aditivos || []).length;
+            const empenhos = (contract.empenhos || []).length;
+
+            content.innerHTML = `
+                <strong>Contrato:</strong> ${contract.numContrato || '-'}<br>
+                <strong>Processo:</strong> ${contract.numProcesso || '-'}<br>
+                <strong>Credor:</strong> ${getCompanyName(contract) || '-'}<br>
+                <strong>Valor Global:</strong> ${contract.valorGlobal || '-'}<br>
+                <strong>Objeto:</strong> ${contract.objeto || '-'}<br>
+                <strong>Período:</strong> ${contract.dtInicial || '-'} até ${contract.dtFinal || '-'}<br>
+                <strong>Unidades:</strong> ${unidades.length ? unidades.join(', ') : '-'}<br>
+                <strong>Aditivos:</strong> ${aditivos} | <strong>Empenhos:</strong> ${empenhos}
+            `;
+            panel.style.display = 'block';
         }
 
         function formatOverviewMonth(month) {

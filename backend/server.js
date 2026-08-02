@@ -21,7 +21,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const ROOT_DIR = path.resolve(__dirname, '..');
 const FRONTEND_DIR = path.join(ROOT_DIR, 'frontend');
-const DB_FILE = path.join(ROOT_DIR, 'database.sqlite');
+const DB_FILE = path.join(__dirname, 'database.sqlite');
+const CONTRACTS_DB_FILE = path.join(__dirname, 'contracts.sqlite');
 const UPLOAD_DIR = path.join(ROOT_DIR, 'uploads');
 
 if (!fs.existsSync(UPLOAD_DIR)) {
@@ -30,7 +31,14 @@ if (!fs.existsSync(UPLOAD_DIR)) {
 
 const db = new sqlite3.Database(DB_FILE, (err) => {
   if (err) {
-    console.error('Erro ao abrir o arquivo de banco de dados:', err);
+    console.error('Erro ao abrir o arquivo de banco de dados principal:', err);
+    process.exit(1);
+  }
+});
+
+const contractsDb = new sqlite3.Database(CONTRACTS_DB_FILE, (err) => {
+  if (err) {
+    console.error('Erro ao abrir o arquivo de banco de dados de contratos:', err);
     process.exit(1);
   }
 });
@@ -101,6 +109,27 @@ const upload = multer({
 const DEV_TOKEN = 'dev-access-token';
 
 function initDatabase() {
+  contractsDb.serialize(() => {
+    contractsDb.run(`
+      CREATE TABLE IF NOT EXISTS contracts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        numContrato TEXT NOT NULL UNIQUE,
+        numProcesso TEXT,
+        credor TEXT,
+        valorGlobal TEXT,
+        objeto TEXT,
+        dtInicial TEXT,
+        dtFinal TEXT,
+        arquivoContrato TEXT,
+        conteudoArquivoBase64 TEXT,
+        lotes TEXT,
+        unidades TEXT,
+        aditivos TEXT,
+        empenhos TEXT
+      )
+    `);
+  });
+
   db.serialize(() => {
     db.run(`
       CREATE TABLE IF NOT EXISTS users (
@@ -203,25 +232,6 @@ function initDatabase() {
     db.run('ALTER TABLE users ADD COLUMN observacoes TEXT DEFAULT ""', [], (err) => {
       if (err && !err.message.includes('duplicate column')) console.error(err);
     });
-
-    db.run(`
-      CREATE TABLE IF NOT EXISTS contracts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        numContrato TEXT NOT NULL UNIQUE,
-        numProcesso TEXT,
-        credor TEXT,
-        valorGlobal TEXT,
-        objeto TEXT,
-        dtInicial TEXT,
-        dtFinal TEXT,
-        arquivoContrato TEXT,
-        conteudoArquivoBase64 TEXT,
-        lotes TEXT,
-        unidades TEXT,
-        aditivos TEXT,
-        empenhos TEXT
-      )
-    `);
 
     function ensureDefaultUser(email, plainPassword, name, role) {
       db.get('SELECT id FROM users WHERE email = ?', [email.toLowerCase()], (err, row) => {
@@ -416,6 +426,7 @@ app.post('/auth/register', async (req, res) => {
     const otpCode = generateOtp();
     const otpExpires = Date.now() + 15 * 60 * 1000;
     const plainPassword = password;
+    const registrationRole = role === 'admin' || role === 'developer' ? 'user' : (role || 'user');
 
     db.run(
       'INSERT INTO users (email, password, name, role, unidade, perfil, status, verified, can_view_overview, otp_code, otp_expires, cpf, matricula, birthDate, phone, cargo, expirationDate, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -423,7 +434,7 @@ app.post('/auth/register', async (req, res) => {
         email.toLowerCase(),
         plainPassword,
         name || '',
-        role || 'user',
+        registrationRole,
         unidade || '',
         perfil || '',
         'Pendente',
@@ -898,7 +909,7 @@ app.delete('/api/unit-users/:id', async (req, res) => {
 app.get('/api/contracts', async (req, res) => {
   const { numContrato } = req.query;
   if (numContrato) {
-    db.get('SELECT * FROM contracts WHERE numContrato = ?', [numContrato], (err, row) => {
+    contractsDb.get('SELECT * FROM contracts WHERE numContrato = ?', [numContrato], (err, row) => {
       if (err) return res.status(500).json({ message: 'Erro ao buscar contrato.' });
       if (!row) return res.status(404).json({ message: 'Contrato não encontrado.' });
       return res.json({
@@ -912,7 +923,7 @@ app.get('/api/contracts', async (req, res) => {
     return;
   }
 
-  db.all('SELECT * FROM contracts ORDER BY id DESC', [], (err, rows) => {
+  contractsDb.all('SELECT * FROM contracts ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ message: 'Erro ao buscar contratos.' });
     const contracts = rows.map(row => ({
       ...row,
@@ -961,7 +972,7 @@ app.post('/api/contracts', async (req, res) => {
     return res.status(400).json({ message: 'Número do contrato é obrigatório.' });
   }
 
-  db.run(
+  contractsDb.run(
     `INSERT OR REPLACE INTO contracts (
         numContrato,
         numProcesso,
