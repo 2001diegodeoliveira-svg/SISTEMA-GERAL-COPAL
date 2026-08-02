@@ -1,28 +1,56 @@
-# COPAL Auth Backend
+# Sistema Geral COPAL
 
-Este projeto adiciona um servidor leve em Node.js com SQLite para cadastrar e autenticar usuários do sistema.
+Este repositório contém uma aplicação web com frontend estático e um backend em Node.js/Express usando SQLite para autenticação, gestão de usuários, contatos, unidades, contratos e integração com IA GOV MT.
 
-## O que foi criado
+## Estrutura do projeto
 
-- `server.js` - servidor Express com endpoints de autenticação
-- `package.json` - dependências para rodar o servidor
-- `db_init.sql` - script SQL para criar tabelas de usuários e sessões
-- `database.sqlite` será criado automaticamente na primeira execução
-- `uploads/` - diretório para imagens de fundo enviadas pelo usuário
+- `server.js` – backend Express com rotas de autenticação, cadastro, uploads, contratos e IA
+- `package.json` – dependências e scripts de execução
+- `db_init.sql` – script SQL de referência para a estrutura do banco
+- `*.html.html` – páginas do frontend, mantidas na raiz do projeto
+- `uploads/` – pasta gerada localmente para arquivos enviados pelo usuário
+- `database.sqlite` – banco local gerado automaticamente em execução
 
-## Endpoints disponíveis
+## Requisitos
 
-- `POST /auth/register` - cadastra usuário e gera código OTP
-- `POST /auth/verify-otp` - verifica código de registro
-- `POST /auth/resend-otp` - reenviar código OTP
-- `POST /auth/login` - autentica usuário e retorna token
-- `POST /auth/upload-background` - atualiza imagem de fundo do usuário
+- Node.js 18+ recomendado
+- npm
 
-## Como usar
+## Como executar localmente
 
-1. No terminal, navegue até a pasta `SISTEMA`
-2. Execute `npm install`
-3. Execute `npm start`
-4. Abra o navegador em `http://localhost:3000/login.html.html`
+1. Instale as dependências:
+   ```bash
+   npm install
+   ```
+2. Copie o arquivo de ambiente exemplo:
+   ```bash
+   cp .env.example .env
+   ```
+3. Ajuste as variáveis de ambiente, se necessário.
+4. Inicie o servidor:
+   ```bash
+   npm start
+   ```
+5. Acesse:
+   ```text
+   http://localhost:3000/
+   ```
 
-> O sistema de login atual em `login.html.html` já está configurado para usar estes endpoints.
+## Variáveis de ambiente
+
+O projeto usa variáveis de ambiente para configuração de e-mail, porta e integração com IA. Consulte o arquivo [.env.example](.env.example).
+
+## Publicação no GitHub
+
+Antes de publicar:
+
+- não envie arquivos locais como `database.sqlite`, `uploads/` ou segredos reais;
+- mantenha as credenciais em `.env` localmente;
+- use um repositório privado se o sistema ainda contiver dados sensíveis;
+- revise se há informações institucionais ou senhas padrão que não devem permanecer no repositório.
+
+## Observações importantes
+
+- O projeto ainda possui uma estrutura mista de frontend estático + backend em um único diretório.
+- Para um cenário mais profissional, a recomendação é separar frontend e backend em pastas diferentes no futuro.
+- O banco é SQLite local, ideal para ambiente de desenvolvimento e testes, mas não é o mais indicado para produção multiusuário.

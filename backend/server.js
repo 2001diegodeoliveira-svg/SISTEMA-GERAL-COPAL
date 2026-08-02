@@ -19,8 +19,10 @@ try {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DB_FILE = path.join(__dirname, 'database.sqlite');
-const UPLOAD_DIR = path.join(__dirname, 'uploads');
+const ROOT_DIR = path.resolve(__dirname, '..');
+const FRONTEND_DIR = path.join(ROOT_DIR, 'frontend');
+const DB_FILE = path.join(ROOT_DIR, 'database.sqlite');
+const UPLOAD_DIR = path.join(ROOT_DIR, 'uploads');
 
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -81,7 +83,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(require('cors')());
 app.use('/uploads', express.static(UPLOAD_DIR));
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(FRONTEND_DIR));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'home.html.html'));
+});
+
+app.get('/login.html.html', (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'cadastrouser.html.html'));
+});
 
 const upload = multer({
   dest: UPLOAD_DIR,

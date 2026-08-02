@@ -1,0 +1,28 @@
+# Dependências
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Ambiente local e segredos
+.env
+.env.local
+.env.*
+!.env.example
+
+# Banco de dados local e uploads
+*.sqlite
+*.sqlite3
+database.sqlite
+uploads/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+.vscode/
+.idea/
