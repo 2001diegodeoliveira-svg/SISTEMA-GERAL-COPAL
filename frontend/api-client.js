@@ -25,6 +25,7 @@
     return {
       localApiBase: 'http://localhost:3000',
       productionApiBase: '',
+      productionApiFallbacks: [],
       githubPagesHosts: ['2001diegodeoliveira-svg.github.io'],
     };
   }
@@ -69,16 +70,26 @@
 
   function inferDefaultBase(config) {
     const host = window.location.hostname || '';
+    const productionCandidates = getProductionCandidates(config);
 
     if (isLocalHost(host)) {
       return normalizeBase(config.localApiBase || `${window.location.protocol}//${window.location.host}`);
     }
 
     if (isConfiguredGithubPagesHost(host, config)) {
-      return normalizeBase(config.productionApiBase || '');
+      return productionCandidates[0] || '';
     }
 
     return '';
+  }
+
+  function getProductionCandidates(config) {
+    const primary = normalizeBase(config.productionApiBase || '');
+    const extras = Array.isArray(config.productionApiFallbacks)
+      ? config.productionApiFallbacks.map((value) => normalizeBase(value)).filter(Boolean)
+      : [];
+
+    return [...new Set([primary, ...extras].filter(Boolean))];
   }
 
   setBaseUrl(window.API_BASE_URL || storedBase || '', false);
@@ -118,6 +129,7 @@
     runtimeConfig = await loadRuntimeConfig();
 
     const localFallbackBase = normalizeBase(runtimeConfig.localApiBase || 'http://localhost:3000');
+    const productionCandidates = getProductionCandidates(runtimeConfig);
     const defaultBase = inferDefaultBase(runtimeConfig);
     const currentBase = normalizeBase(configuredBase);
     const localIsUp = await canReachBase(localFallbackBase);
@@ -129,6 +141,13 @@
     const effectiveBase = normalizeBase(configuredBase);
 
     if (!effectiveBase) {
+      for (const candidate of productionCandidates) {
+        if (await canReachBase(candidate)) {
+          setBaseUrl(candidate, false);
+          return;
+        }
+      }
+
       if (localIsUp) {
         setBaseUrl(localFallbackBase, true);
       }
@@ -136,8 +155,17 @@
     }
 
     const currentIsUp = await canReachBase(effectiveBase);
-    if (!currentIsUp && localIsUp) {
-      setBaseUrl(localFallbackBase, true);
+    if (!currentIsUp) {
+      for (const candidate of productionCandidates) {
+        if (candidate !== effectiveBase && await canReachBase(candidate)) {
+          setBaseUrl(candidate, false);
+          return;
+        }
+      }
+
+      if (localIsUp) {
+        setBaseUrl(localFallbackBase, true);
+      }
     }
   }
 
@@ -184,6 +212,7 @@
       }
 
       const localFallbackBase = normalizeBase((runtimeConfig && runtimeConfig.localApiBase) || 'http://localhost:3000');
+      const productionCandidates = getProductionCandidates(runtimeConfig || defaultConfig());
       const canTryLocalFallback = isGithubPages() && configuredBase !== localFallbackBase;
 
       async function doFetch(baseUrl) {
@@ -198,6 +227,21 @@
 
       try {
         const response = await doFetch(configuredBase);
+
+        if (isGithubPages() && [404, 502, 503, 504].includes(response.status)) {
+          for (const candidate of productionCandidates) {
+            if (!candidate || candidate === configuredBase) continue;
+            try {
+              const altResponse = await doFetch(candidate);
+              if (altResponse.ok || ![404, 502, 503, 504].includes(altResponse.status)) {
+                setBaseUrl(candidate, false);
+                return altResponse;
+              }
+            } catch (altError) {
+              // Tenta o próximo candidato.
+            }
+          }
+        }
 
         // Se o backend público estiver fora do ar, tenta automaticamente o Node local.
         if (canTryLocalFallback && [502, 503, 504].includes(response.status)) {

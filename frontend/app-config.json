@@ -1,6 +1,9 @@
 {
   "localApiBase": "http://localhost:3000",
-  "productionApiBase": "https://sistema-geral-copal-api.onrender.com",
+  "productionApiBase": "https://sistema-geral-copal.onrender.com",
+  "productionApiFallbacks": [
+    "https://sistema-geral-copal-api.onrender.com"
+  ],
   "githubPagesHosts": [
     "2001diegodeoliveira-svg.github.io"
   ]
