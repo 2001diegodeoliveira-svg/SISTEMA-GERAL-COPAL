@@ -8,7 +8,6 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body {
-            --aim-rotate: 0deg;
             min-height: 100vh;
             display: flex;
             justify-content: flex-end;
@@ -25,26 +24,6 @@
             position: absolute;
             inset: 0;
             background: linear-gradient(90deg, rgba(2, 8, 18, 0.88), rgba(5, 15, 30, 0.66), rgba(3, 8, 15, 0.84));
-        }
-        body::after {
-            content: '';
-            position: absolute;
-            left: -8vw;
-            top: -6vh;
-            width: 72vw;
-            height: 112vh;
-            background-image: url('imagemlogincontratos/ChatGPT%20Image%203%20de%20ago.%20de%202026,%2000_42_04.png');
-            background-size: cover;
-            background-position: left center;
-            background-repeat: no-repeat;
-            clip-path: ellipse(52% 50% at 36% 54%);
-            transform-origin: 34% 58%;
-            transform: rotate(var(--aim-rotate));
-            transition: transform 90ms linear;
-            pointer-events: none;
-            z-index: 1;
-            opacity: 0.95;
-            filter: saturate(1.05) contrast(1.02);
         }
         .login-card {
             position: relative;
@@ -113,15 +92,8 @@
         .footer { margin-top: 24px; text-align: center; color: #9ea8b5; font-size: 12px; }
         @media (max-width: 900px) {
             body { justify-content: center; }
-            body::after { display: none; }
             .login-card { margin: 18px; width: 92%; max-width: 430px; padding: 28px 20px; }
             .logo { font-size: 28px; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            body::after {
-                transition: none;
-                transform: none;
-            }
         }
     </style>
 </head>
@@ -149,39 +121,6 @@
     <script src="api-client.js"></script>
 
     <script>
-        (function attachAimEffect() {
-            const root = document.body;
-            let rafId = null;
-
-            // Ponto aproximado do ombro/braço na imagem para orientar a rotação.
-            const anchor = { x: window.innerWidth * 0.27, y: window.innerHeight * 0.56 };
-
-            function clamp(value, min, max) {
-                return Math.min(max, Math.max(min, value));
-            }
-
-            function updateAim(clientX, clientY) {
-                const dx = clientX - anchor.x;
-                const dy = clientY - anchor.y;
-                const deg = Math.atan2(dy, dx) * (180 / Math.PI);
-
-                // Ajuste fino para o personagem apontar com naturalidade.
-                const corrected = clamp(deg - 10, -14, 16);
-                root.style.setProperty('--aim-rotate', `${corrected}deg`);
-            }
-
-            window.addEventListener('resize', () => {
-                anchor.x = window.innerWidth * 0.27;
-                anchor.y = window.innerHeight * 0.56;
-            });
-
-            window.addEventListener('pointermove', (event) => {
-                if (window.matchMedia('(max-width: 900px)').matches) return;
-                if (rafId) cancelAnimationFrame(rafId);
-                rafId = requestAnimationFrame(() => updateAim(event.clientX, event.clientY));
-            });
-        })();
-
         async function hasValidSession() {
             const token = localStorage.getItem('accessToken') || '';
             if (!token) return false;
