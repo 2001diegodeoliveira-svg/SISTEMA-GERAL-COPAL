@@ -122,15 +122,45 @@
         });
       }
 
-      const targetUrl = `${configuredBase}${rawUrl}`;
-      try {
+      const localFallbackBase = 'http://localhost:3000';
+      const canTryLocalFallback = isGithubPages() && configuredBase !== localFallbackBase;
+
+      async function doFetch(baseUrl) {
+        const targetUrl = `${baseUrl}${rawUrl}`;
         if (typeof input === 'string') {
-          return await originalFetch(targetUrl, init);
+          return originalFetch(targetUrl, init);
         }
 
         const clonedRequest = new Request(targetUrl, input);
-        return await originalFetch(clonedRequest, init);
+        return originalFetch(clonedRequest, init);
+      }
+
+      try {
+        const response = await doFetch(configuredBase);
+
+        // Se o backend público estiver fora do ar, tenta automaticamente o Node local.
+        if (canTryLocalFallback && [502, 503, 504].includes(response.status)) {
+          try {
+            const localResponse = await doFetch(localFallbackBase);
+            setBaseUrl(localFallbackBase, true);
+            return localResponse;
+          } catch (fallbackError) {
+            return response;
+          }
+        }
+
+        return response;
       } catch (error) {
+        if (canTryLocalFallback) {
+          try {
+            const localResponse = await doFetch(localFallbackBase);
+            setBaseUrl(localFallbackBase, true);
+            return localResponse;
+          } catch (fallbackError) {
+            // Se também não houver backend local, mantém mensagem padrão abaixo.
+          }
+        }
+
         return new Response(JSON.stringify({
           message: `Não foi possível conectar ao backend em ${configuredBase}. Verifique se a API está no ar.`
         }), {
