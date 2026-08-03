@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: sistema-geral-copal-api
+    runtime: node
+    plan: free
+    rootDir: .
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 24.18.1
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sistema-geral-copal-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: REFRESH_TOKEN_EXPIRES_IN
+        value: 7d
+      - key: UPLOAD_PATH
+        value: uploads
+
+# Banco PostgreSQL gerenciado pelo Render
+databases:
+  - name: sistema-geral-copal-db
+    plan: free
+    databaseName: copal
+    user: copal_user

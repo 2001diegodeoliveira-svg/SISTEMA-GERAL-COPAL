@@ -3,6 +3,9 @@
   let configuredBase = '';
   let promptedForBaseInThisSession = false;
   const originalFetch = window.fetch.bind(window);
+  const KNOWN_PUBLIC_BACKENDS = {
+    '2001diegodeoliveira-svg.github.io': 'https://sistema-geral-copal-api.onrender.com'
+  };
 
   function normalizeBase(value) {
     return String(value || '').trim().replace(/\/$/, '');
@@ -20,7 +23,20 @@
     }
   }
 
-  setBaseUrl(window.API_BASE_URL || storedBase || '', false);
+  function inferDefaultBase() {
+    const host = window.location.hostname || '';
+    if (KNOWN_PUBLIC_BACKENDS[host]) {
+      return KNOWN_PUBLIC_BACKENDS[host];
+    }
+
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return `${window.location.protocol}//${window.location.host}`;
+    }
+
+    return '';
+  }
+
+  setBaseUrl(window.API_BASE_URL || storedBase || inferDefaultBase() || '', false);
 
   window.setApiBaseUrl = function setApiBaseUrl(url) {
     setBaseUrl(url, true);
@@ -45,7 +61,15 @@
       'Informe a URL pública do backend Node.js (ex: https://seu-backend.onrender.com).'
     ].join('\n');
 
-    const input = window.prompt(message, suggested);
+    let input = '';
+    try {
+      if (typeof window.prompt === 'function') {
+        input = window.prompt(message, suggested);
+      }
+    } catch (error) {
+      // Ambientes com prompt bloqueado (webviews/test runners) não devem quebrar a app.
+      input = '';
+    }
     const normalized = normalizeBase(input);
     if (normalized) {
       setBaseUrl(normalized, true);
@@ -76,6 +100,8 @@
       if (!configuredBase) {
         if (isGithubPages()) {
           await promptBackendBaseUrl();
+        } else {
+          setBaseUrl(inferDefaultBase(), false);
         }
       }
 

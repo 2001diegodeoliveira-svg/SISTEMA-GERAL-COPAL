@@ -3,16 +3,30 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: Number(process.env.DB_PORT || 5432),
-  database: process.env.DB_NAME || 'copal',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+const hasConnectionString = !!process.env.DATABASE_URL;
+const forceSsl = String(process.env.DB_SSL || '').toLowerCase() === 'true';
+
+const poolConfig = hasConnectionString
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    }
+  : {
+      host: process.env.DB_HOST || 'localhost',
+      port: Number(process.env.DB_PORT || 5432),
+      database: process.env.DB_NAME || 'copal',
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || 'postgres',
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+      ...(forceSsl ? { ssl: { rejectUnauthorized: false } } : {}),
+    };
+
+const pool = new Pool(poolConfig);
 
 function translatePlaceholders(sql) {
   let index = 0;

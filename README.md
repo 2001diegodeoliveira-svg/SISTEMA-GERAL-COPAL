@@ -43,9 +43,48 @@ Este repositório contém uma aplicação web com frontend estático e backend N
    http://localhost:3000/
    ```
 
+## Configuração para GitHub Pages (frontend) + Backend Node.js
+
+Quando o frontend está publicado no GitHub Pages, a API precisa estar em uma URL pública (Render/Railway/etc).
+
+### Opção recomendada: Render Blueprint
+
+Este repositório já contém o arquivo [render.yaml](render.yaml), que cria:
+
+- `sistema-geral-copal-api` (serviço Node.js)
+- `sistema-geral-copal-db` (PostgreSQL)
+
+Passos:
+
+1. No Render, escolha **New +** > **Blueprint**.
+2. Conecte este repositório.
+3. Faça o deploy do blueprint.
+4. Após o deploy, copie a URL pública do serviço web (ex.: `https://sistema-geral-copal-api.onrender.com`).
+
+### Configurar o frontend para usar a API pública
+
+Na primeira abertura no GitHub Pages, o frontend salva a URL da API automaticamente pelo script `api-client.js`.
+Se precisar ajustar manualmente:
+
+```js
+window.setApiBaseUrl("https://sua-api-publica.onrender.com")
+```
+
+Para limpar:
+
+```js
+window.clearApiBaseUrl()
+```
+
 ## Variáveis de ambiente
 
 O projeto usa variáveis de ambiente para banco de dados, autenticação e e-mail. Consulte [.env.example](.env.example) e [backend/.env.example](backend/.env.example).
+
+Variáveis principais em produção:
+
+- `DATABASE_URL` (prioridade maior, conexão completa PostgreSQL)
+- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` (fallback para ambiente local)
+- `DB_SSL` (`true` para forçar SSL quando necessário)
 
 ## Usuário inicial
 
