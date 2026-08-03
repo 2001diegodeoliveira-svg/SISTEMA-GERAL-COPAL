@@ -727,11 +727,11 @@
             <div class="contracts-login-visual"></div>
             <div class="contracts-login-form">
                 <h2 id="contractsLoginTitle">Acesso ao Módulo de Contratos</h2>
-                <p>Para acessar esta área, informe a matrícula e a senha cadastradas no módulo de cadastro de usuários.</p>
+                <p>Para acessar esta área, informe matrícula ou e-mail e a senha de um usuário cadastrado e aprovado pelo administrador.</p>
 
                 <div class="contracts-login-field">
-                    <label for="contractsLoginMatricula">Matrícula</label>
-                    <input id="contractsLoginMatricula" type="text" placeholder="Digite sua matrícula" autocomplete="username">
+                    <label for="contractsLoginMatricula">Matrícula ou E-mail</label>
+                    <input id="contractsLoginMatricula" type="text" placeholder="Digite sua matrícula ou e-mail" autocomplete="username">
                 </div>
 
                 <div class="contracts-login-field">
@@ -1773,7 +1773,10 @@
                     headers: { Authorization: `Bearer ${contractsAuthToken}` }
                 });
                 if (!response.ok) return false;
-                return true;
+                const data = await response.json();
+                const status = String(data?.user?.status || '').toLowerCase();
+                const accountStatus = String(data?.user?.accountStatus || 'ativo').toLowerCase();
+                return status === 'aprovado' && accountStatus === 'ativo';
             } catch (error) {
                 return false;
             }
@@ -1806,6 +1809,15 @@
                 const data = await response.json();
                 if (!response.ok) {
                     setContractsLoginError(data.message || 'Falha ao autenticar.');
+                    return;
+                }
+
+                const status = String(data?.user?.status || '').toLowerCase();
+                const accountStatus = String(data?.user?.accountStatus || 'ativo').toLowerCase();
+                if (status !== 'aprovado' || accountStatus !== 'ativo') {
+                    setContractsLoginError('Cadastro pendente de aprovação do administrador.');
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('userRole');
                     return;
                 }
 
