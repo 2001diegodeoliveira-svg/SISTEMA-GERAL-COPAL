@@ -6,6 +6,9 @@
     <title>Dashboard - SESP / COPAL</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r158/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
     <style>
         :root {
             --bg-body: #070b19;
@@ -454,6 +457,249 @@
         .badge-analise { background: rgba(251, 191, 36, 0.12); color: #facc15; }
         .badge-encerrado { background: rgba(248, 113, 28, 0.12); color: #fb923c; }
 
+        .distribution-panel {
+            margin-top: 1.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .distribution-layout {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: 1.3fr 0.8fr;
+            align-items: stretch;
+        }
+
+        .distribution-map-card,
+        .distribution-side-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 1.3rem;
+            padding: 1rem;
+            min-height: 390px;
+        }
+
+        .distribution-side-card {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .distribution-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+        }
+
+        .distribution-pill {
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 0.9rem;
+            padding: 0.7rem;
+        }
+
+        .distribution-pill .label {
+            display: block;
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #93c5fd;
+            margin-bottom: 0.35rem;
+            font-weight: 700;
+        }
+
+        .distribution-pill .value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #e0f2fe;
+        }
+
+        .map-stage {
+            position: relative;
+            min-height: 320px;
+            border-radius: 1rem;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 25% 25%, rgba(34, 211, 238, 0.16), transparent 32%),
+                radial-gradient(circle at 80% 18%, rgba(251, 191, 36, 0.16), transparent 28%),
+                linear-gradient(180deg, rgba(8, 17, 38, 0.95) 0%, rgba(5, 11, 24, 0.98) 100%);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+        }
+
+        #threeDistributionCanvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.4;
+        }
+
+        .mt-map {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            opacity: 0.9;
+        }
+
+        .mt-map path.base {
+            fill: rgba(14, 116, 144, 0.2);
+            stroke: rgba(125, 211, 252, 0.38);
+            stroke-width: 2.2;
+            filter: drop-shadow(0 0 14px rgba(34, 211, 238, 0.2));
+        }
+
+        .mt-map path.flow {
+            fill: none;
+            stroke: rgba(251, 191, 36, 0.22);
+            stroke-width: 1.3;
+            stroke-dasharray: 7 5;
+        }
+
+        .unit-markers {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+        }
+
+        .unit-marker {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: #f8fafc;
+        }
+
+        .unit-marker .pulse-ring {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(56, 189, 248, 0.2);
+            transform: translate(-50%, -50%) scale(1);
+            animation: pulseMarker 2.6s ease-out infinite;
+        }
+
+        .unit-marker .marker-core {
+            width: var(--size, 15px);
+            height: var(--size, 15px);
+            border-radius: 50%;
+            background: linear-gradient(135deg, #22d3ee, #f59e0b);
+            box-shadow: 0 0 0 2px rgba(8, 15, 32, 0.8), 0 0 24px rgba(56, 189, 248, 0.45);
+            position: relative;
+            z-index: 2;
+        }
+
+        .unit-marker .marker-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            background: rgba(2, 6, 23, 0.75);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 999px;
+            padding: 0.2rem 0.55rem;
+            white-space: nowrap;
+            position: relative;
+            z-index: 2;
+            max-width: 190px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .distribution-legend {
+            margin-top: 0.8rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.45;
+        }
+
+        .distribution-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 0.6rem;
+            max-height: 220px;
+            overflow: auto;
+            padding-right: 0.25rem;
+        }
+
+        .distribution-item {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            align-items: center;
+            gap: 0.65rem;
+            background: rgba(15, 23, 42, 0.72);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 0.9rem;
+            padding: 0.55rem 0.7rem;
+        }
+
+        .distribution-item .name {
+            color: #e2e8f0;
+            font-size: 0.86rem;
+            font-weight: 700;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .distribution-item .amount {
+            color: #67e8f9;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .distribution-item .go {
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            background: rgba(56, 189, 248, 0.12);
+            color: #bae6fd;
+            font-size: 0.73rem;
+            border-radius: 999px;
+            padding: 0.3rem 0.55rem;
+            cursor: pointer;
+        }
+
+        .distribution-item .go:hover {
+            background: rgba(56, 189, 248, 0.22);
+        }
+
+        .lottie-wrap {
+            border-radius: 1rem;
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            background: rgba(255,255,255,0.03);
+            min-height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #distributionLottie {
+            width: 180px;
+            height: 120px;
+        }
+
+        .hint {
+            color: var(--text-faint);
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+
+        @keyframes pulseMarker {
+            0% { opacity: 0.65; transform: translate(-50%, -50%) scale(0.65); }
+            70% { opacity: 0; transform: translate(-50%, -50%) scale(1.7); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.7); }
+        }
+
         .footer-note {
             color: var(--text-secondary);
             text-align: center;
@@ -464,6 +710,19 @@
         @media (max-width: 960px) {
             .chart-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .distribution-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .distribution-map-card,
+            .distribution-side-card {
+                min-height: auto;
+            }
+
+            .map-stage {
+                min-height: 280px;
             }
 
             .dashboard-filters,
@@ -584,6 +843,51 @@
             </div>
         </section>
 
+        <section class="panel-card distribution-panel">
+            <div class="panel-title">
+                <i data-lucide="map-pinned" style="width: 20px;"></i>
+                <span>Mapa de Distribuição por Unidade</span>
+            </div>
+            <p class="panel-subtitle">
+                A visualização cruza os contratos ativos com as unidades atendidas. Clique em um ponto do mapa para filtrar o dashboard automaticamente.
+            </p>
+            <div class="distribution-layout">
+                <div class="distribution-map-card">
+                    <div class="map-stage">
+                        <canvas id="threeDistributionCanvas"></canvas>
+                        <svg class="mt-map" viewBox="0 0 640 420" aria-hidden="true">
+                            <path class="base" d="M155 70 L220 45 L296 66 L360 58 L422 88 L486 126 L492 178 L540 217 L523 279 L486 332 L439 366 L372 362 L310 383 L248 358 L194 313 L157 251 L124 220 L111 164 L138 124 Z"></path>
+                            <path class="flow" d="M182 136 C255 102, 358 104, 428 152"></path>
+                            <path class="flow" d="M162 212 C254 176, 351 201, 470 228"></path>
+                            <path class="flow" d="M210 300 C283 248, 362 256, 442 315"></path>
+                        </svg>
+                        <div id="unitMarkers" class="unit-markers"></div>
+                    </div>
+                    <p class="distribution-legend">
+                        Intensidade dos pontos = quantidade de contratos ativos por unidade.
+                        A malha representa o fluxo administrativo entre regionais de contratação.
+                    </p>
+                </div>
+                <div class="distribution-side-card">
+                    <div class="distribution-meta">
+                        <div class="distribution-pill">
+                            <span class="label">Unidades mapeadas</span>
+                            <span id="mappedUnitsValue" class="value">0</span>
+                        </div>
+                        <div class="distribution-pill">
+                            <span class="label">Cobertura ativa</span>
+                            <span id="coverageValue" class="value">0%</span>
+                        </div>
+                    </div>
+                    <div class="lottie-wrap">
+                        <div id="distributionLottie"></div>
+                    </div>
+                    <ul id="distributionList" class="distribution-list"></ul>
+                    <p class="hint" id="distributionHint">Use os filtros para refinar o mapa por mês, ano, empresa e unidade.</p>
+                </div>
+            </div>
+        </section>
+
         <section class="panel-card" style="margin-top: 1.5rem;">
             <div class="chart-grid">
                 <div class="chart-card">
@@ -657,8 +961,40 @@
 
         const state = {
             contracts: [],
-            filtered: []
+            filtered: [],
+            introDone: false,
+            lottieReady: false,
+            three: null,
+            threeResizeBound: false
         };
+
+        const MAP_ANCHORS = [
+            { x: 27, y: 18 },
+            { x: 38, y: 24 },
+            { x: 52, y: 20 },
+            { x: 66, y: 26 },
+            { x: 74, y: 40 },
+            { x: 58, y: 43 },
+            { x: 45, y: 50 },
+            { x: 30, y: 46 },
+            { x: 24, y: 61 },
+            { x: 42, y: 66 },
+            { x: 56, y: 63 },
+            { x: 70, y: 58 },
+            { x: 63, y: 75 },
+            { x: 45, y: 79 }
+        ];
+
+        const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
 
         function parseCurrency(value) {
             if (!value) return 0;
@@ -703,6 +1039,31 @@
             const now = new Date();
             const end = new Date(contract.dtFinal || '2100-01-01');
             return end >= now ? 'ativo' : 'encerrado';
+        }
+
+        function hashCode(value) {
+            let hash = 0;
+            for (let i = 0; i < value.length; i += 1) {
+                hash = (hash << 5) - hash + value.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash);
+        }
+
+        function clamp(value, min, max) {
+            return Math.min(max, Math.max(min, value));
+        }
+
+        function markerPosition(name, index) {
+            const anchor = MAP_ANCHORS[index % MAP_ANCHORS.length];
+            const hash = hashCode(name);
+            const jitterX = ((hash % 13) - 6) * 0.55;
+            const jitterY = (((Math.floor(hash / 11)) % 13) - 6) * 0.5;
+
+            return {
+                x: clamp(anchor.x + jitterX, 9, 91),
+                y: clamp(anchor.y + jitterY, 9, 90)
+            };
         }
 
         function setFilterOptions() {
@@ -755,6 +1116,32 @@
             applyFilters();
         }
 
+        function animateMetric(elementId, value, formatter) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+
+            if (!window.gsap || prefersReducedMotion) {
+                element.textContent = formatter(value);
+                element.dataset.value = String(value);
+                return;
+            }
+
+            const startValue = Number(element.dataset.value || 0);
+            const target = Number(value || 0);
+            const holder = { value: startValue };
+
+            gsap.killTweensOf(holder);
+            gsap.to(holder, {
+                value: target,
+                duration: 0.8,
+                ease: 'power2.out',
+                onUpdate: () => {
+                    element.textContent = formatter(holder.value);
+                    element.dataset.value = String(holder.value);
+                }
+            });
+        }
+
         function renderDashboard() {
             const contracts = state.filtered;
             const activeContracts = contracts.filter((contract) => contractStatus(contract) !== 'encerrado');
@@ -778,19 +1165,28 @@
                 }
             });
 
-            document.getElementById('metricActiveContracts').textContent = activeContracts.length;
-            document.getElementById('metricTotalValue').textContent = formatCurrency(totalValue);
-            document.getElementById('metricUnits').textContent = uniqueUnits.size;
-            document.getElementById('metricCompanies').textContent = companyCounts.size;
+            animateMetric('metricActiveContracts', activeContracts.length, (value) => Math.round(value).toLocaleString('pt-BR'));
+            animateMetric('metricTotalValue', totalValue, (value) => formatCurrency(Math.max(value, 0)));
+            animateMetric('metricUnits', uniqueUnits.size, (value) => Math.round(value).toLocaleString('pt-BR'));
+            animateMetric('metricCompanies', companyCounts.size, (value) => Math.round(value).toLocaleString('pt-BR'));
 
             renderStatusBars(statusCounts, activeContracts.length);
-            renderTopList('topUnits', mapTopUnits(activeContracts));
+            const topUnits = mapTopUnits(activeContracts, 12);
+            renderTopList('topUnits', topUnits.slice(0, 6));
             renderTopList('topCompanies', [...companyCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6));
             renderMonthlyTrend(monthlyCounts);
             renderContractsTable(activeContracts);
+            renderDistributionMap(topUnits, activeContracts.length);
+
+            if (window.gsap && !prefersReducedMotion) {
+                gsap.fromTo('.rank-item, .trend-row',
+                    { opacity: 0, y: 8 },
+                    { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out', stagger: 0.03 }
+                );
+            }
         }
 
-        function mapTopUnits(contracts) {
+        function mapTopUnits(contracts, limit) {
             const unitCount = new Map();
             contracts.forEach((contract) => {
                 getContractUnits(contract).forEach((unit) => {
@@ -798,7 +1194,8 @@
                     unitCount.set(unit, (unitCount.get(unit) || 0) + 1);
                 });
             });
-            return [...unitCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
+            const sorted = [...unitCount.entries()].sort((a, b) => b[1] - a[1]);
+            return Number.isFinite(limit) ? sorted.slice(0, limit) : sorted;
         }
 
         function renderStatusBars(statusCounts, total) {
@@ -822,11 +1219,18 @@
                 return `
                     <div class="status-row">
                         <div class="status-label">${labels[status] || status}</div>
-                        <div class="status-bar"><div class="status-fill" style="width:${width}%; background:${colors[status]};"></div></div>
+                        <div class="status-bar"><div class="status-fill" data-width="${width}" style="width:${width}%; background:${colors[status]}; transform-origin:left center;"></div></div>
                         <div class="status-value">${count}</div>
                     </div>
                 `;
             }).join('');
+
+            if (window.gsap && !prefersReducedMotion) {
+                gsap.fromTo('#statusBars .status-fill',
+                    { scaleX: 0 },
+                    { scaleX: 1, duration: 0.8, ease: 'power2.out', stagger: 0.08 }
+                );
+            }
         }
 
         function renderTopList(containerId, items) {
@@ -869,6 +1273,218 @@
             }
         }
 
+        function focusUnitFilter(unitName) {
+            const unitFilter = document.getElementById('filterUnit');
+            if (!unitFilter) return;
+
+            const available = [...unitFilter.options].some((option) => option.value === unitName);
+            if (!available) {
+                const option = document.createElement('option');
+                option.value = unitName;
+                option.textContent = unitName;
+                unitFilter.appendChild(option);
+            }
+
+            unitFilter.value = unitName;
+            applyFilters();
+
+            const tableSection = document.querySelector('.table-overflow');
+            if (tableSection && tableSection.scrollIntoView) {
+                tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function renderDistributionMap(units, activeCount) {
+            const markerHost = document.getElementById('unitMarkers');
+            const list = document.getElementById('distributionList');
+            const mappedUnitsValue = document.getElementById('mappedUnitsValue');
+            const coverageValue = document.getElementById('coverageValue');
+            const hint = document.getElementById('distributionHint');
+
+            if (!markerHost || !list || !mappedUnitsValue || !coverageValue || !hint) return;
+
+            if (!units.length) {
+                markerHost.innerHTML = '';
+                list.innerHTML = '<li class="distribution-item"><span class="name">Sem unidades no filtro atual</span><span class="amount">0</span><span class="go">-</span></li>';
+                mappedUnitsValue.textContent = '0';
+                coverageValue.textContent = '0%';
+                hint.textContent = 'Nenhuma unidade encontrada com os filtros selecionados.';
+                return;
+            }
+
+            const topUnits = units.slice(0, 12);
+            const maxContractsByUnit = Math.max(...topUnits.map(([, amount]) => amount), 1);
+
+            markerHost.innerHTML = topUnits.map(([unitName, amount], index) => {
+                const position = markerPosition(unitName, index);
+                const size = clamp(12 + (amount / maxContractsByUnit) * 14, 12, 26);
+                return `
+                    <button class="unit-marker" style="left:${position.x}%;top:${position.y}%;" data-unit="${escapeHtml(unitName)}" title="${escapeHtml(unitName)}: ${amount} contratos">
+                        <span class="pulse-ring"></span>
+                        <span class="marker-core" style="--size:${size}px"></span>
+                        <span class="marker-label">${escapeHtml(unitName)}</span>
+                    </button>
+                `;
+            }).join('');
+
+            const coverage = Math.min((topUnits.length / Math.max(units.length, 1)) * 100, 100);
+            mappedUnitsValue.textContent = topUnits.length.toLocaleString('pt-BR');
+            coverageValue.textContent = `${coverage.toFixed(0)}%`;
+            hint.textContent = `Cobertura de ${topUnits.length} unidades no mapa tático. Contratos ativos analisados: ${activeCount.toLocaleString('pt-BR')}.`;
+
+            list.innerHTML = topUnits.map(([unitName, amount]) => {
+                return `
+                    <li class="distribution-item">
+                        <span class="name">${escapeHtml(unitName)}</span>
+                        <span class="amount">${amount} contratos</span>
+                        <button class="go" data-unit="${escapeHtml(unitName)}">Filtrar</button>
+                    </li>
+                `;
+            }).join('');
+
+            markerHost.querySelectorAll('.unit-marker').forEach((marker) => {
+                marker.addEventListener('click', () => {
+                    const unitName = marker.dataset.unit || '';
+                    if (unitName) focusUnitFilter(unitName);
+                });
+            });
+
+            list.querySelectorAll('.go').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const unitName = button.dataset.unit || '';
+                    if (unitName) focusUnitFilter(unitName);
+                });
+            });
+
+            if (window.gsap && !prefersReducedMotion) {
+                gsap.fromTo('.unit-marker',
+                    { opacity: 0, scale: 0.6 },
+                    { opacity: 1, scale: 1, duration: 0.45, ease: 'back.out(1.6)', stagger: 0.03 }
+                );
+            }
+        }
+
+        function initLottieDistribution() {
+            if (state.lottieReady || !window.lottie) return;
+
+            const container = document.getElementById('distributionLottie');
+            if (!container) return;
+
+            try {
+                window.lottie.loadAnimation({
+                    container,
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: 'https://assets9.lottiefiles.com/packages/lf20_obhph3sh.json'
+                });
+                state.lottieReady = true;
+            } catch (error) {
+                container.textContent = 'Distribuicao ativa';
+                state.lottieReady = true;
+            }
+        }
+
+        function resizeThreeDistribution() {
+            if (!state.three) return;
+
+            const { canvas, renderer, camera } = state.three;
+            const width = canvas.clientWidth || 1;
+            const height = canvas.clientHeight || 1;
+            renderer.setSize(width, height, false);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+        }
+
+        function initThreeDistribution() {
+            if (state.three || !window.THREE) return;
+
+            const canvas = document.getElementById('threeDistributionCanvas');
+            if (!canvas) return;
+
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 100);
+            camera.position.set(0, 0, 23);
+
+            const group = new THREE.Group();
+            scene.add(group);
+
+            const light = new THREE.PointLight(0x67e8f9, 0.85, 120);
+            light.position.set(4, 7, 14);
+            scene.add(light);
+
+            const fillLight = new THREE.PointLight(0xf59e0b, 0.65, 120);
+            fillLight.position.set(-6, -4, 10);
+            scene.add(fillLight);
+
+            const shell = new THREE.Mesh(
+                new THREE.IcosahedronGeometry(6.5, 1),
+                new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.18 })
+            );
+            group.add(shell);
+
+            const starsGeometry = new THREE.BufferGeometry();
+            const starsCount = 380;
+            const starCoords = new Float32Array(starsCount * 3);
+            for (let i = 0; i < starsCount; i += 1) {
+                starCoords[i * 3] = (Math.random() - 0.5) * 22;
+                starCoords[i * 3 + 1] = (Math.random() - 0.5) * 16;
+                starCoords[i * 3 + 2] = (Math.random() - 0.5) * 8;
+            }
+            starsGeometry.setAttribute('position', new THREE.BufferAttribute(starCoords, 3));
+
+            const stars = new THREE.Points(
+                starsGeometry,
+                new THREE.PointsMaterial({ color: 0xf8fafc, size: 0.07, transparent: true, opacity: 0.85 })
+            );
+            group.add(stars);
+
+            state.three = {
+                renderer,
+                scene,
+                camera,
+                group,
+                shell,
+                stars,
+                canvas,
+                frameHandle: null
+            };
+
+            resizeThreeDistribution();
+
+            const tick = () => {
+                if (!state.three) return;
+                state.three.group.rotation.y += 0.0019;
+                state.three.group.rotation.x += 0.0008;
+                state.three.shell.rotation.z += 0.0017;
+                state.three.renderer.render(state.three.scene, state.three.camera);
+                state.three.frameHandle = requestAnimationFrame(tick);
+            };
+
+            tick();
+
+            if (!state.threeResizeBound) {
+                window.addEventListener('resize', resizeThreeDistribution);
+                state.threeResizeBound = true;
+            }
+        }
+
+        function runIntroAnimation() {
+            if (state.introDone || !window.gsap || prefersReducedMotion) {
+                state.introDone = true;
+                return;
+            }
+
+            gsap.fromTo('.panel-card',
+                { opacity: 0, y: 14 },
+                { opacity: 1, y: 0, duration: 0.65, ease: 'power2.out', stagger: 0.06 }
+            );
+            state.introDone = true;
+        }
+
         function renderContractsTable(contracts) {
             const body = document.getElementById('contractsTableBody');
             if (!contracts.length) {
@@ -896,17 +1512,27 @@
         async function loadDashboardData() {
             try {
                 const response = await fetch('/api/contracts');
+                if (!response.ok) {
+                    throw new Error(`Falha HTTP ${response.status}`);
+                }
                 const data = await response.json();
                 state.contracts = data.contracts || [];
                 state.filtered = state.contracts.slice();
                 setFilterOptions();
                 applyFilters();
+                runIntroAnimation();
             } catch (error) {
                 console.error('Falha ao carregar contratos:', error);
                 document.getElementById('contractsTableBody').innerHTML = '<tr><td colspan="7" style="color: var(--text-secondary);">Não foi possível carregar os contratos.</td></tr>';
+                const hint = document.getElementById('distributionHint');
+                if (hint) {
+                    hint.textContent = 'Nao foi possivel carregar os dados do backend. Verifique se a API esta ativa.';
+                }
             }
         }
 
+        initThreeDistribution();
+        initLottieDistribution();
         loadDashboardData();
         setInterval(loadDashboardData, 20000);
     </script>
