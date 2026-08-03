@@ -1157,7 +1157,8 @@ app.get('/api/health', async (req, res) => {
     });
   } catch (error) {
     console.error('Erro ao inicializar o banco PostgreSQL:', error?.message || error);
-    console.error('Defina DATABASE_URL (ou POSTGRES_INTERNAL_URL) no Render. Em ambiente local, use DB_HOST, DB_PORT, DB_NAME, DB_USER e DB_PASSWORD no .env.');
+    console.error('Defina DATABASE_URL (ou POSTGRES_INTERNAL_URL) no Render. O backend também tenta detectar automaticamente outras variáveis *_URL de Postgres.');
+    console.error('Sem URL, informe ao menos DB_HOST/PGHOST e credenciais do banco no ambiente.');
     process.exit(1);
   }
 })();

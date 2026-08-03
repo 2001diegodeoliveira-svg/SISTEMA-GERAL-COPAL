@@ -12,15 +12,38 @@ function firstNonEmpty(...values) {
   return '';
 }
 
+function findConnectionStringFromEnv() {
+  const preferredKeys = [
+    'DATABASE_URL',
+    'POSTGRES_INTERNAL_URL',
+    'POSTGRES_URL',
+    'PG_CONNECTION_STRING',
+    'POSTGRES_PRISMA_URL',
+    'POSTGRESQL_URL',
+    'RENDER_POSTGRES_INTERNAL_URL',
+    'RENDER_POSTGRES_URL',
+  ];
+
+  for (const key of preferredKeys) {
+    const value = firstNonEmpty(process.env[key]);
+    if (value) return value;
+  }
+
+  // Fallback: tenta descobrir automaticamente qualquer variável de URL de banco.
+  const dynamicEntry = Object.entries(process.env).find(([key, value]) => {
+    if (typeof value !== 'string' || !value.trim()) return false;
+    if (!/url/i.test(key)) return false;
+    if (!/(postgres|database|pg)/i.test(key)) return false;
+    return /^postgres(ql)?:\/\//i.test(value.trim());
+  });
+
+  return dynamicEntry ? dynamicEntry[1].trim() : '';
+}
+
 const isRender = String(process.env.RENDER || '').toLowerCase() === 'true';
 const isProductionLike = isRender || String(process.env.NODE_ENV || '').toLowerCase() === 'production';
 
-const connectionString = firstNonEmpty(
-  process.env.DATABASE_URL,
-  process.env.POSTGRES_INTERNAL_URL,
-  process.env.POSTGRES_URL,
-  process.env.PG_CONNECTION_STRING
-);
+const connectionString = findConnectionStringFromEnv();
 
 const hasConnectionString = !!connectionString;
 const forceSsl = String(process.env.DB_SSL || '').toLowerCase() === 'true';
@@ -32,9 +55,13 @@ const databaseName = firstNonEmpty(process.env.DB_NAME, process.env.PGDATABASE, 
 const user = firstNonEmpty(process.env.DB_USER, process.env.PGUSER, process.env.POSTGRES_USER);
 const password = firstNonEmpty(process.env.DB_PASSWORD, process.env.PGPASSWORD, process.env.POSTGRES_PASSWORD);
 
-if (!hasConnectionString && isProductionLike && (!host || !databaseName || !user || !password)) {
+if (!hasConnectionString && isProductionLike && !host) {
+  const urlLikeKeys = Object.keys(process.env)
+    .filter((key) => /url/i.test(key) && /(postgres|database|pg)/i.test(key))
+    .sort();
+
   throw new Error(
-    'Banco não configurado para produção. Defina DATABASE_URL (ou POSTGRES_INTERNAL_URL) no ambiente do Render.'
+    `Banco não configurado para produção. Defina DATABASE_URL (ou POSTGRES_INTERNAL_URL) no ambiente do Render. Variáveis URL detectadas: ${urlLikeKeys.join(', ') || 'nenhuma'}.`
   );
 }
 
@@ -49,9 +76,9 @@ const poolConfig = hasConnectionString
   : {
       host: host || 'localhost',
       port,
-      database: databaseName || 'copal',
+      database: databaseName || user || 'copal',
       user: user || 'postgres',
-      password: password || 'postgres',
+      password: password || '',
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
