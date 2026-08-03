@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login de Contratos | SESP COPAL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            background-image: url('imagemlogincontratos/ChatGPT%20Image%203%20de%20ago.%20de%202026,%2000_42_04.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+            overflow: hidden;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(2, 8, 18, 0.88), rgba(5, 15, 30, 0.66), rgba(3, 8, 15, 0.84));
+        }
+        .login-card {
+            position: relative;
+            z-index: 2;
+            width: 430px;
+            padding: 44px;
+            margin-right: 8%;
+            border-radius: 18px;
+            background: rgba(8, 18, 35, 0.68);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(14px);
+            box-shadow: 0 24px 56px rgba(0, 0, 0, 0.45);
+        }
+        .logo { font-size: 32px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+        .logo span { color: #2b8fff; }
+        .subtitle { color: #c6d0db; margin-bottom: 26px; font-size: 0.95rem; }
+        .field { margin-bottom: 16px; }
+        .field label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 0.82rem;
+            color: #ecf2ff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .field input {
+            width: 100%;
+            height: 54px;
+            padding: 14px 15px;
+            border-radius: 10px;
+            border: 1px solid #234067;
+            background: #13253d;
+            color: #fff;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .field input:focus {
+            border-color: #2b8fff;
+            box-shadow: 0 0 0 3px rgba(43, 143, 255, 0.24);
+        }
+        .login-btn {
+            width: 100%;
+            height: 54px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(45deg, #0066ff, #1f90ff);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform .2s, box-shadow .2s;
+            margin-top: 6px;
+        }
+        .login-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 28px rgba(0, 102, 255, 0.34);
+        }
+        .login-btn:disabled { opacity: 0.75; cursor: not-allowed; transform: none; box-shadow: none; }
+        .message {
+            min-height: 20px;
+            margin-top: 10px;
+            color: #ffd2d2;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+        .footer { margin-top: 24px; text-align: center; color: #9ea8b5; font-size: 12px; }
+        @media (max-width: 900px) {
+            body { justify-content: center; }
+            .login-card { margin: 18px; width: 92%; max-width: 430px; padding: 28px 20px; }
+            .logo { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo">SESP <span>CONTRATOS</span></div>
+        <div class="subtitle">Acesso à aba de Processos com matrícula e senha cadastradas.</div>
+
+        <form id="contractsLoginForm">
+            <div class="field">
+                <label for="matricula">Matrícula</label>
+                <input id="matricula" name="matricula" type="text" placeholder="Digite sua matrícula" autocomplete="username" required>
+            </div>
+            <div class="field">
+                <label for="password">Senha</label>
+                <input id="password" name="password" type="password" placeholder="Digite sua senha" autocomplete="current-password" required>
+            </div>
+            <button id="loginBtn" class="login-btn" type="submit">Entrar</button>
+            <div id="loginMessage" class="message"></div>
+        </form>
+
+        <div class="footer">© 2026 • Secretaria de Estado de Segurança Pública</div>
+    </div>
+
+    <script>
+        async function hasValidSession() {
+            const token = localStorage.getItem('accessToken') || '';
+            if (!token) return false;
+            try {
+                const response = await fetch('/auth/me', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                return response.ok;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        (async () => {
+            if (await hasValidSession()) {
+                window.location.href = 'contratos.html.html';
+            }
+        })();
+
+        document.getElementById('contractsLoginForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const matricula = (document.getElementById('matricula').value || '').trim();
+            const password = document.getElementById('password').value || '';
+            const loginBtn = document.getElementById('loginBtn');
+            const loginMessage = document.getElementById('loginMessage');
+
+            if (!matricula || !password) {
+                loginMessage.innerText = 'Informe matrícula e senha.';
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.innerText = 'Validando...';
+            loginMessage.innerText = '';
+
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ matricula, password })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    loginMessage.innerText = data.message || 'Usuário não encontrado ou senha inválida.';
+                    return;
+                }
+
+                if (!data.accessToken) {
+                    loginMessage.innerText = 'Falha na autenticação. Tente novamente.';
+                    return;
+                }
+
+                localStorage.setItem('accessToken', data.accessToken);
+                if (data.user && data.user.role) {
+                    localStorage.setItem('userRole', data.user.role);
+                }
+
+                window.location.href = 'contratos.html.html';
+            } catch (error) {
+                loginMessage.innerText = 'Não foi possível conectar ao servidor.';
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.innerText = 'Entrar';
+            }
+        });
+    </script>
+</body>
+</html>
