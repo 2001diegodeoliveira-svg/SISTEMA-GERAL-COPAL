@@ -1,17 +1,29 @@
--- Banco de dados COPAL: tabela de usuários e sessões
-
-CREATE DATABASE IF NOT EXISTS copal;
-USE copal;
+-- Banco de dados COPAL: esquema SQLite alinhado ao backend Node.js
 
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT NOT NULL UNIQUE,
   password TEXT NOT NULL,
   name TEXT DEFAULT '',
+  role TEXT NOT NULL DEFAULT 'user',
+  unidade TEXT DEFAULT '',
+  perfil TEXT DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'Pendente',
   verified INTEGER NOT NULL DEFAULT 0,
+  can_view_overview INTEGER NOT NULL DEFAULT 0,
+  access_level TEXT DEFAULT '',
+  account_status TEXT NOT NULL DEFAULT 'ativo',
+  permissions_json TEXT DEFAULT '{}',
   otp_code TEXT,
   otp_expires INTEGER,
-  background_image TEXT
+  background_image TEXT,
+  cpf TEXT DEFAULT '',
+  matricula TEXT DEFAULT '',
+  birthDate TEXT DEFAULT '',
+  phone TEXT DEFAULT '',
+  cargo TEXT DEFAULT '',
+  expirationDate TEXT DEFAULT '',
+  observacoes TEXT DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -22,11 +34,80 @@ CREATE TABLE IF NOT EXISTS sessions (
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- Exemplo de usuário inicial (senha em SHA-256: Senha123)
-INSERT INTO users (email, password, name, verified)
-VALUES ('admin@copal.mt.gov', 'a3dc9b55b47c39f453a3eb487cc2d1f3d1cea2d2d40f6b989b2f3f43d3a7125b', 'Administrador COPAL', 1);
+CREATE TABLE IF NOT EXISTS contacts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  unidade TEXT NOT NULL,
+  setor TEXT NOT NULL,
+  telefone TEXT NOT NULL,
+  ramal TEXT
+);
 
--- Tabela de contratos para a página contratos.html.html
+CREATE TABLE IF NOT EXISTS units (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  code TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  location TEXT DEFAULT '',
+  responsible TEXT DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'Ativo'
+);
+
+CREATE TABLE IF NOT EXISTS unit_users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  unit_code TEXT NOT NULL,
+  login TEXT NOT NULL,
+  pass TEXT NOT NULL,
+  name TEXT DEFAULT '',
+  doc TEXT DEFAULT '',
+  email TEXT DEFAULT '',
+  phone TEXT DEFAULT '',
+  role TEXT DEFAULT '',
+  is_default INTEGER NOT NULL DEFAULT 1,
+  FOREIGN KEY (unit_code) REFERENCES units(code)
+);
+
+CREATE TABLE IF NOT EXISTS requisition_codes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  requester_email TEXT NOT NULL,
+  requester_name TEXT NOT NULL,
+  requester_matricula TEXT NOT NULL,
+  code TEXT NOT NULL,
+  expires_at INTEGER NOT NULL,
+  used_at INTEGER,
+  created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS requisitions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  req_number_year TEXT,
+  req_unit_demand TEXT,
+  req_contract_num TEXT,
+  req_issue_date TEXT,
+  req_company TEXT,
+  req_company_email TEXT,
+  req_cnpj TEXT,
+  req_deadline_days TEXT,
+  req_days_type TEXT,
+  req_address TEXT,
+  req_business_hours TEXT,
+  req_fiscal_name TEXT,
+  req_fiscal_phone TEXT,
+  requester_name TEXT NOT NULL,
+  requester_matricula TEXT NOT NULL,
+  requester_email TEXT NOT NULL,
+  verification_code TEXT NOT NULL,
+  pdf_attachment_name TEXT,
+  pdf_attachment_path TEXT,
+  email_subject TEXT,
+  email_text TEXT,
+  email_html TEXT,
+  email_status TEXT NOT NULL DEFAULT 'pending',
+  email_error TEXT,
+  created_at INTEGER NOT NULL,
+  sent_at INTEGER,
+  code_id INTEGER,
+  FOREIGN KEY (code_id) REFERENCES requisition_codes(id)
+);
+
 CREATE TABLE IF NOT EXISTS contracts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   numContrato TEXT NOT NULL UNIQUE,
@@ -42,22 +123,4 @@ CREATE TABLE IF NOT EXISTS contracts (
   unidades TEXT,
   aditivos TEXT,
   empenhos TEXT
-);
-
--- Exemplo de contrato inicial
-INSERT INTO contracts (numContrato, numProcesso, credor, valorGlobal, objeto, dtInicial, dtFinal, arquivoContrato, conteudoArquivoBase64, lotes, unidades, aditivos, empenhos)
-VALUES (
-  'CONTRATO 001/2026',
-  'SESP-PRO-2026/0001',
-  'Auto Rescue Equipamentos Eireli',
-  'R$ 1.450.000,00',
-  'Manutenção preventiva e corretiva de viaturas operacionais de combate a incêndio',
-  '2026-01-01',
-  '2026-12-31',
-  'contrato_001.pdf',
-  '',
-  '[{"lote":"Lote 1","item":"Item 01","descricao":"Serviço de manutenção preventiva","valor":"R$ 500.000,00"}]',
-  '[{"unidade":"CBM-MT","valor":"R$ 750.000,00"}]',
-  '[{"tipo":"VALOR","data":"2026-06-15","valor":"R$ 100.000,00","obs":"Aditivo de reajuste"}]',
-  '[{"numEmpenho":"2026NE00123","tipoEmpenho":"GLOBAL","valorEmpenho":"R$ 200.000,00","dataLancamento":"2026-07-01"}]'
 );

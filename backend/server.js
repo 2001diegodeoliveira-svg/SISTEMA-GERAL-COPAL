@@ -84,6 +84,34 @@ function sendEmail(mailOptions) {
   return emailTransporter.sendMail({ from: fromAddress, ...mailOptions });
 }
 
+function runQuery(database, sql, params = []) {
+  return new Promise((resolve, reject) => {
+    database.run(sql, params, function (err) {
+      if (err) return reject(err);
+      resolve(this);
+    });
+  });
+}
+
+function getQuery(database, sql, params = []) {
+  return new Promise((resolve, reject) => {
+    database.get(sql, params, (err, row) => {
+      if (err) return reject(err);
+      resolve(row);
+    });
+  });
+}
+
+function safeJsonParse(value, fallback = []) {
+  if (!value) return fallback;
+  if (typeof value === 'object') return value;
+  try {
+    return JSON.parse(value);
+  } catch (error) {
+    return fallback;
+  }
+}
+
 // A partir de agora, o sistema armazena senhas em texto simples para facilitar o uso.
 // A função hashPassword é mantida apenas para compatibilidade com registros antigos.
 
@@ -143,6 +171,9 @@ function initDatabase() {
         status TEXT NOT NULL DEFAULT 'Pendente',
         verified INTEGER NOT NULL DEFAULT 0,
         can_view_overview INTEGER NOT NULL DEFAULT 0,
+        access_level TEXT DEFAULT '',
+        account_status TEXT NOT NULL DEFAULT 'ativo',
+        permissions_json TEXT DEFAULT '{}',
         otp_code TEXT,
         otp_expires INTEGER,
         background_image TEXT
@@ -196,6 +227,53 @@ function initDatabase() {
       )
     `);
 
+    db.run(`
+      CREATE TABLE IF NOT EXISTS requisition_codes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        requester_email TEXT NOT NULL,
+        requester_name TEXT NOT NULL,
+        requester_matricula TEXT NOT NULL,
+        code TEXT NOT NULL,
+        expires_at INTEGER NOT NULL,
+        used_at INTEGER,
+        created_at INTEGER NOT NULL
+      )
+    `);
+
+    db.run(`
+      CREATE TABLE IF NOT EXISTS requisitions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        req_number_year TEXT,
+        req_unit_demand TEXT,
+        req_contract_num TEXT,
+        req_issue_date TEXT,
+        req_company TEXT,
+        req_company_email TEXT,
+        req_cnpj TEXT,
+        req_deadline_days TEXT,
+        req_days_type TEXT,
+        req_address TEXT,
+        req_business_hours TEXT,
+        req_fiscal_name TEXT,
+        req_fiscal_phone TEXT,
+        requester_name TEXT NOT NULL,
+        requester_matricula TEXT NOT NULL,
+        requester_email TEXT NOT NULL,
+        verification_code TEXT NOT NULL,
+        pdf_attachment_name TEXT,
+        pdf_attachment_path TEXT,
+        email_subject TEXT,
+        email_text TEXT,
+        email_html TEXT,
+        email_status TEXT NOT NULL DEFAULT 'pending',
+        email_error TEXT,
+        created_at INTEGER NOT NULL,
+        sent_at INTEGER,
+        code_id INTEGER,
+        FOREIGN KEY(code_id) REFERENCES requisition_codes(id)
+      )
+    `);
+
     db.run('ALTER TABLE unit_users ADD COLUMN doc TEXT DEFAULT ""', [], (err) => {
       if (err && !err.message.includes('duplicate column')) console.error(err);
     });
@@ -230,6 +308,15 @@ function initDatabase() {
       if (err && !err.message.includes('duplicate column')) console.error(err);
     });
     db.run('ALTER TABLE users ADD COLUMN observacoes TEXT DEFAULT ""', [], (err) => {
+      if (err && !err.message.includes('duplicate column')) console.error(err);
+    });
+    db.run('ALTER TABLE users ADD COLUMN access_level TEXT DEFAULT ""', [], (err) => {
+      if (err && !err.message.includes('duplicate column')) console.error(err);
+    });
+    db.run('ALTER TABLE users ADD COLUMN account_status TEXT NOT NULL DEFAULT "ativo"', [], (err) => {
+      if (err && !err.message.includes('duplicate column')) console.error(err);
+    });
+    db.run('ALTER TABLE users ADD COLUMN permissions_json TEXT DEFAULT "{}"', [], (err) => {
       if (err && !err.message.includes('duplicate column')) console.error(err);
     });
 
@@ -410,6 +497,9 @@ app.post('/auth/register', async (req, res) => {
     perfil,
     role,
     canViewOverview,
+    accessLevel,
+    accountStatus,
+    permissions,
     cpf,
     matricula,
     birthDate,
@@ -427,9 +517,11 @@ app.post('/auth/register', async (req, res) => {
     const otpExpires = Date.now() + 15 * 60 * 1000;
     const plainPassword = password;
     const registrationRole = role === 'admin' || role === 'developer' ? 'user' : (role || 'user');
+    const permissionsJson = JSON.stringify(safeJsonParse(permissions, {}));
+    const normalizedAccountStatus = (accountStatus || 'ativo').toString().toLowerCase();
 
     db.run(
-      'INSERT INTO users (email, password, name, role, unidade, perfil, status, verified, can_view_overview, otp_code, otp_expires, cpf, matricula, birthDate, phone, cargo, expirationDate, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO users (email, password, name, role, unidade, perfil, status, verified, can_view_overview, access_level, account_status, permissions_json, otp_code, otp_expires, cpf, matricula, birthDate, phone, cargo, expirationDate, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         email.toLowerCase(),
         plainPassword,
@@ -440,6 +532,9 @@ app.post('/auth/register', async (req, res) => {
         'Pendente',
         0,
         canViewOverview ? 1 : 0,
+        accessLevel || '',
+        normalizedAccountStatus,
+        permissionsJson,
         otpCode,
         otpExpires,
         cpf || '',
@@ -536,6 +631,10 @@ app.post('/auth/login', async (req, res) => {
     return res.status(401).json({ message: 'Credenciais inválidas.' });
   }
 
+  if ((user.account_status || 'ativo').toLowerCase() !== 'ativo') {
+    return res.status(403).json({ message: 'Conta inativa. Fale com o administrador.' });
+  }
+
   const passwordMatches = user.password === password || user.password === hashPassword(password);
   if (!passwordMatches) {
     return res.status(401).json({ message: 'Credenciais inválidas.' });
@@ -567,6 +666,9 @@ app.post('/auth/login', async (req, res) => {
           unidade: user.unidade || null,
           perfil: user.perfil || null,
           status: user.status || null,
+          accessLevel: user.access_level || null,
+          accountStatus: user.account_status || null,
+          permissions: safeJsonParse(user.permissions_json, {}),
           canViewOverview: !!user.can_view_overview,
           backgroundImage: user.background_image || null,
         },
@@ -594,6 +696,9 @@ app.get('/auth/me', async (req, res) => {
     unidade: session.unidade,
     perfil: session.perfil,
     status: session.status,
+    accessLevel: session.access_level,
+    accountStatus: session.account_status,
+    permissions: safeJsonParse(session.permissions_json, {}),
     canViewOverview: !!session.can_view_overview,
     backgroundImage: session.background_image,
   }});
@@ -606,15 +711,16 @@ app.post('/api/request-requisition-code', async (req, res) => {
   }
 
   const code = generateOtp();
-  const key = requesterEmail.toLowerCase();
-  requisitionCodeStore[key] = {
-    code,
-    requesterName,
-    requesterMatricula,
-    expiresAt: Date.now() + 15 * 60 * 1000,
-  };
+  const expiresAt = Date.now() + 15 * 60 * 1000;
+  const createdAt = Date.now();
 
   try {
+    await runQuery(
+      db,
+      'INSERT INTO requisition_codes (requester_email, requester_name, requester_matricula, code, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [requesterEmail.toLowerCase(), requesterName, requesterMatricula, code, expiresAt, createdAt]
+    );
+
     await sendEmail({
       to: requesterEmail,
       subject: 'Código de validação de requisição - COPAL SESP',
@@ -662,8 +768,13 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     return res.status(400).json({ message: 'Dados do servidor e código de validação são obrigatórios.' });
   }
 
-  const stored = requisitionCodeStore[reqRequesterEmail.toLowerCase()];
-  if (!stored || stored.code !== reqVerificationCode || Date.now() > stored.expiresAt) {
+  const stored = await getQuery(
+    db,
+    'SELECT * FROM requisition_codes WHERE requester_email = ? ORDER BY id DESC LIMIT 1',
+    [reqRequesterEmail.toLowerCase()]
+  );
+
+  if (!stored || stored.code !== reqVerificationCode || stored.used_at || Date.now() > stored.expires_at) {
     return res.status(400).json({ message: 'Código de validação inválido ou expirado.' });
   }
 
@@ -671,7 +782,9 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     return res.status(400).json({ message: 'E-mail da empresa contratada é obrigatório.' });
   }
 
-  delete requisitionCodeStore[reqRequesterEmail.toLowerCase()];
+  const pdfAttachmentName = req.file ? req.file.originalname : '';
+  const pdfAttachmentPath = req.file ? req.file.path : '';
+  let requisitionRecordId = null;
 
   const requisitionBody = `Requisição Nº: ${reqNumberYear || 'N/A'}\n` +
     `Unidade Demandante: ${reqUnitDemand || 'N/A'}\n` +
@@ -716,6 +829,67 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
   }
 
   try {
+    const requisitionInsert = await runQuery(
+      db,
+      `INSERT INTO requisitions (
+        req_number_year,
+        req_unit_demand,
+        req_contract_num,
+        req_issue_date,
+        req_company,
+        req_company_email,
+        req_cnpj,
+        req_deadline_days,
+        req_days_type,
+        req_address,
+        req_business_hours,
+        req_fiscal_name,
+        req_fiscal_phone,
+        requester_name,
+        requester_matricula,
+        requester_email,
+        verification_code,
+        pdf_attachment_name,
+        pdf_attachment_path,
+        email_subject,
+        email_text,
+        email_html,
+        email_status,
+        email_error,
+        created_at,
+        code_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
+      [
+        reqNumberYear || '',
+        reqUnitDemand || '',
+        reqContractNum || '',
+        reqIssueDate || '',
+        reqCompany || '',
+        reqCompanyEmail || '',
+        reqCnpj || '',
+        reqDeadlineDays || '',
+        reqDaysType || '',
+        reqAddress || '',
+        reqBusinessHours || '',
+        reqFiscalName || '',
+        reqFiscalPhone || '',
+        reqRequesterName,
+        reqRequesterMatricula,
+        reqRequesterEmail,
+        reqVerificationCode,
+        pdfAttachmentName,
+        pdfAttachmentPath,
+        `Requisição ${reqNumberYear || ''} - ${reqCompany}`,
+        requisitionBody,
+        emailHtml,
+        'pending',
+        '',
+        Date.now(),
+        stored.id,
+      ]
+    );
+    requisitionRecordId = requisitionInsert.lastID;
+
     await sendEmail({
       to: reqCompanyEmail,
       subject: `Requisição ${reqNumberYear || ''} - ${reqCompany}`,
@@ -724,9 +898,19 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
       attachments,
     });
 
+    await runQuery(db, 'UPDATE requisitions SET email_status = ?, sent_at = ?, email_error = ? WHERE id = ?', ['sent', Date.now(), '', requisitionRecordId]);
+    await runQuery(db, 'UPDATE requisition_codes SET used_at = ? WHERE id = ?', [Date.now(), stored.id]);
+
     return res.json({ message: 'Requisição validada e enviada para o e-mail da empresa contratada.' });
   } catch (error) {
     console.error('Erro ao enviar requisição para a empresa:', error);
+    try {
+      if (requisitionRecordId) {
+        await runQuery(db, 'UPDATE requisitions SET email_status = ?, email_error = ? WHERE id = ?', ['failed', error.message || 'Falha no envio do e-mail.', requisitionRecordId]);
+      }
+    } catch (persistError) {
+      console.error('Erro ao registrar falha da requisição:', persistError);
+    }
     return res.status(500).json({ message: 'Falha ao enviar a requisição por e-mail. Verifique a configuração de SMTP e o anexo PDF.' });
   }
 });
@@ -744,7 +928,7 @@ app.get('/auth/users', async (req, res) => {
   }
 
   db.all(
-    'SELECT id, email, name, role, unidade, perfil, status, verified, background_image FROM users ORDER BY id DESC',
+    'SELECT id, email, name, role, unidade, perfil, access_level, account_status, status, verified, permissions_json, background_image FROM users ORDER BY id DESC',
     [],
     (err, rows) => {
       if (err) {
@@ -938,7 +1122,7 @@ app.get('/api/contracts', async (req, res) => {
 
 app.get('/api/contracts/:numContrato', async (req, res) => {
   const { numContrato } = req.params;
-  db.get('SELECT * FROM contracts WHERE numContrato = ?', [numContrato], (err, row) => {
+  contractsDb.get('SELECT * FROM contracts WHERE numContrato = ?', [numContrato], (err, row) => {
     if (err) return res.status(500).json({ message: 'Erro ao buscar contrato.' });
     if (!row) return res.status(404).json({ message: 'Contrato não encontrado.' });
     res.json({
