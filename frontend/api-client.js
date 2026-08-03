@@ -24,8 +24,8 @@
     const host = window.location.hostname || '';
 
     if (isGithubPages()) {
-      // Em GitHub Pages, usa backend local por padrão para desenvolvimento.
-      return 'http://localhost:3000';
+      // Em GitHub Pages, evita travar no localhost em produção.
+      return '';
     }
 
     if (host === 'localhost' || host === '127.0.0.1') {
@@ -35,9 +35,7 @@
     return '';
   }
 
-  const initialBase = isGithubPages()
-    ? (window.API_BASE_URL || inferDefaultBase() || storedBase || '')
-    : (window.API_BASE_URL || storedBase || inferDefaultBase() || '');
+  const initialBase = window.API_BASE_URL || storedBase || inferDefaultBase() || '';
 
   setBaseUrl(initialBase, false);
 
@@ -114,6 +112,12 @@
     const currentIsUp = await canReachBase(currentBase);
     if (!currentIsUp && localIsUp) {
       setBaseUrl(localFallbackBase, true);
+      return;
+    }
+
+    if (!currentIsUp && currentBase === localFallbackBase) {
+      // Limpa base inválida para permitir prompt de backend público no primeiro login.
+      setBaseUrl('', true);
     }
   }
 
@@ -179,6 +183,14 @@
           }
         }
 
+        // Se estiver no GitHub Pages com localhost e houver erro de gateway, pede backend público.
+        if (isGithubPages() && configuredBase === localFallbackBase && [502, 503, 504].includes(response.status)) {
+          const promptedBase = await promptBackendBaseUrl();
+          if (promptedBase) {
+            return doFetch(promptedBase);
+          }
+        }
+
         return response;
       } catch (error) {
         if (canTryLocalFallback) {
@@ -188,6 +200,17 @@
             return localResponse;
           } catch (fallbackError) {
             // Se também não houver backend local, mantém mensagem padrão abaixo.
+          }
+        }
+
+        if (isGithubPages() && configuredBase === localFallbackBase) {
+          const promptedBase = await promptBackendBaseUrl();
+          if (promptedBase) {
+            try {
+              return await doFetch(promptedBase);
+            } catch (retryError) {
+              // Mantém resposta padronizada abaixo caso nova URL também falhe.
+            }
           }
         }
 
