@@ -76,30 +76,6 @@ Para limpar:
 window.clearApiBaseUrl()
 ```
 
-### Domínio próprio (Opção 01)
-
-Este projeto foi preparado com CNAME para:
-
-- `sistema-geral-copal.br`
-
-Passos no GitHub:
-
-1. Abra **Settings > Pages** do repositório.
-2. Em **Custom domain**, confirme `sistema-geral-copal.br`.
-3. Marque **Enforce HTTPS** após a validação do certificado.
-
-Passos no Cloudflare (DNS):
-
-1. Crie um registro `CNAME`:
-   - `Name`: `www`
-   - `Target`: `2001diegodeoliveira-svg.github.io`
-   - `Proxy status`: DNS only (nuvem cinza)
-2. Crie um redirecionamento para o domínio raiz (`sistema-geral-copal.br` -> `www.sistema-geral-copal.br`) usando:
-   - **Rules > Redirect Rules**, ou
-   - registro `A` (apex) com CNAME flattening habilitado para GitHub Pages.
-
-Observação: a propagação DNS e do certificado pode levar alguns minutos.
-
 ## Variáveis de ambiente
 
 O projeto usa variáveis de ambiente para banco de dados, autenticação e e-mail. Consulte [.env.example](.env.example) e [backend/.env.example](backend/.env.example).
