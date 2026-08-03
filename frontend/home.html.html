@@ -412,60 +412,10 @@
     <!-- Scripts de Ícones -->
     <script>
         lucide.createIcons();
-    let authToken = localStorage.getItem('accessToken');
-    let userRole = localStorage.getItem('userRole') || 'standard';
-    const usuarioNavTab = document.getElementById('usuarioNavTab');
     const userNavTab = document.getElementById('userNavTab');
-
-    // Acesso liberado temporariamente sem login/senha.
-
-    async function loadCurrentUser() {
-        if (!authToken) {
-            configureAccess();
-            return;
-        }
-        try {
-            const res = await fetch('/auth/me', {
-                headers: { 'Authorization': `Bearer ${authToken}` }
-            });
-            if (!res.ok) {
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('userRole');
-                authToken = null;
-                userRole = 'standard';
-                configureAccess();
-                return;
-            }
-            const data = await res.json();
-            if (data.user) {
-                userRole = data.user.role || 'standard';
-                localStorage.setItem('userRole', userRole);
-                configureAccess();
-            }
-        } catch (err) {
-            console.error('Falha ao carregar usuário atual:', err);
-        }
+    if (userNavTab) {
+        userNavTab.style.display = 'none';
     }
-
-    function configureAccess() {
-        if (usuarioNavTab) {
-            usuarioNavTab.style.opacity = '1';
-            usuarioNavTab.style.pointerEvents = 'auto';
-        }
-        if (userRole === 'developer' || userRole === 'admin') {
-            document.getElementById('developerToolsPanel').style.display = 'block';
-            if (userNavTab) {
-                userNavTab.style.display = 'block';
-            }
-            const openUsersBtn = document.getElementById('openUsersBtn');
-            if (openUsersBtn) {
-                openUsersBtn.addEventListener('click', loadUsers);
-            }
-        }
-    }
-
-    configureAccess();
-    loadCurrentUser();
         function openUserRegistration(event) {
             event.preventDefault();
             window.location.href = 'cadastrouser.html.html';
