@@ -87,6 +87,38 @@
     return typeof path === 'string' && (path.startsWith('/api/') || path.startsWith('/auth/'));
   }
 
+  async function canReachBase(baseUrl) {
+    const normalized = normalizeBase(baseUrl);
+    if (!normalized) return false;
+
+    try {
+      const response = await originalFetch(`${normalized}/api/health`, { method: 'GET' });
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async function bootstrapApiBase() {
+    if (!isGithubPages()) return;
+
+    const localFallbackBase = 'http://localhost:3000';
+    const currentBase = normalizeBase(configuredBase);
+    const localIsUp = await canReachBase(localFallbackBase);
+
+    if (!currentBase) {
+      if (localIsUp) {
+        setBaseUrl(localFallbackBase, true);
+      }
+      return;
+    }
+
+    const currentIsUp = await canReachBase(currentBase);
+    if (!currentIsUp && localIsUp) {
+      setBaseUrl(localFallbackBase, true);
+    }
+  }
+
   window.apiUrl = function apiUrl(path) {
     const normalizedPath = String(path || '');
     if (/^https?:\/\//i.test(normalizedPath)) {
@@ -207,4 +239,6 @@
   window.apiFetch = async function apiFetch(path, options) {
     return fetch(window.apiUrl(path), options);
   };
+
+  bootstrapApiBase();
 })();
