@@ -1075,14 +1075,7 @@
                 </div>
 
                 <div id="containerUnidades" style="margin-top:20px;">
-                    <div style="display:flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
-                        <label style="font-weight: 600;"><input type="checkbox" class="chk-unidade" value="PMMT" onchange="renderUnidades()"> PMMT</label>
-                        <label style="font-weight: 600;"><input type="checkbox" class="chk-unidade" value="CBMMT" onchange="renderUnidades()"> CBMMT</label>
-                        <label style="font-weight: 600;"><input type="checkbox" class="chk-unidade" value="CIOPAER" onchange="renderUnidades()"> CIOPAER</label>
-                        <label style="font-weight: 600;"><input type="checkbox" class="chk-unidade" value="PCJ" onchange="renderUnidades()"> PCJ</label>
-                        <label style="font-weight: 600;"><input type="checkbox" class="chk-unidade" value="POLITEC" onchange="renderUnidades()"> POLITEC</label>
-                        <label style="font-weight: 600;"><input type="checkbox" class="chk-unidade" value="SESP" onchange="renderUnidades()"> SESP</label>
-                    </div>
+                    <div id="rateioUnidadesCheckboxes" style="display:flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;"></div>
 
                     <div id="cardsUnidadesDinamicas"></div>
                 </div>
@@ -1729,6 +1722,7 @@
 
         let DB_CONTRATOS = {};
         let contractsAuthToken = localStorage.getItem('accessToken') || '';
+        const RATEIO_DEFAULT_UNITS = ['PM-MT', 'CBM-MT', 'CIOPAER', 'PJC-MT', 'POLITEC', 'SESP', 'COPAL'];
 
         function setContractsLoginError(message) {
             const errorEl = document.getElementById('contractsLoginError');
@@ -1928,6 +1922,8 @@
                     showContractsLoginOverlay();
                 }
             });
+
+            loadRateioUnits();
         });
 
         /* ==========================================================================
@@ -2175,6 +2171,41 @@
 
         function toggleTipoRateio() {
             // Pode expandir regras conforme o tipo de rateio
+        }
+
+        function renderRateioUnitOptions(units) {
+            const container = document.getElementById('rateioUnidadesCheckboxes');
+            if (!container) return;
+
+            container.innerHTML = '';
+            const seen = new Set();
+
+            (units || []).forEach((unit) => {
+                const code = String(unit || '').trim().toUpperCase();
+                if (!code || seen.has(code)) return;
+                seen.add(code);
+
+                const label = document.createElement('label');
+                label.style.fontWeight = '600';
+                label.innerHTML = `<input type="checkbox" class="chk-unidade" value="${code}" onchange="renderUnidades()"> ${code}`;
+                container.appendChild(label);
+            });
+        }
+
+        async function loadRateioUnits() {
+            try {
+                const res = await fetch('/api/units');
+                const data = await res.json();
+                const units = Array.isArray(data.units) ? data.units.map(u => u.code) : [];
+                if (units.length) {
+                    renderRateioUnitOptions(units);
+                    return;
+                }
+            } catch (error) {
+                console.error('Falha ao carregar unidades para rateio:', error);
+            }
+
+            renderRateioUnitOptions(RATEIO_DEFAULT_UNITS);
         }
 
         // RENDERING DE UNIDADES (ETAPA 05 MODIFICADA)
@@ -2425,7 +2456,7 @@
                         containerUnidades.appendChild(lbl);
                     });
                 } else {
-                    const unidadesPadrao = ["PMMT", "CBMMT", "CIOPAER", "PCJ", "POLITEC", "SESP"];
+                    const unidadesPadrao = RATEIO_DEFAULT_UNITS;
                     unidadesPadrao.forEach(u => {
                         const lbl = document.createElement('label');
                         lbl.style.fontWeight = '600';
