@@ -3,27 +3,59 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-const hasConnectionString = !!process.env.DATABASE_URL;
+function firstNonEmpty(...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+  return '';
+}
+
+const isRender = String(process.env.RENDER || '').toLowerCase() === 'true';
+const isProductionLike = isRender || String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+
+const connectionString = firstNonEmpty(
+  process.env.DATABASE_URL,
+  process.env.POSTGRES_INTERNAL_URL,
+  process.env.POSTGRES_URL,
+  process.env.PG_CONNECTION_STRING
+);
+
+const hasConnectionString = !!connectionString;
 const forceSsl = String(process.env.DB_SSL || '').toLowerCase() === 'true';
+const sslRequired = forceSsl || isProductionLike;
+
+const host = firstNonEmpty(process.env.DB_HOST, process.env.PGHOST, process.env.POSTGRES_HOST);
+const port = Number(firstNonEmpty(process.env.DB_PORT, process.env.PGPORT, process.env.POSTGRES_PORT) || 5432);
+const databaseName = firstNonEmpty(process.env.DB_NAME, process.env.PGDATABASE, process.env.POSTGRES_DB);
+const user = firstNonEmpty(process.env.DB_USER, process.env.PGUSER, process.env.POSTGRES_USER);
+const password = firstNonEmpty(process.env.DB_PASSWORD, process.env.PGPASSWORD, process.env.POSTGRES_PASSWORD);
+
+if (!hasConnectionString && isProductionLike && (!host || !databaseName || !user || !password)) {
+  throw new Error(
+    'Banco não configurado para produção. Defina DATABASE_URL (ou POSTGRES_INTERNAL_URL) no ambiente do Render.'
+  );
+}
 
 const poolConfig = hasConnectionString
   ? {
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
+      connectionString,
+      ...(sslRequired ? { ssl: { rejectUnauthorized: false } } : {}),
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
     }
   : {
-      host: process.env.DB_HOST || 'localhost',
-      port: Number(process.env.DB_PORT || 5432),
-      database: process.env.DB_NAME || 'copal',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
+      host: host || 'localhost',
+      port,
+      database: databaseName || 'copal',
+      user: user || 'postgres',
+      password: password || 'postgres',
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
-      ...(forceSsl ? { ssl: { rejectUnauthorized: false } } : {}),
+      ...(sslRequired ? { ssl: { rejectUnauthorized: false } } : {}),
     };
 
 const pool = new Pool(poolConfig);
