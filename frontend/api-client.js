@@ -21,6 +21,8 @@
   }
 
   function inferDefaultBase() {
+    const host = window.location.hostname || '';
+
     if (isGithubPages()) {
       // Em GitHub Pages, usa backend local por padrão para desenvolvimento.
       return 'http://localhost:3000';
