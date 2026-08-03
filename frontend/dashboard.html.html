@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r158/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
     <style>
         :root {
@@ -839,6 +839,7 @@
             </div>
             <div class="filter-actions">
                 <button class="button-secondary" onclick="resetFilters()">Limpar filtros</button>
+                <button class="button-secondary" onclick="configureApiBase()">Configurar API</button>
                 <button class="button-primary" onclick="loadDashboardData()">Atualizar agora</button>
             </div>
         </section>
@@ -1114,6 +1115,27 @@
             document.getElementById('filterMonth').value = '';
             document.getElementById('filterUnit').value = '';
             applyFilters();
+        }
+
+        function configureApiBase() {
+            const current = localStorage.getItem('API_BASE_URL') || '';
+            const input = window.prompt('Informe a URL da API (ex: https://seu-backend.onrender.com). Deixe vazio para manter a atual.', current);
+
+            if (input === null) return;
+
+            const normalized = String(input || '').trim().replace(/\/$/, '');
+            if (!normalized) {
+                loadDashboardData();
+                return;
+            }
+
+            if (typeof window.setApiBaseUrl === 'function') {
+                window.setApiBaseUrl(normalized);
+            } else {
+                localStorage.setItem('API_BASE_URL', normalized);
+            }
+
+            loadDashboardData();
         }
 
         function animateMetric(elementId, value, formatter) {
@@ -1526,7 +1548,7 @@
                 document.getElementById('contractsTableBody').innerHTML = '<tr><td colspan="7" style="color: var(--text-secondary);">Não foi possível carregar os contratos.</td></tr>';
                 const hint = document.getElementById('distributionHint');
                 if (hint) {
-                    hint.textContent = 'Nao foi possivel carregar os dados do backend. Verifique se a API esta ativa.';
+                    hint.textContent = 'Nao foi possivel carregar os dados do backend. Use o botao Configurar API e informe a URL publica do servidor.';
                 }
             }
         }
