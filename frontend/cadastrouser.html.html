@@ -1130,16 +1130,10 @@
             return headers;
         }
 
-        function redirectToLogin() {
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('userRole');
-            alert('Faça login para acessar esta página.');
-            window.location.href = 'login.html.html';
-        }
-
         async function verifyPageAccess() {
             if (!authToken) {
-                return redirectToLogin();
+                localStorage.removeItem('userRole');
+                return;
             }
 
             try {
@@ -1148,7 +1142,10 @@
                 });
 
                 if (!res.ok) {
-                    return redirectToLogin();
+                    authToken = '';
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('userRole');
+                    return;
                 }
 
                 const data = await res.json();
@@ -1156,7 +1153,9 @@
                 localStorage.setItem('userRole', role);
             } catch (error) {
                 console.error('Erro na verificação de acesso:', error);
-                redirectToLogin();
+                authToken = '';
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('userRole');
             }
         }
 
