@@ -3,9 +3,6 @@
   let configuredBase = '';
   let promptedForBaseInThisSession = false;
   const originalFetch = window.fetch.bind(window);
-  const KNOWN_PUBLIC_BACKENDS = {
-    '2001diegodeoliveira-svg.github.io': 'https://sistema-geral-copal-api.onrender.com'
-  };
 
   function normalizeBase(value) {
     return String(value || '').trim().replace(/\/$/, '');
@@ -24,13 +21,8 @@
   }
 
   function inferDefaultBase() {
-    const host = window.location.hostname || '';
-    if (KNOWN_PUBLIC_BACKENDS[host]) {
-      return KNOWN_PUBLIC_BACKENDS[host];
-    }
-
     if (isGithubPages()) {
-      // Em GitHub Pages, tenta backend local automaticamente para facilitar testes.
+      // Em GitHub Pages, usa backend local por padrão para desenvolvimento.
       return 'http://localhost:3000';
     }
 
@@ -41,7 +33,11 @@
     return '';
   }
 
-  setBaseUrl(window.API_BASE_URL || storedBase || inferDefaultBase() || '', false);
+  const initialBase = isGithubPages()
+    ? (window.API_BASE_URL || inferDefaultBase() || storedBase || '')
+    : (window.API_BASE_URL || storedBase || inferDefaultBase() || '');
+
+  setBaseUrl(initialBase, false);
 
   window.setApiBaseUrl = function setApiBaseUrl(url) {
     setBaseUrl(url, true);
