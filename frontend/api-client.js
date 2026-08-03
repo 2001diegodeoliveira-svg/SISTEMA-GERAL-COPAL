@@ -1,9 +1,58 @@
 (function () {
   const storedBase = localStorage.getItem('API_BASE_URL') || '';
-  const configuredBase = (window.API_BASE_URL || storedBase || '').trim().replace(/\/$/, '');
+  let configuredBase = '';
+  let promptedForBaseInThisSession = false;
   const originalFetch = window.fetch.bind(window);
 
-  window.API_BASE_URL = configuredBase;
+  function normalizeBase(value) {
+    return String(value || '').trim().replace(/\/$/, '');
+  }
+
+  function setBaseUrl(baseUrl, persist) {
+    configuredBase = normalizeBase(baseUrl);
+    window.API_BASE_URL = configuredBase;
+    if (persist !== false) {
+      if (configuredBase) {
+        localStorage.setItem('API_BASE_URL', configuredBase);
+      } else {
+        localStorage.removeItem('API_BASE_URL');
+      }
+    }
+  }
+
+  setBaseUrl(window.API_BASE_URL || storedBase || '', false);
+
+  window.setApiBaseUrl = function setApiBaseUrl(url) {
+    setBaseUrl(url, true);
+    return configuredBase;
+  };
+
+  window.clearApiBaseUrl = function clearApiBaseUrl() {
+    setBaseUrl('', true);
+  };
+
+  function isGithubPages() {
+    return /github\.io$/i.test(window.location.hostname || '');
+  }
+
+  async function promptBackendBaseUrl() {
+    if (promptedForBaseInThisSession) return '';
+    promptedForBaseInThisSession = true;
+
+    const suggested = localStorage.getItem('API_BASE_URL') || '';
+    const message = [
+      'Backend não configurado para esta publicação.',
+      'Informe a URL pública do backend Node.js (ex: https://seu-backend.onrender.com).'
+    ].join('\n');
+
+    const input = window.prompt(message, suggested);
+    const normalized = normalizeBase(input);
+    if (normalized) {
+      setBaseUrl(normalized, true);
+      return normalized;
+    }
+    return '';
+  }
 
   function isBackendPath(path) {
     return typeof path === 'string' && (path.startsWith('/api/') || path.startsWith('/auth/'));
@@ -25,8 +74,14 @@
 
     if (isBackendPath(rawUrl)) {
       if (!configuredBase) {
+        if (isGithubPages()) {
+          await promptBackendBaseUrl();
+        }
+      }
+
+      if (!configuredBase) {
         return new Response(JSON.stringify({
-          message: 'Backend não configurado nesta publicação. Defina API_BASE_URL para apontar ao servidor Node.js.'
+          message: 'Backend não configurado nesta publicação. Defina API_BASE_URL para apontar ao servidor Node.js. Use window.setApiBaseUrl("https://seu-backend") no console.'
         }), {
           status: 503,
           headers: { 'Content-Type': 'application/json' }
