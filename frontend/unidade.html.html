@@ -1649,6 +1649,35 @@
         let unitsCache = [];
         let unitUsersCache = {};
 
+        const OFFLINE_UNITS_KEY = 'COPAL_OFFLINE_UNITS';
+        const OFFLINE_UNIT_USERS_KEY = 'COPAL_OFFLINE_UNIT_USERS';
+
+        function loadOfflineUnits() {
+            try {
+                const data = JSON.parse(localStorage.getItem(OFFLINE_UNITS_KEY) || '[]');
+                return Array.isArray(data) ? data : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function saveOfflineUnits(units) {
+            localStorage.setItem(OFFLINE_UNITS_KEY, JSON.stringify(units || []));
+        }
+
+        function loadOfflineUnitUsersMap() {
+            try {
+                const data = JSON.parse(localStorage.getItem(OFFLINE_UNIT_USERS_KEY) || '{}');
+                return data && typeof data === 'object' ? data : {};
+            } catch (error) {
+                return {};
+            }
+        }
+
+        function saveOfflineUnitUsersMap(usersMap) {
+            localStorage.setItem(OFFLINE_UNIT_USERS_KEY, JSON.stringify(usersMap || {}));
+        }
+
         let pendingUnitCode = null;
         let activeUnitCode = null;
         let authenticatedUserRef = null; // Armazena a referência do usuário logado (ADM ou Usuário Cadastrado)
@@ -1662,9 +1691,12 @@
                 const res = await fetch('/api/units');
                 const data = await res.json();
                 unitsCache = data.units || [];
+                saveOfflineUnits(unitsCache);
                 renderUnitsGrid();
             } catch (error) {
                 console.error('Falha ao carregar unidades:', error);
+                unitsCache = loadOfflineUnits();
+                renderUnitsGrid();
             }
         }
 
@@ -1720,7 +1752,8 @@
                 renderUnitUsersTable(unitCode, authenticatedUserRef && authenticatedUserRef.login === 'ADM');
             } catch (error) {
                 console.error('Falha ao carregar usuários da unidade:', error);
-                unitUsersCache[unitCode] = [];
+                const offlineUsersMap = loadOfflineUnitUsersMap();
+                unitUsersCache[unitCode] = offlineUsersMap[unitCode] || [];
             }
         }
 
@@ -1951,7 +1984,34 @@
                 alert('Unidade cadastrada com sucesso.');
             } catch (error) {
                 console.error('Erro ao cadastrar unidade:', error);
-                alert('Erro de conexão ao servidor.');
+                const offlineUnits = loadOfflineUnits();
+                const exists = offlineUnits.some(u => (u.code || '').toUpperCase() === sigla.toUpperCase());
+                if (exists) {
+                    alert('Esta unidade já existe no modo offline.');
+                    return;
+                }
+
+                const offlineUnit = {
+                    id: Date.now(),
+                    code: sigla,
+                    name,
+                    location,
+                    responsible,
+                    status: 'Ativo'
+                };
+
+                offlineUnits.push(offlineUnit);
+                saveOfflineUnits(offlineUnits);
+                unitsCache = offlineUnits;
+                renderUnitsGrid();
+
+                document.getElementById('unitSigla').value = '';
+                document.getElementById('unitName').value = '';
+                document.getElementById('unitLocation').value = '';
+                document.getElementById('unitResponsible').value = '';
+                modal.classList.remove('active');
+
+                alert('Servidor indisponível. Unidade salva localmente (modo offline).');
             }
         });
 
@@ -2120,7 +2180,33 @@
                 alert(`Usuário ${name} cadastrado com sucesso! Senha inicial: 123456`);
             } catch (error) {
                 console.error('Erro ao cadastrar usuário da unidade:', error);
-                alert('Erro de conexão ao servidor.');
+                const offlineUsersMap = loadOfflineUnitUsersMap();
+                const list = offlineUsersMap[activeUnitCode] || [];
+                const offlineUser = {
+                    id: Date.now(),
+                    login: name,
+                    pass: '123456',
+                    name,
+                    doc,
+                    email,
+                    phone,
+                    role,
+                    is_default: true
+                };
+                list.push(offlineUser);
+                offlineUsersMap[activeUnitCode] = list;
+                saveOfflineUnitUsersMap(offlineUsersMap);
+                unitUsersCache[activeUnitCode] = list;
+                renderUnitUsersTable(activeUnitCode, true);
+
+                document.getElementById('uFullName').value = '';
+                document.getElementById('uDoc').value = '';
+                document.getElementById('uEmail').value = '';
+                document.getElementById('uPhone').value = '';
+                document.getElementById('uRole').value = '';
+                addUserModal.classList.remove('active');
+
+                alert(`Servidor indisponível. Usuário ${name} salvo localmente (modo offline).`);
             }
         });
 
@@ -2141,7 +2227,13 @@
                 await loadUnitUsers(activeUnitCode);
             } catch (error) {
                 console.error('Erro ao excluir usuário da unidade:', error);
-                alert('Erro de conexão ao servidor.');
+                const offlineUsersMap = loadOfflineUnitUsersMap();
+                const list = (offlineUsersMap[activeUnitCode] || []).filter(u => Number(u.id) !== Number(id));
+                offlineUsersMap[activeUnitCode] = list;
+                saveOfflineUnitUsersMap(offlineUsersMap);
+                unitUsersCache[activeUnitCode] = list;
+                renderUnitUsersTable(activeUnitCode, true);
+                alert('Servidor indisponível. Usuário removido localmente (modo offline).');
             }
         }
 

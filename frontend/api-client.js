@@ -29,6 +29,11 @@
       return KNOWN_PUBLIC_BACKENDS[host];
     }
 
+    if (isGithubPages()) {
+      // Em GitHub Pages, tenta backend local automaticamente para facilitar testes.
+      return 'http://localhost:3000';
+    }
+
     if (host === 'localhost' || host === '127.0.0.1') {
       return `${window.location.protocol}//${window.location.host}`;
     }
@@ -98,16 +103,19 @@
 
     if (isBackendPath(rawUrl)) {
       if (!configuredBase) {
-        if (isGithubPages()) {
+        const inferred = inferDefaultBase();
+        if (inferred) {
+          setBaseUrl(inferred, false);
+        }
+
+        if (!configuredBase && isGithubPages()) {
           await promptBackendBaseUrl();
-        } else {
-          setBaseUrl(inferDefaultBase(), false);
         }
       }
 
       if (!configuredBase) {
         return new Response(JSON.stringify({
-          message: 'Backend não configurado nesta publicação. Defina API_BASE_URL para apontar ao servidor Node.js. Use window.setApiBaseUrl("https://seu-backend") no console.'
+          message: 'Backend não configurado nesta publicação. Inicie o Node local em http://localhost:3000 ou defina a URL pública com window.setApiBaseUrl("https://seu-backend").'
         }), {
           status: 503,
           headers: { 'Content-Type': 'application/json' }
@@ -115,12 +123,21 @@
       }
 
       const targetUrl = `${configuredBase}${rawUrl}`;
-      if (typeof input === 'string') {
-        return originalFetch(targetUrl, init);
-      }
+      try {
+        if (typeof input === 'string') {
+          return await originalFetch(targetUrl, init);
+        }
 
-      const clonedRequest = new Request(targetUrl, input);
-      return originalFetch(clonedRequest, init);
+        const clonedRequest = new Request(targetUrl, input);
+        return await originalFetch(clonedRequest, init);
+      } catch (error) {
+        return new Response(JSON.stringify({
+          message: `Não foi possível conectar ao backend em ${configuredBase}. Verifique se a API está no ar.`
+        }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
     }
 
     return originalFetch(input, init);
