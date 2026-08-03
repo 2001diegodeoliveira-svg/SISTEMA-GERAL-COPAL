@@ -905,32 +905,47 @@ app.delete('/api/unit-users/:id', async (req, res) => {
   });
 });
 
+function mapContractRow(row) {
+  if (!row) return row;
+
+  const numContrato = row.numContrato || row.numcontrato || '';
+  const numProcesso = row.numProcesso || row.numprocesso || '';
+  const valorGlobal = row.valorGlobal || row.valorglobal || '';
+  const dtInicial = row.dtInicial || row.dtinicial || '';
+  const dtFinal = row.dtFinal || row.dtfinal || '';
+  const arquivoContrato = row.arquivoContrato || row.arquivocontrato || '';
+  const conteudoArquivoBase64 = row.conteudoArquivoBase64 || row.conteudoarquivobase64 || '';
+
+  return {
+    ...row,
+    numContrato,
+    numProcesso,
+    valorGlobal,
+    dtInicial,
+    dtFinal,
+    arquivoContrato,
+    conteudoArquivoBase64,
+    lotes: safeJsonParse(row.lotes, []),
+    unidades: safeJsonParse(row.unidades, []),
+    aditivos: safeJsonParse(row.aditivos, []),
+    empenhos: safeJsonParse(row.empenhos, []),
+  };
+}
+
 app.get('/api/contracts', async (req, res) => {
   const { numContrato } = req.query;
   if (numContrato) {
     contractsDb.get('SELECT * FROM contracts WHERE numContrato = ?', [numContrato], (err, row) => {
       if (err) return res.status(500).json({ message: 'Erro ao buscar contrato.' });
       if (!row) return res.status(404).json({ message: 'Contrato não encontrado.' });
-      return res.json({
-        ...row,
-        lotes: safeJsonParse(row.lotes, []),
-        unidades: safeJsonParse(row.unidades, []),
-        aditivos: safeJsonParse(row.aditivos, []),
-        empenhos: safeJsonParse(row.empenhos, []),
-      });
+      return res.json(mapContractRow(row));
     });
     return;
   }
 
   contractsDb.all('SELECT * FROM contracts ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ message: 'Erro ao buscar contratos.' });
-    const contracts = rows.map(row => ({
-      ...row,
-      lotes: safeJsonParse(row.lotes, []),
-      unidades: safeJsonParse(row.unidades, []),
-      aditivos: safeJsonParse(row.aditivos, []),
-      empenhos: safeJsonParse(row.empenhos, []),
-    }));
+    const contracts = rows.map(mapContractRow);
     res.json({ contracts });
   });
 });
@@ -940,13 +955,7 @@ app.get('/api/contracts/:numContrato', async (req, res) => {
   contractsDb.get('SELECT * FROM contracts WHERE numContrato = ?', [numContrato], (err, row) => {
     if (err) return res.status(500).json({ message: 'Erro ao buscar contrato.' });
     if (!row) return res.status(404).json({ message: 'Contrato não encontrado.' });
-    res.json({
-      ...row,
-      lotes: safeJsonParse(row.lotes, []),
-      unidades: safeJsonParse(row.unidades, []),
-      aditivos: safeJsonParse(row.aditivos, []),
-      empenhos: safeJsonParse(row.empenhos, []),
-    });
+    res.json(mapContractRow(row));
   });
 });
 
