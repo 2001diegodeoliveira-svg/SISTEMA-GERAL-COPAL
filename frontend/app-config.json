@@ -1,0 +1,7 @@
+{
+  "localApiBase": "http://localhost:3000",
+  "productionApiBase": "",
+  "githubPagesHosts": [
+    "2001diegodeoliveira-svg.github.io"
+  ]
+}

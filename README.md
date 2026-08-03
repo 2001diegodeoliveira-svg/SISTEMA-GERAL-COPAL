@@ -61,18 +61,28 @@ Passos:
 3. Faça o deploy do blueprint.
 4. Após o deploy, copie a URL pública do serviço web (ex.: `https://sistema-geral-copal-api.onrender.com`).
 
-### Configurar o frontend para usar a API pública
+### Configurar o frontend para usar a API pública (sem prompt manual)
 
-Na primeira abertura no GitHub Pages, o frontend salva a URL da API automaticamente pelo script `api-client.js`.
-Se precisar ajustar manualmente:
+O frontend usa o arquivo `frontend/app-config.json` para decidir automaticamente a URL da API:
+
+```json
+{
+   "localApiBase": "http://localhost:3000",
+   "productionApiBase": "https://SUA-API.onrender.com",
+   "githubPagesHosts": ["2001diegodeoliveira-svg.github.io"]
+}
+```
+
+Fluxo:
+
+- Em `localhost` ele usa `localApiBase`.
+- Em GitHub Pages ele usa `productionApiBase`.
+- Se `productionApiBase` estiver vazio, a API não é chamada e o frontend informa erro de configuração.
+
+Sobrescrita opcional em tempo de execução (debug):
 
 ```js
 window.setApiBaseUrl("https://sua-api-publica.onrender.com")
-```
-
-Para limpar:
-
-```js
 window.clearApiBaseUrl()
 ```
 
@@ -85,6 +95,13 @@ Variáveis principais em produção:
 - `DATABASE_URL` (prioridade maior, conexão completa PostgreSQL)
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` (fallback para ambiente local)
 - `DB_SSL` (`true` para forçar SSL quando necessário)
+- `CORS_ORIGINS` (origens permitidas, separadas por vírgula)
+
+Exemplo recomendado:
+
+```env
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://2001diegodeoliveira-svg.github.io
+```
 
 ## Usuário inicial
 

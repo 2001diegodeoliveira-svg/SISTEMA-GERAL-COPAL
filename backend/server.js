@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
+const cors = require('cors');
 const { createDatabase } = require('./config/database');
 
 dotenv.config();
@@ -130,7 +131,44 @@ function safeJsonParse(value, fallback = []) {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(require('cors')());
+
+function parseCorsOrigins() {
+  const defaults = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    'https://2001diegodeoliveira-svg.github.io',
+  ];
+
+  const fromEnv = String(process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return [...new Set([...defaults, ...fromEnv])];
+}
+
+const allowedOrigins = parseCorsOrigins();
+
+app.use(cors({
+  origin(origin, callback) {
+    // Permite ferramentas sem Origin (curl/postman/health-checks internos).
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`Origem não permitida por CORS: ${origin}`));
+  },
+  credentials: false,
+}));
+
 app.use('/uploads', express.static(UPLOAD_DIR));
 app.use(express.static(FRONTEND_DIR));
 

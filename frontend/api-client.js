@@ -1,7 +1,8 @@
 (function () {
   const storedBase = localStorage.getItem('API_BASE_URL') || '';
   let configuredBase = '';
-  let promptedForBaseInThisSession = false;
+  let runtimeConfig = null;
+  let configLoaded = false;
   const originalFetch = window.fetch.bind(window);
 
   function normalizeBase(value) {
@@ -20,24 +21,67 @@
     }
   }
 
-  function inferDefaultBase() {
+  function defaultConfig() {
+    return {
+      localApiBase: 'http://localhost:3000',
+      productionApiBase: '',
+      githubPagesHosts: ['2001diegodeoliveira-svg.github.io'],
+    };
+  }
+
+  async function loadRuntimeConfig() {
+    if (configLoaded) return runtimeConfig || defaultConfig();
+    configLoaded = true;
+
+    const fallback = defaultConfig();
+
+    try {
+      const response = await originalFetch('app-config.json', { cache: 'no-store' });
+      if (!response.ok) {
+        runtimeConfig = fallback;
+        return runtimeConfig;
+      }
+
+      const parsed = await response.json();
+      runtimeConfig = {
+        ...fallback,
+        ...parsed,
+        githubPagesHosts: Array.isArray(parsed.githubPagesHosts) && parsed.githubPagesHosts.length
+          ? parsed.githubPagesHosts
+          : fallback.githubPagesHosts,
+      };
+      return runtimeConfig;
+    } catch (error) {
+      runtimeConfig = fallback;
+      return runtimeConfig;
+    }
+  }
+
+  function isLocalHost(host) {
+    const normalized = String(host || '').toLowerCase();
+    return normalized === 'localhost' || normalized === '127.0.0.1';
+  }
+
+  function isConfiguredGithubPagesHost(host, config) {
+    const normalizedHost = String(host || '').toLowerCase();
+    return (config.githubPagesHosts || []).some((entry) => String(entry || '').toLowerCase() === normalizedHost);
+  }
+
+  function inferDefaultBase(config) {
     const host = window.location.hostname || '';
 
-    if (isGithubPages()) {
-      // Em GitHub Pages, evita travar no localhost em produção.
-      return '';
+    if (isLocalHost(host)) {
+      return normalizeBase(config.localApiBase || `${window.location.protocol}//${window.location.host}`);
     }
 
-    if (host === 'localhost' || host === '127.0.0.1') {
-      return `${window.location.protocol}//${window.location.host}`;
+    if (isConfiguredGithubPagesHost(host, config)) {
+      return normalizeBase(config.productionApiBase || '');
     }
 
     return '';
   }
 
-  const initialBase = window.API_BASE_URL || storedBase || inferDefaultBase() || '';
-
-  setBaseUrl(initialBase, false);
+  setBaseUrl(window.API_BASE_URL || storedBase || '', false);
 
   window.setApiBaseUrl = function setApiBaseUrl(url) {
     setBaseUrl(url, true);
@@ -49,34 +93,9 @@
   };
 
   function isGithubPages() {
-    return /github\.io$/i.test(window.location.hostname || '');
-  }
-
-  async function promptBackendBaseUrl() {
-    if (promptedForBaseInThisSession) return '';
-    promptedForBaseInThisSession = true;
-
-    const suggested = localStorage.getItem('API_BASE_URL') || '';
-    const message = [
-      'Backend não configurado para esta publicação.',
-      'Informe a URL pública do backend Node.js (ex: https://seu-backend.onrender.com).'
-    ].join('\n');
-
-    let input = '';
-    try {
-      if (typeof window.prompt === 'function') {
-        input = window.prompt(message, suggested);
-      }
-    } catch (error) {
-      // Ambientes com prompt bloqueado (webviews/test runners) não devem quebrar a app.
-      input = '';
-    }
-    const normalized = normalizeBase(input);
-    if (normalized) {
-      setBaseUrl(normalized, true);
-      return normalized;
-    }
-    return '';
+    const host = window.location.hostname || '';
+    if (!runtimeConfig) return /github\.io$/i.test(host);
+    return isConfiguredGithubPagesHost(host, runtimeConfig) || /github\.io$/i.test(host);
   }
 
   function isBackendPath(path) {
@@ -96,28 +115,29 @@
   }
 
   async function bootstrapApiBase() {
-    if (!isGithubPages()) return;
+    runtimeConfig = await loadRuntimeConfig();
 
-    const localFallbackBase = 'http://localhost:3000';
+    const localFallbackBase = normalizeBase(runtimeConfig.localApiBase || 'http://localhost:3000');
+    const defaultBase = inferDefaultBase(runtimeConfig);
     const currentBase = normalizeBase(configuredBase);
     const localIsUp = await canReachBase(localFallbackBase);
 
-    if (!currentBase) {
+    if (!currentBase && defaultBase) {
+      setBaseUrl(defaultBase, false);
+    }
+
+    const effectiveBase = normalizeBase(configuredBase);
+
+    if (!effectiveBase) {
       if (localIsUp) {
         setBaseUrl(localFallbackBase, true);
       }
       return;
     }
 
-    const currentIsUp = await canReachBase(currentBase);
+    const currentIsUp = await canReachBase(effectiveBase);
     if (!currentIsUp && localIsUp) {
       setBaseUrl(localFallbackBase, true);
-      return;
-    }
-
-    if (!currentIsUp && currentBase === localFallbackBase) {
-      // Limpa base inválida para permitir prompt de backend público no primeiro login.
-      setBaseUrl('', true);
     }
   }
 
@@ -136,27 +156,34 @@
     const rawUrl = typeof input === 'string' ? input : (input && input.url) || '';
 
     if (isBackendPath(rawUrl)) {
-      if (!configuredBase) {
-        const inferred = inferDefaultBase();
-        if (inferred) {
-          setBaseUrl(inferred, false);
-        }
+      if (!runtimeConfig) {
+        runtimeConfig = await loadRuntimeConfig();
+      }
 
-        if (!configuredBase && isGithubPages()) {
-          await promptBackendBaseUrl();
+      if (!configuredBase) {
+        const inferred = inferDefaultBase(runtimeConfig || defaultConfig());
+        if (inferred) {
+          setBaseUrl(inferred, true);
+        }
+      }
+
+      if (!configuredBase) {
+        const localFallback = normalizeBase((runtimeConfig && runtimeConfig.localApiBase) || 'http://localhost:3000');
+        if (await canReachBase(localFallback)) {
+          setBaseUrl(localFallback, true);
         }
       }
 
       if (!configuredBase) {
         return new Response(JSON.stringify({
-          message: 'Backend não configurado nesta publicação. Inicie o Node local em http://localhost:3000 ou defina a URL pública com window.setApiBaseUrl("https://seu-backend").'
+          message: 'Backend não configurado nesta publicação. Defina a URL da API em frontend/app-config.json (productionApiBase) ou use window.setApiBaseUrl("https://seu-backend").'
         }), {
           status: 503,
           headers: { 'Content-Type': 'application/json' }
         });
       }
 
-      const localFallbackBase = 'http://localhost:3000';
+      const localFallbackBase = normalizeBase((runtimeConfig && runtimeConfig.localApiBase) || 'http://localhost:3000');
       const canTryLocalFallback = isGithubPages() && configuredBase !== localFallbackBase;
 
       async function doFetch(baseUrl) {
@@ -183,14 +210,6 @@
           }
         }
 
-        // Se estiver no GitHub Pages com localhost e houver erro de gateway, pede backend público.
-        if (isGithubPages() && configuredBase === localFallbackBase && [502, 503, 504].includes(response.status)) {
-          const promptedBase = await promptBackendBaseUrl();
-          if (promptedBase) {
-            return doFetch(promptedBase);
-          }
-        }
-
         return response;
       } catch (error) {
         if (canTryLocalFallback) {
@@ -200,17 +219,6 @@
             return localResponse;
           } catch (fallbackError) {
             // Se também não houver backend local, mantém mensagem padrão abaixo.
-          }
-        }
-
-        if (isGithubPages() && configuredBase === localFallbackBase) {
-          const promptedBase = await promptBackendBaseUrl();
-          if (promptedBase) {
-            try {
-              return await doFetch(promptedBase);
-            } catch (retryError) {
-              // Mantém resposta padronizada abaixo caso nova URL também falhe.
-            }
           }
         }
 
