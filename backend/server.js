@@ -9,6 +9,7 @@ const dotenv = require('dotenv');
 const { createDatabase } = require('./config/database');
 
 dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 let fetchApi = global.fetch;
 try {
@@ -25,7 +26,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const ROOT_DIR = path.resolve(__dirname, '..');
 const FRONTEND_DIR = path.join(ROOT_DIR, 'frontend');
-const UPLOAD_DIR = path.join(ROOT_DIR, 'uploads');
+const uploadPath = process.env.UPLOAD_PATH || 'uploads';
+const UPLOAD_DIR = path.isAbsolute(uploadPath) ? uploadPath : path.join(ROOT_DIR, uploadPath);
 
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -75,6 +77,11 @@ function createMailTransporter() {
         pass: process.env.SMTP_PASS,
       },
     });
+  }
+
+  if (process.platform === 'win32') {
+    // Em ambiente local Windows sem SMTP, evita quebra no fluxo de envio.
+    return nodemailer.createTransport({ jsonTransport: true });
   }
 
   return nodemailer.createTransport({
@@ -1047,7 +1054,8 @@ app.get('/api/health', async (req, res) => {
       console.log(`Servidor iniciado em http://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error('Erro ao inicializar o banco PostgreSQL:', error);
+    console.error('Erro ao inicializar o banco PostgreSQL:', error?.message || error);
+    console.error('Verifique DB_HOST, DB_PORT, DB_NAME, DB_USER e DB_PASSWORD no arquivo .env da raiz ou backend/.env.');
     process.exit(1);
   }
 })();

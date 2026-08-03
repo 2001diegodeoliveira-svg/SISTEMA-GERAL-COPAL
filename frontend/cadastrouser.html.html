@@ -1133,7 +1133,7 @@
         function redirectToLogin() {
             localStorage.removeItem('accessToken');
             localStorage.removeItem('userRole');
-            alert('Acesso restrito: apenas desenvolvedor e administrador podem usar esta página.');
+            alert('Faça login para acessar esta página.');
             window.location.href = 'login.html.html';
         }
 
@@ -1153,11 +1153,6 @@
 
                 const data = await res.json();
                 const role = data.user?.role || 'user';
-
-                if (role !== 'developer' && role !== 'admin') {
-                    return redirectToLogin();
-                }
-
                 localStorage.setItem('userRole', role);
             } catch (error) {
                 console.error('Erro na verificação de acesso:', error);

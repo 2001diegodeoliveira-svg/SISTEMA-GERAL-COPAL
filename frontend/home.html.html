@@ -448,9 +448,9 @@
     }
 
     function configureAccess() {
-        if (userRole !== 'developer' && userRole !== 'admin' && usuarioNavTab) {
-            usuarioNavTab.style.opacity = '0.6';
-            usuarioNavTab.style.pointerEvents = 'none';
+        if (usuarioNavTab) {
+            usuarioNavTab.style.opacity = '1';
+            usuarioNavTab.style.pointerEvents = 'auto';
         }
         if (userRole === 'developer' || userRole === 'admin') {
             document.getElementById('developerToolsPanel').style.display = 'block';
