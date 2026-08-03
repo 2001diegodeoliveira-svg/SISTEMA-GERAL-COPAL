@@ -1310,6 +1310,22 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="info-box-card">
+                    <h4><i data-lucide="history" style="width: 16px;"></i> Histórico de Atualizações da Unidade</h4>
+                    <table class="balance-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Tipo</th>
+                                <th>Detalhes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detUpdatesBody">
+                            <tr><td colspan="3" style="text-align:center; color:#64748b;">Nenhuma atualização registrada.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -1623,34 +1639,14 @@
     <script>
         lucide.createIcons();
 
-        // Base de Dados Simulada
-        const mockContracts = {
-            'CBM-MT': [
-                { 
-                    number: 'CONTRATO Nº 085/2025/SESP', 
-                    object: 'Manutenção preventiva e corretiva de viaturas operacionais de combate a incêndio', 
-                    company: 'Auto Rescue Equipamentos Eireli', 
-                    value: 'R$ 1.450.000,00', 
-                    validity: '12/2026', 
-                    status: 'Ativo',
-                    processNumber: 'SESP-PRO-2025/08491',
-                    licitationType: 'Pregão Eletrônico SRP Nº 014/2025',
-                    razaoSocial: 'Auto Rescue Equipamentos Eireli',
-                    cnpj: '12.345.678/0001-90',
-                    items: [
-                        { name: 'Revisão Geral de Caminhão Auto Bomba Tanque (ABT)', allocated: 10, used: 4, available: 6, unitPrice: 'R$ 25.000,00', remainingBalance: 'R$ 150.000,00' },
-                        { name: 'Troca de Conjunto de Manguotes e Vedações Hídricas', allocated: 25, used: 10, available: 15, unitPrice: 'R$ 8.000,00', remainingBalance: 'R$ 120.000,00' }
-                    ]
-                }
-            ]
-        };
-
         // Cache local de unidades e usuários carregados do servidor
         let unitsCache = [];
         let unitUsersCache = {};
+        let contractsCache = [];
 
         const OFFLINE_UNITS_KEY = 'COPAL_OFFLINE_UNITS';
         const OFFLINE_UNIT_USERS_KEY = 'COPAL_OFFLINE_UNIT_USERS';
+        const OFFLINE_CONTRACTS_KEY = 'COPAL_OFFLINE_CONTRACTS';
 
         function loadOfflineUnits() {
             try {
@@ -1678,6 +1674,232 @@
             localStorage.setItem(OFFLINE_UNIT_USERS_KEY, JSON.stringify(usersMap || {}));
         }
 
+        function loadOfflineContracts() {
+            try {
+                const data = JSON.parse(localStorage.getItem(OFFLINE_CONTRACTS_KEY) || '[]');
+                return Array.isArray(data) ? data : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function saveOfflineContracts(contracts) {
+            localStorage.setItem(OFFLINE_CONTRACTS_KEY, JSON.stringify(contracts || []));
+        }
+
+        function normalizeUnitCode(value) {
+            const cleaned = String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+            const aliases = {
+                PMMT: 'PMMT',
+                CBMMT: 'CBMMT',
+                CIOPAER: 'CIOPAER',
+                PCJ: 'PCJ',
+                PJCMT: 'PCJ',
+                POLITEC: 'POLITEC',
+                SESP: 'SESP'
+            };
+            return aliases[cleaned] || cleaned;
+        }
+
+        function parseMoneyValue(value) {
+            if (!value) return 0;
+            return parseFloat(String(value).replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
+        }
+
+        function formatMoneyValue(value) {
+            return (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function contractMatchesUnit(contract, unitCode) {
+            const target = normalizeUnitCode(unitCode);
+            return (contract.unidades || []).some((entry) => {
+                const value = typeof entry === 'string' ? entry : entry?.unidade;
+                return normalizeUnitCode(value) === target;
+            });
+        }
+
+        function getUnitDataFromContract(contract, unitCode) {
+            const target = normalizeUnitCode(unitCode);
+            return (contract.unidades || []).find((entry) => {
+                const value = typeof entry === 'string' ? entry : entry?.unidade;
+                return normalizeUnitCode(value) === target;
+            }) || null;
+        }
+
+        function getContractsByUnit(unitCode) {
+            return contractsCache.filter(contract => contractMatchesUnit(contract, unitCode));
+        }
+
+        async function loadContracts() {
+            try {
+                const res = await fetch('/api/contracts');
+                const data = await res.json();
+                contractsCache = Array.isArray(data.contracts) ? data.contracts : [];
+                saveOfflineContracts(contractsCache);
+            } catch (error) {
+                console.error('Falha ao carregar contratos:', error);
+                contractsCache = loadOfflineContracts();
+            }
+        }
+
+        function getUnitUpdates(contract, unitCode) {
+            const updates = [];
+            (contract.aditivos || []).forEach(ad => {
+                updates.push({
+                    data: ad.data || '-',
+                    tipo: `Aditivo ${ad.tipo || ''}`.trim(),
+                    detalhes: `${ad.valor ? `Valor: ${ad.valor}. ` : ''}${ad.obs || 'Atualização contratual.'}`
+                });
+            });
+
+            (contract.empenhos || []).forEach(emp => {
+                const unidadeEmpenho = Array.isArray(emp.unidades) ? emp.unidades.some(u => normalizeUnitCode(u) === normalizeUnitCode(unitCode)) : false;
+                if (!unidadeEmpenho) return;
+                updates.push({
+                    data: emp.dataLancamento || '-',
+                    tipo: 'Empenho',
+                    detalhes: `${emp.numEmpenho || '-'} • ${emp.tipoEmpenho || '-'} • ${emp.valorEmpenho || '-'}`
+                });
+            });
+
+            return updates;
+        }
+
+        function updateUnitStats() {
+            document.querySelectorAll('.unit-card').forEach(card => {
+                const unitCode = card.getAttribute('data-unit-code') || '';
+                const contracts = getContractsByUnit(unitCode);
+                const updatesCount = contracts.reduce((total, contract) => total + (contract.aditivos || []).length + (contract.empenhos || []).length, 0);
+                const statSpans = card.querySelectorAll('.stat-item span');
+                if (statSpans[0]) statSpans[0].innerText = String(contracts.length);
+                if (statSpans[1]) statSpans[1].innerText = String(updatesCount);
+            });
+        }
+
+        function renderContractsForUnit(unitCode) {
+            const container = document.getElementById('contractListContainer');
+            const searchTerm = (document.getElementById('contractSearch').value || '').trim().toLowerCase();
+            const contracts = getContractsByUnit(unitCode).filter(contract => {
+                const text = [contract.numContrato, contract.credor, contract.objeto, contract.numProcesso].join(' ').toLowerCase();
+                return !searchTerm || text.includes(searchTerm);
+            });
+
+            container.innerHTML = '';
+            if (!contracts.length) {
+                container.innerHTML = '<p style="color:#64748b;">Nenhum contrato vinculado a esta unidade.</p>';
+                return;
+            }
+
+            contracts.forEach(contract => {
+                const updatesCount = (contract.aditivos || []).length + (contract.empenhos || []).length;
+                const item = document.createElement('div');
+                item.className = 'unit-card';
+                item.style.cursor = 'pointer';
+                item.innerHTML = `
+                    <div class="unit-card-header">
+                        <div class="unit-badge-icon"><i data-lucide="file-text" style="width: 22px;"></i></div>
+                        <div class="unit-name-box">
+                            <h3>${contract.numContrato || '-'}</h3>
+                            <span>${contract.credor || '-'}</span>
+                        </div>
+                    </div>
+                    <div class="unit-card-body">
+                        <ul class="unit-info-list">
+                            <li><i data-lucide="folder" style="width: 14px;"></i> Processo: ${contract.numProcesso || '-'}</li>
+                            <li><i data-lucide="calendar" style="width: 14px;"></i> Vigência: ${contract.dtInicial || '-'} até ${contract.dtFinal || '-'}</li>
+                        </ul>
+                        <div class="unit-stats">
+                            <div class="stat-item"><label>Atualizações</label><span>${updatesCount}</span></div>
+                            <div class="stat-item"><label>Empenhos</label><span>${(contract.empenhos || []).length}</span></div>
+                        </div>
+                    </div>
+                `;
+                item.addEventListener('click', () => showContractDetails(unitCode, contract.numContrato));
+                container.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        function showContractDetails(unitCode, contractNumber) {
+            const contract = contractsCache.find(c => c.numContrato === contractNumber);
+            if (!contract) return;
+
+            const unitData = getUnitDataFromContract(contract, unitCode) || {};
+            const unitItems = Array.isArray(unitData.itensDetalhados) ? unitData.itensDetalhados : [];
+            const updates = getUnitUpdates(contract, unitCode);
+
+            document.getElementById('contractsListSection').style.display = 'none';
+            document.getElementById('contractFullDetailView').style.display = 'block';
+
+            document.getElementById('detContractNumber').innerText = contract.numContrato || '-';
+            document.getElementById('detProcNum').innerText = contract.numProcesso || '-';
+            document.getElementById('detLicType').innerText = contract.tipoProcedimento || 'Não informado';
+            document.getElementById('detRazaoSocial').innerText = contract.razaoSocial || contract.credor || '-';
+            document.getElementById('detCredorCnpj').innerText = `${contract.credor || '-'}${contract.cnpj ? ` - CNPJ: ${contract.cnpj}` : ''}`;
+            document.getElementById('detObjeto').innerText = contract.objeto || '-';
+
+            const empenhado = (contract.empenhos || []).reduce((total, emp) => {
+                const unidadeEmpenho = Array.isArray(emp.unidades) ? emp.unidades.some(u => normalizeUnitCode(u) === normalizeUnitCode(unitCode)) : false;
+                return unidadeEmpenho ? total + parseMoneyValue(emp.valorEmpenho) : total;
+            }, 0);
+
+            const tbody = document.getElementById('detTableBody');
+            tbody.innerHTML = '';
+            if (!unitItems.length) {
+                const fallbackTotal = parseMoneyValue(unitData.valor || contract.valorGlobal);
+                const disponivel = Math.max(0, fallbackTotal - empenhado);
+                tbody.innerHTML = `
+                    <tr>
+                        <td>Saldo Global da Unidade</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>${formatMoneyValue(disponivel)}</td>
+                    </tr>
+                `;
+            } else {
+                unitItems.forEach(item => {
+                    const allocated = Number(item.quantidade || 0);
+                    const used = 0;
+                    const available = Math.max(0, allocated - used);
+                    const totalItemValue = parseMoneyValue(item.valorTotal);
+                    const unitPrice = allocated > 0 ? totalItemValue / allocated : 0;
+                    tbody.insertAdjacentHTML('beforeend', `
+                        <tr>
+                            <td>${item.loteNome || '-'}</td>
+                            <td>${allocated || '-'}</td>
+                            <td>${used}</td>
+                            <td>${available}</td>
+                            <td>${formatMoneyValue(unitPrice)}</td>
+                            <td>${item.valorTotal || '-'}</td>
+                        </tr>
+                    `);
+                });
+            }
+
+            const updatesBody = document.getElementById('detUpdatesBody');
+            updatesBody.innerHTML = '';
+            if (!updates.length) {
+                updatesBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#64748b;">Nenhuma atualização registrada.</td></tr>';
+            } else {
+                updates.forEach(update => {
+                    updatesBody.insertAdjacentHTML('beforeend', `
+                        <tr>
+                            <td>${update.data}</td>
+                            <td>${update.tipo}</td>
+                            <td>${update.detalhes}</td>
+                        </tr>
+                    `);
+                });
+            }
+        }
+
+        function hideContractDetails() {
+            document.getElementById('contractFullDetailView').style.display = 'none';
+            document.getElementById('contractsListSection').style.display = 'block';
+        }
+
         let pendingUnitCode = null;
         let activeUnitCode = null;
         let authenticatedUserRef = null; // Armazena a referência do usuário logado (ADM ou Usuário Cadastrado)
@@ -1693,10 +1915,14 @@
                 unitsCache = data.units || [];
                 saveOfflineUnits(unitsCache);
                 renderUnitsGrid();
+                await loadContracts();
+                updateUnitStats();
             } catch (error) {
                 console.error('Falha ao carregar unidades:', error);
                 unitsCache = loadOfflineUnits();
                 renderUnitsGrid();
+                await loadContracts();
+                updateUnitStats();
             }
         }
 
@@ -2124,9 +2350,19 @@
 
             renderUnitUsersTable(code, isAdm);
 
+            document.getElementById('contractFullDetailView').style.display = 'none';
+            document.getElementById('contractsListSection').style.display = 'block';
+            renderContractsForUnit(code);
+
             listView.style.display = 'none';
             detailView.style.display = 'flex';
         }
+
+        document.getElementById('contractSearch').addEventListener('input', () => {
+            if (activeUnitCode) renderContractsForUnit(activeUnitCode);
+        });
+
+        document.getElementById('btnBackToContractList').addEventListener('click', hideContractDetails);
 
         // GESTÃO DE USUÁRIOS DA UNIDADE
         document.getElementById('btnOpenUserModal').addEventListener('click', () => addUserModal.classList.add('active'));
