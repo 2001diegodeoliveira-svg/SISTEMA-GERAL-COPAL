@@ -67,6 +67,148 @@
                         color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        /* TELA DE LOGIN DE ACESSO A CONTRATOS */
+        .contracts-login-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 5000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(7, 23, 49, 0.64);
+            backdrop-filter: blur(3px);
+        }
+
+        .contracts-login-overlay.hidden {
+            display: none;
+        }
+
+        .contracts-login-card {
+            width: 100%;
+            max-width: 980px;
+            min-height: 560px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            background: #ffffff;
+        }
+
+        .contracts-login-visual {
+            position: relative;
+            background-image: url('imagemlogincontratos/ChatGPT%20Image%203%20de%20ago.%20de%202026,%2000_42_04.png');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .contracts-login-visual::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(160deg, rgba(7, 23, 49, 0.2), rgba(7, 23, 49, 0.55));
+        }
+
+        .contracts-login-form {
+            padding: 2rem 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            justify-content: center;
+            background: #ffffff;
+        }
+
+        .contracts-login-form h2 {
+            margin: 0;
+            color: #0f2c59;
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .contracts-login-form p {
+            margin: 0;
+            color: #64748b;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .contracts-login-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .contracts-login-field label {
+            font-size: 0.82rem;
+            color: #334155;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .contracts-login-field input {
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 0.78rem 0.9rem;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .contracts-login-field input:focus {
+            border-color: #1e40af;
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);
+        }
+
+        .contracts-login-btn {
+            margin-top: 0.5rem;
+            border: none;
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            background: linear-gradient(135deg, #0f2c59, #1e40af);
+            color: #ffffff;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .contracts-login-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(15, 44, 89, 0.32);
+        }
+
+        .contracts-login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .contracts-login-error {
+            min-height: 18px;
+            color: #dc2626;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 900px) {
+            .contracts-login-card {
+                max-width: 520px;
+                min-height: 0;
+                grid-template-columns: 1fr;
+            }
+
+            .contracts-login-visual {
+                min-height: 200px;
+            }
+
+            .contracts-login-form {
+                padding: 1.35rem;
+            }
+        }
+
         /* BARRA SUPERIOR INSTITUCIONAL */
         .top-gov-bar {
             background-color: var(--sesp-dark-blue);
@@ -580,6 +722,29 @@
     </style>
 </head>
 <body>
+    <div id="contractsLoginOverlay" class="contracts-login-overlay" role="dialog" aria-modal="true" aria-labelledby="contractsLoginTitle">
+        <div class="contracts-login-card">
+            <div class="contracts-login-visual"></div>
+            <div class="contracts-login-form">
+                <h2 id="contractsLoginTitle">Acesso ao Módulo de Contratos</h2>
+                <p>Para acessar esta área, informe a matrícula e a senha cadastradas no módulo de cadastro de usuários.</p>
+
+                <div class="contracts-login-field">
+                    <label for="contractsLoginMatricula">Matrícula</label>
+                    <input id="contractsLoginMatricula" type="text" placeholder="Digite sua matrícula" autocomplete="username">
+                </div>
+
+                <div class="contracts-login-field">
+                    <label for="contractsLoginPassword">Senha</label>
+                    <input id="contractsLoginPassword" type="password" placeholder="Digite sua senha" autocomplete="current-password">
+                </div>
+
+                <button id="contractsLoginBtn" class="contracts-login-btn" type="button">Entrar no Contratos</button>
+                <div id="contractsLoginError" class="contracts-login-error"></div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- BARRA SUPERIOR INSTITUCIONAL -->
     <div class="top-gov-bar">
@@ -1583,6 +1748,83 @@
         lucide.createIcons();
 
         let DB_CONTRATOS = {};
+        let contractsAuthToken = localStorage.getItem('accessToken') || '';
+
+        function setContractsLoginError(message) {
+            const errorEl = document.getElementById('contractsLoginError');
+            if (!errorEl) return;
+            errorEl.innerText = message || '';
+        }
+
+        function hideContractsLoginOverlay() {
+            const overlay = document.getElementById('contractsLoginOverlay');
+            if (overlay) overlay.classList.add('hidden');
+        }
+
+        function showContractsLoginOverlay() {
+            const overlay = document.getElementById('contractsLoginOverlay');
+            if (overlay) overlay.classList.remove('hidden');
+        }
+
+        async function validateExistingContractsSession() {
+            if (!contractsAuthToken) return false;
+            try {
+                const response = await fetch('/auth/me', {
+                    headers: { Authorization: `Bearer ${contractsAuthToken}` }
+                });
+                if (!response.ok) return false;
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        async function handleContractsLogin() {
+            const matriculaInput = document.getElementById('contractsLoginMatricula');
+            const passwordInput = document.getElementById('contractsLoginPassword');
+            const loginButton = document.getElementById('contractsLoginBtn');
+
+            const matricula = (matriculaInput?.value || '').trim();
+            const password = passwordInput?.value || '';
+
+            if (!matricula || !password) {
+                setContractsLoginError('Informe matrícula e senha para acessar.');
+                return;
+            }
+
+            loginButton.disabled = true;
+            loginButton.innerText = 'Validando...';
+            setContractsLoginError('');
+
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ matricula, password })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    setContractsLoginError(data.message || 'Falha ao autenticar.');
+                    return;
+                }
+
+                contractsAuthToken = data.accessToken || '';
+                if (contractsAuthToken) {
+                    localStorage.setItem('accessToken', contractsAuthToken);
+                }
+                if (data.user && data.user.role) {
+                    localStorage.setItem('userRole', data.user.role);
+                }
+
+                hideContractsLoginOverlay();
+            } catch (error) {
+                setContractsLoginError('Não foi possível conectar ao servidor de autenticação.');
+            } finally {
+                loginButton.disabled = false;
+                loginButton.innerText = 'Entrar no Contratos';
+            }
+        }
 
         // Cache local de contratos para acelerar buscas
 
@@ -1670,6 +1912,30 @@
             } else {
                 atualizarInterface(false);
             }
+
+            const loginBtn = document.getElementById('contractsLoginBtn');
+            const matriculaInput = document.getElementById('contractsLoginMatricula');
+            const passwordInput = document.getElementById('contractsLoginPassword');
+
+            if (loginBtn) loginBtn.addEventListener('click', handleContractsLogin);
+            if (matriculaInput) {
+                matriculaInput.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') handleContractsLogin();
+                });
+            }
+            if (passwordInput) {
+                passwordInput.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') handleContractsLogin();
+                });
+            }
+
+            validateExistingContractsSession().then((isValid) => {
+                if (isValid) {
+                    hideContractsLoginOverlay();
+                } else {
+                    showContractsLoginOverlay();
+                }
+            });
         });
 
         /* ==========================================================================

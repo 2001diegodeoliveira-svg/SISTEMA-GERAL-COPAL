@@ -2,9 +2,13 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const multer = require('multer');
-const sqlite3 = require('sqlite3').verbose();
 const nodemailer = require('nodemailer');
+const dotenv = require('dotenv');
+const { createDatabase } = require('./config/database');
+
+dotenv.config();
 
 let fetchApi = global.fetch;
 try {
@@ -21,30 +25,33 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const ROOT_DIR = path.resolve(__dirname, '..');
 const FRONTEND_DIR = path.join(ROOT_DIR, 'frontend');
-const DB_FILE = path.join(__dirname, 'database.sqlite');
-const CONTRACTS_DB_FILE = path.join(__dirname, 'contracts.sqlite');
 const UPLOAD_DIR = path.join(ROOT_DIR, 'uploads');
 
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
-const db = new sqlite3.Database(DB_FILE, (err) => {
-  if (err) {
-    console.error('Erro ao abrir o arquivo de banco de dados principal:', err);
-    process.exit(1);
-  }
-});
-
-const contractsDb = new sqlite3.Database(CONTRACTS_DB_FILE, (err) => {
-  if (err) {
-    console.error('Erro ao abrir o arquivo de banco de dados de contratos:', err);
-    process.exit(1);
-  }
-});
+const db = createDatabase();
+const contractsDb = createDatabase();
 
 function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+function isBcryptHash(value) {
+  return typeof value === 'string' && /^\$2[aby]\$/.test(value);
+}
+
+async function hashPasswordSecure(password) {
+  return bcrypt.hash(password, 10);
+}
+
+async function verifyPasswordSecure(rawPassword, storedHash) {
+  if (!storedHash) return false;
+  if (isBcryptHash(storedHash)) {
+    return bcrypt.compare(rawPassword, storedHash);
+  }
+  return storedHash === rawPassword || storedHash === hashPassword(rawPassword);
 }
 
 function generateToken() {
@@ -112,8 +119,7 @@ function safeJsonParse(value, fallback = []) {
   }
 }
 
-// A partir de agora, o sistema armazena senhas em texto simples para facilitar o uso.
-// A função hashPassword é mantida apenas para compatibilidade com registros antigos.
+// As senhas são persistidas como hash para compatibilidade com o esquema PostgreSQL.
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -136,299 +142,25 @@ const upload = multer({
 
 const DEV_TOKEN = 'dev-access-token';
 
-function initDatabase() {
-  contractsDb.serialize(() => {
-    contractsDb.run(`
-      CREATE TABLE IF NOT EXISTS contracts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        numContrato TEXT NOT NULL UNIQUE,
-        numProcesso TEXT,
-        credor TEXT,
-        valorGlobal TEXT,
-        objeto TEXT,
-        dtInicial TEXT,
-        dtFinal TEXT,
-        arquivoContrato TEXT,
-        conteudoArquivoBase64 TEXT,
-        lotes TEXT,
-        unidades TEXT,
-        aditivos TEXT,
-        empenhos TEXT
-      )
-    `);
-  });
+async function initDatabase() {
+  const schemaPath = path.join(__dirname, 'database', 'schema.sql');
+  const seedPath = path.join(__dirname, 'database', 'seed.sql');
 
-  db.serialize(() => {
-    db.run(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
-        name TEXT DEFAULT '',
-        role TEXT NOT NULL DEFAULT 'user',
-        unidade TEXT DEFAULT '',
-        perfil TEXT DEFAULT '',
-        status TEXT NOT NULL DEFAULT 'Pendente',
-        verified INTEGER NOT NULL DEFAULT 0,
-        can_view_overview INTEGER NOT NULL DEFAULT 0,
-        access_level TEXT DEFAULT '',
-        account_status TEXT NOT NULL DEFAULT 'ativo',
-        permissions_json TEXT DEFAULT '{}',
-        otp_code TEXT,
-        otp_expires INTEGER,
-        background_image TEXT
-      )
-    `);
+  async function executeSqlFile(sqlFilePath) {
+    const rawSql = fs.readFileSync(sqlFilePath, 'utf-8');
+    const cleanSql = rawSql.replace(/^--.*$/gm, '');
+    const statements = cleanSql
+      .split(';')
+      .map(statement => statement.trim())
+      .filter(Boolean);
 
-    db.run(`
-      CREATE TABLE IF NOT EXISTS sessions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        token TEXT NOT NULL UNIQUE,
-        user_id INTEGER NOT NULL,
-        created_at INTEGER NOT NULL,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-      )
-    `);
-
-    db.run(`
-      CREATE TABLE IF NOT EXISTS contacts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        unidade TEXT NOT NULL,
-        setor TEXT NOT NULL,
-        telefone TEXT NOT NULL,
-        ramal TEXT
-      )
-    `);
-
-    db.run(`
-      CREATE TABLE IF NOT EXISTS units (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        code TEXT NOT NULL UNIQUE,
-        name TEXT NOT NULL,
-        location TEXT DEFAULT '',
-        responsible TEXT DEFAULT '',
-        status TEXT NOT NULL DEFAULT 'Ativo'
-      )
-    `);
-
-    db.run(`
-      CREATE TABLE IF NOT EXISTS unit_users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        unit_code TEXT NOT NULL,
-        login TEXT NOT NULL,
-        pass TEXT NOT NULL,
-        name TEXT DEFAULT '',
-        doc TEXT DEFAULT '',
-        email TEXT DEFAULT '',
-        phone TEXT DEFAULT '',
-        role TEXT DEFAULT '',
-        is_default INTEGER NOT NULL DEFAULT 1,
-        FOREIGN KEY(unit_code) REFERENCES units(code)
-      )
-    `);
-
-    db.run(`
-      CREATE TABLE IF NOT EXISTS requisition_codes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        requester_email TEXT NOT NULL,
-        requester_name TEXT NOT NULL,
-        requester_matricula TEXT NOT NULL,
-        code TEXT NOT NULL,
-        expires_at INTEGER NOT NULL,
-        used_at INTEGER,
-        created_at INTEGER NOT NULL
-      )
-    `);
-
-    db.run(`
-      CREATE TABLE IF NOT EXISTS requisitions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        req_number_year TEXT,
-        req_unit_demand TEXT,
-        req_contract_num TEXT,
-        req_issue_date TEXT,
-        req_company TEXT,
-        req_company_email TEXT,
-        req_cnpj TEXT,
-        req_deadline_days TEXT,
-        req_days_type TEXT,
-        req_address TEXT,
-        req_business_hours TEXT,
-        req_fiscal_name TEXT,
-        req_fiscal_phone TEXT,
-        requester_name TEXT NOT NULL,
-        requester_matricula TEXT NOT NULL,
-        requester_email TEXT NOT NULL,
-        verification_code TEXT NOT NULL,
-        pdf_attachment_name TEXT,
-        pdf_attachment_path TEXT,
-        email_subject TEXT,
-        email_text TEXT,
-        email_html TEXT,
-        email_status TEXT NOT NULL DEFAULT 'pending',
-        email_error TEXT,
-        created_at INTEGER NOT NULL,
-        sent_at INTEGER,
-        code_id INTEGER,
-        FOREIGN KEY(code_id) REFERENCES requisition_codes(id)
-      )
-    `);
-
-    db.run('ALTER TABLE unit_users ADD COLUMN doc TEXT DEFAULT ""', [], (err) => {
-      if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run('ALTER TABLE unit_users ADD COLUMN email TEXT DEFAULT ""', [], (err) => {
-      if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run('ALTER TABLE unit_users ADD COLUMN phone TEXT DEFAULT ""', [], (err) => {
-      if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run('ALTER TABLE unit_users ADD COLUMN role TEXT DEFAULT ""', [], (err) => {
-      if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run('ALTER TABLE users ADD COLUMN can_view_overview INTEGER NOT NULL DEFAULT 0', [], (err) => {
-      if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run('ALTER TABLE users ADD COLUMN cpf TEXT DEFAULT ""', [], (err) => {
-      if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run('ALTER TABLE users ADD COLUMN matricula TEXT DEFAULT ""', [], (err) => {
-      if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run('ALTER TABLE users ADD COLUMN birthDate TEXT DEFAULT ""', [], (err) => {
-      if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run('ALTER TABLE users ADD COLUMN phone TEXT DEFAULT ""', [], (err) => {
-      if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run('ALTER TABLE users ADD COLUMN cargo TEXT DEFAULT ""', [], (err) => {
-      if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run('ALTER TABLE users ADD COLUMN expirationDate TEXT DEFAULT ""', [], (err) => {
-      if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run('ALTER TABLE users ADD COLUMN observacoes TEXT DEFAULT ""', [], (err) => {
-      if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run('ALTER TABLE users ADD COLUMN access_level TEXT DEFAULT ""', [], (err) => {
-      if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run('ALTER TABLE users ADD COLUMN account_status TEXT NOT NULL DEFAULT "ativo"', [], (err) => {
-      if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-    db.run('ALTER TABLE users ADD COLUMN permissions_json TEXT DEFAULT "{}"', [], (err) => {
-      if (err && !err.message.includes('duplicate column')) console.error(err);
-    });
-
-    function ensureDefaultUser(email, plainPassword, name, role) {
-      db.get('SELECT id FROM users WHERE email = ?', [email.toLowerCase()], (err, row) => {
-        if (err) {
-          console.error('Erro ao verificar usuário padrão:', err);
-          return;
-        }
-        if (!row) {
-          db.run(
-            'INSERT INTO users (email, password, name, role, status, verified, can_view_overview) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [email.toLowerCase(), plainPassword, name, role, 'Aprovado', 1, (role === 'developer' || role === 'admin') ? 1 : 0],
-            (insertErr) => {
-              if (insertErr) {
-                console.error('Erro ao criar usuário padrão:', insertErr);
-              }
-            }
-          );
-        } else {
-          db.run(
-            'UPDATE users SET password = ?, name = ?, role = ?, status = ?, verified = 1, can_view_overview = ? WHERE email = ?',
-            [plainPassword, name, role, 'Aprovado', (role === 'developer' || role === 'admin') ? 1 : 0, email.toLowerCase()],
-            (updateErr) => {
-              if (updateErr) {
-                console.error('Erro ao atualizar usuário padrão:', updateErr);
-              }
-            }
-          );
-        }
-      });
+    for (const statement of statements) {
+      await db.query(statement);
     }
+  }
 
-    ensureDefaultUser('admin@copal.mt.gov', 'Senha123', 'Administrador COPAL', 'admin');
-    ensureDefaultUser('dev@copal.mt.gov', 'Dev2026!', 'Desenvolvedor COPAL', 'developer');
-    ensureDefaultUser('2001diegodeoliveir@gmail.com', 'Inter@1909', 'Desenvolvedor', 'developer');
-    ensureDefaultUser('devhenrique', 'Inter@1909', 'DEV Henrique', 'developer');
-    ensureDefaultUser('copal adm', 'Copal@2026', 'Copal ADM', 'admin');
-
-    db.get('SELECT COUNT(*) AS count FROM contacts', [], (err, row) => {
-      if (!err && row && row.count === 0) {
-        const defaultContacts = [
-          { unidade: 'COPAL', setor: 'Coordenação Geral', telefone: '(65) 3613-5500', ramal: '201' },
-          { unidade: 'COPAL', setor: 'Gerência de Contratos', telefone: '(65) 3613-5502', ramal: '205' },
-          { unidade: 'SESP', setor: 'Diretoria de TI', telefone: '(65) 3613-5540', ramal: '310 / 312' },
-          { unidade: 'PM-MT', setor: 'Comando Geral / Protocolo', telefone: '(65) 3613-8800', ramal: '102' },
-          { unidade: 'PJC-MT', setor: 'Superintendência Geral', telefone: '(65) 3613-6800', ramal: 'Ramal Direto' }
-        ];
-        defaultContacts.forEach(contact => {
-          db.run(
-            'INSERT INTO contacts (unidade, setor, telefone, ramal) VALUES (?, ?, ?, ?)',
-            [contact.unidade, contact.setor, contact.telefone, contact.ramal]
-          );
-        });
-      }
-    });
-
-    function ensureUnitAdmin(unitCode) {
-      db.get(
-        'SELECT id FROM unit_users WHERE unit_code = ? AND upper(login) = ? LIMIT 1',
-        [unitCode, 'ADM'],
-        (err, row) => {
-          if (err) {
-            console.error('Erro ao verificar usuário ADM da unidade', unitCode, err);
-            return;
-          }
-          if (!row) {
-            db.run(
-              'INSERT INTO unit_users (unit_code, login, pass, name, doc, email, phone, role, is_default) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-              [unitCode, 'ADM', '123456', 'Administrador Local', '', '', '', 'Administrator', 1],
-              (insertErr) => {
-                if (insertErr) {
-                  console.error('Erro ao criar ADM padrão da unidade', unitCode, insertErr);
-                }
-              }
-            );
-          }
-        }
-      );
-    }
-
-    db.get('SELECT COUNT(*) AS count FROM units', [], (err, row) => {
-      if (!err && row && row.count === 0) {
-        const defaultUnits = [
-          { code: 'CBM-MT', name: 'Corpo de Bombeiros Militar', location: 'Cuiabá - MT', responsible: 'Ten. Cel. Silva' },
-          { code: 'PM-MT', name: 'Polícia Militar de Mato Grosso', location: 'Cuiabá - MT', responsible: 'Cel. Souza' },
-          { code: 'PJC', name: 'Polícia Judiciária Civil', location: 'Cuiabá - MT', responsible: 'Delegado Lima' }
-        ];
-        defaultUnits.forEach(unit => {
-          db.run(
-            'INSERT INTO units (code, name, location, responsible, status) VALUES (?, ?, ?, ?, ?)',
-            [unit.code, unit.name, unit.location, unit.responsible, 'Ativo'],
-            (insertErr) => {
-              if (insertErr) {
-                console.error('Erro ao criar unidade padrão:', insertErr);
-                return;
-              }
-              ensureUnitAdmin(unit.code);
-            }
-          );
-        });
-      } else if (!err && row && row.count > 0) {
-        db.each('SELECT code FROM units', [], (eachErr, unitRow) => {
-          if (eachErr) {
-            console.error('Erro ao listar unidades para criar ADM padrão:', eachErr);
-            return;
-          }
-          ensureUnitAdmin(unitRow.code);
-        });
-      }
-    });
-  });
+  await executeSqlFile(schemaPath);
+  await executeSqlFile(seedPath);
 }
 
 function getUserByEmail(email) {
@@ -445,10 +177,24 @@ function getUserByEmail(email) {
   });
 }
 
+function getUserByLoginIdentifier(identifier) {
+  return new Promise((resolve, reject) => {
+    const normalized = String(identifier || '').toLowerCase().trim();
+    db.get(
+      'SELECT * FROM users WHERE lower(email) = ? OR lower(name) = ? OR lower(matricula) = ? LIMIT 1',
+      [normalized, normalized, normalized],
+      (err, row) => {
+        if (err) return reject(err);
+        resolve(row);
+      }
+    );
+  });
+}
+
 function getSessionByToken(token) {
   return new Promise((resolve, reject) => {
     db.get(
-      `SELECT sessions.token, sessions.user_id, users.email, users.name, users.role, users.unidade, users.perfil, users.status, users.can_view_overview, users.background_image
+      `SELECT sessions.token, sessions.user_id, users.email, users.name, users.role, users.unidade, users.perfil, users.status, users.can_view_overview, users.background_image, users.access_level, users.account_status, users.permissions_json
        FROM sessions
        JOIN users ON sessions.user_id = users.id
        WHERE sessions.token = ?`,
@@ -515,16 +261,16 @@ app.post('/auth/register', async (req, res) => {
   try {
     const otpCode = generateOtp();
     const otpExpires = Date.now() + 15 * 60 * 1000;
-    const plainPassword = password;
+    const passwordHash = await hashPasswordSecure(password);
     const registrationRole = role === 'admin' || role === 'developer' ? 'user' : (role || 'user');
     const permissionsJson = JSON.stringify(safeJsonParse(permissions, {}));
     const normalizedAccountStatus = (accountStatus || 'ativo').toString().toLowerCase();
 
     db.run(
-      'INSERT INTO users (email, password, name, role, unidade, perfil, status, verified, can_view_overview, access_level, account_status, permissions_json, otp_code, otp_expires, cpf, matricula, birthDate, phone, cargo, expirationDate, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO users (email, password_hash, name, role, unidade, perfil, status, verified, can_view_overview, access_level, account_status, permissions_json, otp_code, otp_expires, cpf, matricula, birthDate, phone, cargo, expirationDate, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         email.toLowerCase(),
-        plainPassword,
+        passwordHash,
         name || '',
         registrationRole,
         unidade || '',
@@ -547,7 +293,7 @@ app.post('/auth/register', async (req, res) => {
       ],
       function (err) {
         if (err) {
-          if (err.code === 'SQLITE_CONSTRAINT') {
+          if (err.code === '23505') {
             return res.status(400).json({ message: 'E-mail já cadastrado.' });
           }
           return res.status(500).json({ message: 'Erro interno no servidor.' });
@@ -621,12 +367,14 @@ app.post('/auth/resend-otp', async (req, res) => {
 });
 
 app.post('/auth/login', async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ message: 'E-mail e senha são obrigatórios.' });
+  const { email, matricula, password } = req.body;
+  const loginIdentifier = String(matricula || email || '').trim();
+
+  if (!loginIdentifier || !password) {
+    return res.status(400).json({ message: 'Matrícula (ou e-mail) e senha são obrigatórios.' });
   }
 
-  const user = await getUserByEmail(email.toLowerCase());
+  const user = await getUserByLoginIdentifier(loginIdentifier);
   if (!user) {
     return res.status(401).json({ message: 'Credenciais inválidas.' });
   }
@@ -635,17 +383,18 @@ app.post('/auth/login', async (req, res) => {
     return res.status(403).json({ message: 'Conta inativa. Fale com o administrador.' });
   }
 
-  const passwordMatches = user.password === password || user.password === hashPassword(password);
+  const passwordMatches = await verifyPasswordSecure(password, user.password_hash);
   if (!passwordMatches) {
     return res.status(401).json({ message: 'Credenciais inválidas.' });
   }
 
-  if (!user.verified) {
-    return res.status(403).json({ message: 'Conta não verificada. Confirme o código enviado por e-mail.' });
+  if (!isBcryptHash(user.password_hash)) {
+    const upgradedHash = await hashPasswordSecure(password);
+    db.run('UPDATE users SET password_hash = ? WHERE id = ?', [upgradedHash, user.id]);
   }
 
-  if (user.password !== password) {
-    db.run('UPDATE users SET password = ? WHERE id = ?', [password, user.id]);
+  if (!user.verified) {
+    return res.status(403).json({ message: 'Conta não verificada. Confirme o código enviado por e-mail.' });
   }
 
   const token = generateToken();
@@ -661,6 +410,7 @@ app.post('/auth/login', async (req, res) => {
         accessToken: token,
         user: {
           email: user.email,
+          matricula: user.matricula || null,
           name: user.name,
           role: user.role || 'user',
           unidade: user.unidade || null,
@@ -1031,11 +781,12 @@ app.post('/api/units', async (req, res) => {
     function (err) {
       if (err) return res.status(500).json({ message: 'Erro ao criar unidade.' });
       const unitId = this.lastID;
+      const defaultUnitPassHash = hashPassword('123456');
       db.run(
         'INSERT INTO unit_users (unit_code, login, pass, name, doc, email, phone, role, is_default) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [code, 'ADM', '123456', 'Administrador Local', '', '', '', 'Administrator', 1],
+        [code, 'ADM', defaultUnitPassHash, 'Administrador Local', '', '', '', 'Administrator', 1],
         (userErr) => {
-          if (userErr && userErr.code !== 'SQLITE_CONSTRAINT') {
+          if (userErr && userErr.code !== '23505') {
             console.error('Erro ao criar usuário ADM da unidade:', userErr);
           }
           res.json({ id: unitId, code, name, location: location || '', responsible: responsible || '', status: status || 'Ativo' });
@@ -1059,12 +810,13 @@ app.post('/api/unit-users/:unitCode', async (req, res) => {
   if (!login || !pass) {
     return res.status(400).json({ message: 'Login e senha são obrigatórios.' });
   }
+  const unitPassHash = hashPassword(pass);
   db.run(
     'INSERT INTO unit_users (unit_code, login, pass, name, doc, email, phone, role, is_default) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [unitCode, login, pass, name || '', doc || '', email || '', phone || '', role || '', is_default ? 1 : 0],
+    [unitCode, login, unitPassHash, name || '', doc || '', email || '', phone || '', role || '', is_default ? 1 : 0],
     function (err) {
       if (err) return res.status(500).json({ message: 'Erro ao criar usuário da unidade.' });
-      res.json({ id: this.lastID, unit_code: unitCode, login, pass, name: name || '', doc: doc || '', email: email || '', phone: phone || '', role: role || '', is_default: is_default ? 1 : 0 });
+      res.json({ id: this.lastID, unit_code: unitCode, login, name: name || '', doc: doc || '', email: email || '', phone: phone || '', role: role || '', is_default: is_default ? 1 : 0 });
     }
   );
 });
@@ -1072,9 +824,10 @@ app.post('/api/unit-users/:unitCode', async (req, res) => {
 app.put('/api/unit-users/:id', async (req, res) => {
   const { id } = req.params;
   const { login, pass, name, doc, email, phone, role, is_default } = req.body;
+  const unitPassHash = hashPassword(pass || '');
   db.run(
     'UPDATE unit_users SET login = ?, pass = ?, name = ?, doc = ?, email = ?, phone = ?, role = ?, is_default = ? WHERE id = ?',
-    [login || '', pass || '', name || '', doc || '', email || '', phone || '', role || '', is_default ? 1 : 0, id],
+    [login || '', unitPassHash, name || '', doc || '', email || '', phone || '', role || '', is_default ? 1 : 0, id],
     function (err) {
       if (err) return res.status(500).json({ message: 'Erro ao atualizar usuário da unidade.' });
       res.json({ success: true });
@@ -1098,10 +851,10 @@ app.get('/api/contracts', async (req, res) => {
       if (!row) return res.status(404).json({ message: 'Contrato não encontrado.' });
       return res.json({
         ...row,
-        lotes: row.lotes ? JSON.parse(row.lotes) : [],
-        unidades: row.unidades ? JSON.parse(row.unidades) : [],
-        aditivos: row.aditivos ? JSON.parse(row.aditivos) : [],
-        empenhos: row.empenhos ? JSON.parse(row.empenhos) : [],
+        lotes: safeJsonParse(row.lotes, []),
+        unidades: safeJsonParse(row.unidades, []),
+        aditivos: safeJsonParse(row.aditivos, []),
+        empenhos: safeJsonParse(row.empenhos, []),
       });
     });
     return;
@@ -1111,10 +864,10 @@ app.get('/api/contracts', async (req, res) => {
     if (err) return res.status(500).json({ message: 'Erro ao buscar contratos.' });
     const contracts = rows.map(row => ({
       ...row,
-      lotes: row.lotes ? JSON.parse(row.lotes) : [],
-      unidades: row.unidades ? JSON.parse(row.unidades) : [],
-      aditivos: row.aditivos ? JSON.parse(row.aditivos) : [],
-      empenhos: row.empenhos ? JSON.parse(row.empenhos) : [],
+      lotes: safeJsonParse(row.lotes, []),
+      unidades: safeJsonParse(row.unidades, []),
+      aditivos: safeJsonParse(row.aditivos, []),
+      empenhos: safeJsonParse(row.empenhos, []),
     }));
     res.json({ contracts });
   });
@@ -1127,10 +880,10 @@ app.get('/api/contracts/:numContrato', async (req, res) => {
     if (!row) return res.status(404).json({ message: 'Contrato não encontrado.' });
     res.json({
       ...row,
-      lotes: row.lotes ? JSON.parse(row.lotes) : [],
-      unidades: row.unidades ? JSON.parse(row.unidades) : [],
-      aditivos: row.aditivos ? JSON.parse(row.aditivos) : [],
-      empenhos: row.empenhos ? JSON.parse(row.empenhos) : [],
+      lotes: safeJsonParse(row.lotes, []),
+      unidades: safeJsonParse(row.unidades, []),
+      aditivos: safeJsonParse(row.aditivos, []),
+      empenhos: safeJsonParse(row.empenhos, []),
     });
   });
 });
@@ -1157,7 +910,7 @@ app.post('/api/contracts', async (req, res) => {
   }
 
   contractsDb.run(
-    `INSERT OR REPLACE INTO contracts (
+    `INSERT INTO contracts (
         numContrato,
         numProcesso,
         credor,
@@ -1171,7 +924,22 @@ app.post('/api/contracts', async (req, res) => {
         unidades,
         aditivos,
         empenhos
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?::jsonb)
+      ON CONFLICT (numContrato)
+      DO UPDATE SET
+        numProcesso = EXCLUDED.numProcesso,
+        credor = EXCLUDED.credor,
+        valorGlobal = EXCLUDED.valorGlobal,
+        objeto = EXCLUDED.objeto,
+        dtInicial = EXCLUDED.dtInicial,
+        dtFinal = EXCLUDED.dtFinal,
+        arquivoContrato = EXCLUDED.arquivoContrato,
+        conteudoArquivoBase64 = EXCLUDED.conteudoArquivoBase64,
+        lotes = EXCLUDED.lotes,
+        unidades = EXCLUDED.unidades,
+        aditivos = EXCLUDED.aditivos,
+        empenhos = EXCLUDED.empenhos,
+        updated_at = NOW()`,
     [
       numContrato,
       numProcesso || '',
@@ -1272,7 +1040,14 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  initDatabase();
-  console.log(`Servidor iniciado em http://localhost:${PORT}`);
-});
+(async () => {
+  try {
+    await initDatabase();
+    app.listen(PORT, () => {
+      console.log(`Servidor iniciado em http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Erro ao inicializar o banco PostgreSQL:', error);
+    process.exit(1);
+  }
+})();

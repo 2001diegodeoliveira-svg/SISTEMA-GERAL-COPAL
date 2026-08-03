@@ -1,20 +1,21 @@
 # Sistema Geral COPAL
 
-Este repositório contém uma aplicação web com frontend estático e um backend em Node.js/Express usando SQLite para autenticação, gestão de usuários, contatos, unidades, contratos e integração com IA GOV MT.
+Este repositório contém uma aplicação web com frontend estático e backend Node.js/Express, migrado para PostgreSQL para autenticação, gestão de usuários, contatos, unidades, contratos, requisições e integração com IA GOV MT.
 
 ## Estrutura do projeto
 
-- `server.js` – backend Express com rotas de autenticação, cadastro, uploads, contratos e IA
-- `package.json` – dependências e scripts de execução
-- `db_init.sql` – script SQL de referência para a estrutura do banco
-- `*.html.html` – páginas do frontend, mantidas na raiz do projeto
-- `uploads/` – pasta gerada localmente para arquivos enviados pelo usuário
-- `database.sqlite` – banco local gerado automaticamente em execução
+- `backend/server.js` - API principal Express
+- `backend/config/database.js` - conexão e camada de compatibilidade PostgreSQL
+- `backend/database/schema.sql` - schema PostgreSQL
+- `backend/database/seed.sql` - carga inicial
+- `frontend/*.html.html` - páginas do frontend
+- `uploads/` - pasta de anexos
 
 ## Requisitos
 
 - Node.js 18+ recomendado
 - npm
+- PostgreSQL 14+
 
 ## Como executar localmente
 
@@ -26,31 +27,46 @@ Este repositório contém uma aplicação web com frontend estático e um backen
    ```bash
    cp .env.example .env
    ```
-3. Ajuste as variáveis de ambiente, se necessário.
-4. Inicie o servidor:
+3. Crie um banco PostgreSQL (exemplo: `copal`).
+4. Aplique schema e seed:
    ```bash
-   npm start
+   psql -h localhost -U postgres -d copal -f backend/database/schema.sql
+   psql -h localhost -U postgres -d copal -f backend/database/seed.sql
    ```
-5. Acesse:
+5. Ajuste as variáveis de ambiente em `.env`, se necessário.
+6. Inicie o servidor:
+   ```bash
+   npm run dev
+   ```
+7. Acesse:
    ```text
    http://localhost:3000/
    ```
 
 ## Variáveis de ambiente
 
-O projeto usa variáveis de ambiente para configuração de e-mail, porta e integração com IA. Consulte o arquivo [.env.example](.env.example).
+O projeto usa variáveis de ambiente para banco de dados, autenticação e e-mail. Consulte [.env.example](.env.example) e [backend/.env.example](backend/.env.example).
+
+## Usuário inicial
+
+Após rodar o seed, o usuário padrão é:
+
+- E-mail: `admin@copal.mt.gov`
+- Senha: `Senha123`
+
+Observação: no primeiro login, o hash legado é atualizado automaticamente para bcrypt.
 
 ## Publicação no GitHub
 
 Antes de publicar:
 
-- não envie arquivos locais como `database.sqlite`, `uploads/` ou segredos reais;
+- não envie `uploads/` ou segredos reais;
 - mantenha as credenciais em `.env` localmente;
 - use um repositório privado se o sistema ainda contiver dados sensíveis;
 - revise se há informações institucionais ou senhas padrão que não devem permanecer no repositório.
 
 ## Observações importantes
 
-- O projeto ainda possui uma estrutura mista de frontend estático + backend em um único diretório.
-- Para um cenário mais profissional, a recomendação é separar frontend e backend em pastas diferentes no futuro.
-- O banco é SQLite local, ideal para ambiente de desenvolvimento e testes, mas não é o mais indicado para produção multiusuário.
+- O frontend permanece estático e consome a API do backend.
+- A migração para PostgreSQL foi aplicada mantendo os endpoints principais para evitar quebra de layout e fluxo.
+- Para produção, recomenda-se configurar HTTPS, CORS restritivo e rotação de tokens.

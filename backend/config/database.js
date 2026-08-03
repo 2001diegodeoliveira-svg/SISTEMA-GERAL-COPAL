@@ -1,0 +1,121 @@
+const { Pool } = require('pg');
+const dotenv = require('dotenv');
+
+dotenv.config();
+
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT || 5432),
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+function translatePlaceholders(sql) {
+  let index = 0;
+  return String(sql).replace(/\?/g, () => ` $${++index}`.trimStart());
+}
+
+function normalizeSql(sql) {
+  return translatePlaceholders(sql)
+    .replace(/AUTOINCREMENT/gi, 'BIGSERIAL')
+    .replace(/INTEGER PRIMARY KEY BIGSERIAL/gi, 'BIGSERIAL PRIMARY KEY');
+}
+
+class CompatDatabase {
+  constructor(poolInstance) {
+    this.pool = poolInstance;
+    this.queue = Promise.resolve();
+  }
+
+  serialize(callback) {
+    callback();
+  }
+
+  enqueue(task) {
+    this.queue = this.queue.then(task, task);
+    return this.queue;
+  }
+
+  run(sql, params = [], callback) {
+    const finalSql = normalizeSql(sql);
+    const isInsert = /^\s*insert\s/i.test(finalSql);
+    const needsReturning = isInsert && !/\breturning\b/i.test(finalSql);
+    const query = needsReturning ? `${finalSql} RETURNING id` : finalSql;
+
+    return this.enqueue(async () => {
+      const result = await this.pool.query(query, params);
+      const meta = {
+        lastID: result.rows?.[0]?.id ?? null,
+        changes: result.rowCount || 0,
+      };
+      if (typeof callback === 'function') {
+        callback.call(meta, null);
+      }
+      return meta;
+    }).catch((error) => {
+      if (typeof callback === 'function') {
+        callback(error);
+        return null;
+      }
+      throw error;
+    });
+  }
+
+  get(sql, params = [], callback) {
+    const finalSql = normalizeSql(sql);
+    return this.enqueue(async () => {
+      const result = await this.pool.query(finalSql, params);
+      const row = result.rows?.[0] || undefined;
+      if (typeof callback === 'function') {
+        callback(null, row);
+      }
+      return row;
+    }).catch((error) => {
+      if (typeof callback === 'function') {
+        callback(error);
+        return null;
+      }
+      throw error;
+    });
+  }
+
+  all(sql, params = [], callback) {
+    const finalSql = normalizeSql(sql);
+    return this.enqueue(async () => {
+      const result = await this.pool.query(finalSql, params);
+      const rows = result.rows || [];
+      if (typeof callback === 'function') {
+        callback(null, rows);
+      }
+      return rows;
+    }).catch((error) => {
+      if (typeof callback === 'function') {
+        callback(error);
+        return null;
+      }
+      throw error;
+    });
+  }
+
+  async query(sql, params = []) {
+    const finalSql = normalizeSql(sql);
+    return this.pool.query(finalSql, params);
+  }
+
+  close() {
+    return this.pool.end();
+  }
+}
+
+function createDatabase() {
+  return new CompatDatabase(pool);
+}
+
+module.exports = {
+  pool,
+  createDatabase,
+};
