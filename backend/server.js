@@ -139,7 +139,6 @@ function parseCorsOrigins() {
     'http://localhost:5500',
     'http://127.0.0.1:5500',
     'https://2001diegodeoliveira-svg.github.io',
-    'https://sistema-geral-copal.vercel.app',
   ];
 
   const fromEnv = String(process.env.CORS_ORIGINS || '')
@@ -152,15 +151,28 @@ function parseCorsOrigins() {
 
 const allowedOrigins = parseCorsOrigins();
 
+function isAllowedOrigin(origin) {
+  if (!origin) {
+    return true;
+  }
+
+  if (allowedOrigins.includes(origin)) {
+    return true;
+  }
+
+  try {
+    const parsedOrigin = new URL(origin);
+    const host = String(parsedOrigin.hostname || '').toLowerCase();
+    return host.endsWith('.vercel.app') || host === 'vercel.app';
+  } catch (error) {
+    return false;
+  }
+}
+
 app.use(cors({
   origin(origin, callback) {
     // Permite ferramentas sem Origin (curl/postman/health-checks internos).
-    if (!origin) {
-      callback(null, true);
-      return;
-    }
-
-    if (allowedOrigins.includes(origin)) {
+    if (isAllowedOrigin(origin)) {
       callback(null, true);
       return;
     }
