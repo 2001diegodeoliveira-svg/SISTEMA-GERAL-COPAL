@@ -47,6 +47,22 @@ Este repositório contém uma aplicação web com frontend estático e backend N
 
 Quando o frontend está publicado no GitHub Pages, a API precisa estar em uma URL pública (Render/Railway/etc).
 
+## Configuração para Vercel
+
+Este repositório também pode publicar apenas o frontend no Vercel. A raiz do site aponta para [frontend/home.html.html](frontend/home.html.html) e as demais páginas continuam funcionando como arquivos estáticos.
+
+Passos:
+
+1. Conecte o repositório no Vercel.
+2. Não adicione build command.
+3. Mantenha o deploy como site estático.
+4. Acesse a home pela URL raiz do projeto.
+
+Observação:
+
+- O backend Node.js/Express continua fora do Vercel neste formato.
+- A API pública deve permanecer em Render, Railway ou outro host compatível.
+
 ### Opção recomendada: Render Blueprint
 
 Este repositório já contém o arquivo [render.yaml](render.yaml), que cria:

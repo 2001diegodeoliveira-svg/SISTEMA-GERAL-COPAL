@@ -272,7 +272,7 @@
   <div class="stage-sub">Somente consulta — dashboard, contratos e unidades. Toque nos elementos para navegar.</div>
   <div class="stage-actions">
     <div class="download-card">
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://localhost:3000/App%20mobile/download.html" alt="QR code para baixar o app" />
+      <img id="downloadQr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://localhost:3000/App%20mobile/download.html" alt="QR code para baixar o app" />
       <div class="download-card-content">
         <div class="download-card-title">Baixe o app COPAL SESP</div>
         <div class="download-card-text">Escaneie o QR code para abrir a página de download do app mobile.</div>
@@ -501,6 +501,15 @@ function renderUnidades(){
 renderContratos(contratos, 'contratos-list');
 renderContratos(contratos.slice(0,3), 'dash-recent');
 renderUnidades();
+
+(function updateDownloadQr() {
+  const qr = document.getElementById('downloadQr');
+  if (!qr) return;
+
+  const origin = window.location.origin || '';
+  const downloadUrl = `${origin}/frontend/App%20mobile/download.html`;
+  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(downloadUrl)}`;
+})();
 
 function showTab(name){
   document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));

@@ -410,13 +410,21 @@
     <!-- Scripts de Ícones -->
     <script>
         lucide.createIcons();
+        function resolveFrontendPath(relativePath) {
+            if ((window.location.hostname || '').toLowerCase().includes('vercel.app')) {
+                return `/frontend/${String(relativePath || '').replace(/^\.?\/?/, '')}`;
+            }
+
+            return String(relativePath || '');
+        }
+
     const userNavTab = document.getElementById('userNavTab');
     if (userNavTab) {
         userNavTab.style.display = 'none';
     }
         function openUserRegistration(event) {
             event.preventDefault();
-            window.location.href = 'cadastrouser.html.html';
+            window.location.href = resolveFrontendPath('cadastrouser.html.html');
         }
 
         async function loadUsers() {

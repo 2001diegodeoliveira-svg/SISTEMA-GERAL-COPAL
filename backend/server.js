@@ -139,6 +139,7 @@ function parseCorsOrigins() {
     'http://localhost:5500',
     'http://127.0.0.1:5500',
     'https://2001diegodeoliveira-svg.github.io',
+    'https://sistema-geral-copal.vercel.app',
   ];
 
   const fromEnv = String(process.env.CORS_ORIGINS || '')

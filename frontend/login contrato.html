@@ -140,7 +140,10 @@
 
         (async () => {
             if (await hasValidSession()) {
-                window.location.href = 'contratos.html.html';
+                                const target = (window.location.hostname || '').toLowerCase().includes('vercel.app')
+                                    ? '/frontend/contratos.html.html'
+                                    : 'contratos.html.html';
+                                window.location.href = target;
             }
         })();
 
@@ -192,7 +195,10 @@
                     localStorage.setItem('userRole', data.user.role);
                 }
 
-                window.location.href = 'contratos.html.html';
+                                const target = (window.location.hostname || '').toLowerCase().includes('vercel.app')
+                                    ? '/frontend/contratos.html.html'
+                                    : 'contratos.html.html';
+                                window.location.href = target;
             } catch (error) {
                 loginMessage.innerText = 'Não foi possível conectar ao servidor.';
             } finally {

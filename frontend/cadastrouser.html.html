@@ -619,7 +619,7 @@
     <nav class="main-nav">
         <ul class="nav-links">
             <li>
-                <button id="tabBtnHome" onclick="window.location.href='home.html.html';">
+                <button id="tabBtnHome" onclick="window.location.href=resolveFrontendPath('home.html.html');">
                     <i data-lucide="home" style="width: 15px;"></i> Home
                 </button>
             </li>
@@ -998,6 +998,14 @@
     <!-- SCRIPT DE LÓGICA -->
     <script>
         lucide.createIcons();
+
+        function resolveFrontendPath(relativePath) {
+            if ((window.location.hostname || '').toLowerCase().includes('vercel.app')) {
+                return `/frontend/${String(relativePath || '').replace(/^\.?\/?/, '')}`;
+            }
+
+            return String(relativePath || '');
+        }
 
         let pendingUserRequests = [];
 

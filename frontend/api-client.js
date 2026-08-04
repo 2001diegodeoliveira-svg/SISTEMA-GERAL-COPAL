@@ -4,10 +4,22 @@
   let runtimeConfig = null;
   let configLoaded = false;
   const originalFetch = window.fetch.bind(window);
+  const onVercelHost = /(^|\.)vercel\.app$/i.test(String(window.location.hostname || ''));
 
   function normalizeBase(value) {
     return String(value || '').trim().replace(/\/$/, '');
   }
+
+  function resolveFrontendPath(relativePath) {
+    const normalizedPath = String(relativePath || '').replace(/^\.?\/?/, '');
+    if ((window.location.hostname || '').toLowerCase().includes('vercel.app')) {
+      return `/frontend/${normalizedPath}`;
+    }
+
+    return normalizedPath;
+  }
+
+  window.resolveFrontendPath = resolveFrontendPath;
 
   function setBaseUrl(baseUrl, persist) {
     configuredBase = normalizeBase(baseUrl);
@@ -36,26 +48,39 @@
 
     const fallback = defaultConfig();
 
-    try {
-      const response = await originalFetch('app-config.json', { cache: 'no-store' });
-      if (!response.ok) {
-        runtimeConfig = fallback;
-        return runtimeConfig;
-      }
+    const pathname = String(window.location.pathname || '').toLowerCase();
+    const candidates = pathname.includes('/frontend/')
+      ? ['app-config.json']
+      : ['/frontend/app-config.json', 'frontend/app-config.json', 'app-config.json'];
 
-      const parsed = await response.json();
-      runtimeConfig = {
-        ...fallback,
-        ...parsed,
-        githubPagesHosts: Array.isArray(parsed.githubPagesHosts) && parsed.githubPagesHosts.length
-          ? parsed.githubPagesHosts
-          : fallback.githubPagesHosts,
-      };
-      return runtimeConfig;
-    } catch (error) {
-      runtimeConfig = fallback;
-      return runtimeConfig;
+    for (const candidate of candidates) {
+      try {
+        const response = await originalFetch(candidate, { cache: 'no-store' });
+        if (!response.ok) {
+          continue;
+        }
+
+        const parsed = await response.json();
+        runtimeConfig = {
+          ...fallback,
+          ...parsed,
+          githubPagesHosts: Array.isArray(parsed.githubPagesHosts) && parsed.githubPagesHosts.length
+            ? parsed.githubPagesHosts
+            : fallback.githubPagesHosts,
+        };
+        return runtimeConfig;
+      } catch (error) {
+        continue;
+      }
     }
+
+    runtimeConfig = fallback;
+    return runtimeConfig;
+  }
+
+  if (onVercelHost) {
+    localStorage.removeItem('API_BASE_URL');
+    setBaseUrl('', false);
   }
 
   function isLocalHost(host) {
@@ -92,7 +117,7 @@
     return [...new Set([primary, ...extras].filter(Boolean))];
   }
 
-  setBaseUrl(window.API_BASE_URL || storedBase || '', false);
+  setBaseUrl(onVercelHost ? '' : (window.API_BASE_URL || storedBase || ''), false);
 
   window.setApiBaseUrl = function setApiBaseUrl(url) {
     setBaseUrl(url, true);
@@ -126,6 +151,11 @@
   }
 
   async function bootstrapApiBase() {
+    if (onVercelHost) {
+      setBaseUrl('', false);
+      return;
+    }
+
     runtimeConfig = await loadRuntimeConfig();
 
     const localFallbackBase = normalizeBase(runtimeConfig.localApiBase || 'http://localhost:3000');
@@ -184,6 +214,10 @@
     const rawUrl = typeof input === 'string' ? input : (input && input.url) || '';
 
     if (isBackendPath(rawUrl)) {
+      if (onVercelHost) {
+        return originalFetch(input, init);
+      }
+
       if (!runtimeConfig) {
         runtimeConfig = await loadRuntimeConfig();
       }
