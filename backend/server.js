@@ -911,6 +911,36 @@ app.post('/api/units', authenticateToken, authorizeAdmin, async (req, res) => {
   );
 });
 
+app.delete('/api/units/:id', authenticateToken, authorizeAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  db.get('SELECT id, code, name FROM units WHERE id = ?', [id], (findErr, unit) => {
+    if (findErr) return res.status(500).json({ message: 'Erro ao localizar unidade.' });
+    if (!unit) return res.status(404).json({ message: 'Unidade não encontrada.' });
+
+    db.run('DELETE FROM unit_users WHERE unit_code = ?', [unit.code], (deleteUsersErr) => {
+      if (deleteUsersErr) {
+        return res.status(500).json({ message: 'Erro ao remover usuários vinculados à unidade.' });
+      }
+
+      db.run('DELETE FROM units WHERE id = ?', [id], function (deleteUnitErr) {
+        if (deleteUnitErr) {
+          return res.status(500).json({ message: 'Erro ao remover unidade.' });
+        }
+
+        return res.json({
+          success: true,
+          deletedUnit: {
+            id: unit.id,
+            code: unit.code,
+            name: unit.name,
+          },
+        });
+      });
+    });
+  });
+});
+
 app.get('/api/unit-users/:unitCode', async (req, res) => {
   const { unitCode } = req.params;
   db.all('SELECT * FROM unit_users WHERE unit_code = ? ORDER BY id DESC', [unitCode], (err, rows) => {
