@@ -1552,10 +1552,10 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p style="font-size: 0.8rem; color: #64748b;">Informe o e-mail e a senha do administrador para liberar o cadastro de unidades.</p>
+                <p style="font-size: 0.8rem; color: #64748b;">Informe o login do administrador para liberar o cadastro de unidades. A validação acontece no backend.</p>
                 <div class="form-group">
-                    <label>E-mail Administrador</label>
-                    <input type="text" id="loginUsername" placeholder="Digite o e-mail do administrador" autocomplete="off">
+                    <label>Login do Administrador</label>
+                    <input type="text" id="loginUsername" placeholder="ADM@COPAL" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label>Senha</label>
@@ -1903,7 +1903,7 @@
         let pendingUnitCode = null;
         let activeUnitCode = null;
         let authenticatedUserRef = null; // Armazena a referência do usuário logado (ADM ou Usuário Cadastrado)
-        let authToken = localStorage.getItem('accessToken') || '';
+        let authToken = '';
         let pendingAdminAction = null;
 
         let pendingRequisitionCode = null;
@@ -2326,9 +2326,6 @@
                     }
 
                     authToken = data.accessToken || '';
-                    if (authToken) {
-                        localStorage.setItem('accessToken', authToken);
-                    }
 
                     closeAdminLoginModal();
                     modal.classList.add('active');

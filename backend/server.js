@@ -29,6 +29,8 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const FRONTEND_DIR = path.join(ROOT_DIR, 'frontend');
 const uploadPath = process.env.UPLOAD_PATH || 'uploads';
 const UPLOAD_DIR = path.isAbsolute(uploadPath) ? uploadPath : path.join(ROOT_DIR, uploadPath);
+const ADMIN_BOOTSTRAP_LOGIN = String(process.env.ADMIN_BOOTSTRAP_LOGIN || 'ADM@COPAL').trim().toLowerCase();
+const ADMIN_BOOTSTRAP_PASSWORD = String(process.env.ADMIN_BOOTSTRAP_PASSWORD || 'COPAL@2026');
 
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -433,7 +435,7 @@ app.post('/auth/login', async (req, res) => {
     return res.status(400).json({ message: 'Matrícula (ou e-mail) e senha são obrigatórios.' });
   }
 
-  if (normalizedIdentifier === 'adm@copal' && password === 'COPAL@2026') {
+  if (normalizedIdentifier === ADMIN_BOOTSTRAP_LOGIN && password === ADMIN_BOOTSTRAP_PASSWORD) {
     const adminUser = await new Promise((resolve, reject) => {
       db.get(
         `SELECT * FROM users
