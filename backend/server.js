@@ -34,8 +34,8 @@ if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
-const db = createDatabase();
-const contractsDb = createDatabase();
+const db = createDatabase('users');
+const contractsDb = createDatabase('contracts');
 
 function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');

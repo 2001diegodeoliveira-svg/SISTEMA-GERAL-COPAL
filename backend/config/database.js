@@ -3,6 +3,19 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+const pools = new Map();
+
+const GENERIC_URL_KEYS = [
+  'DATABASE_URL',
+  'POSTGRES_INTERNAL_URL',
+  'POSTGRES_URL',
+  'PG_CONNECTION_STRING',
+  'POSTGRES_PRISMA_URL',
+  'POSTGRESQL_URL',
+  'RENDER_POSTGRES_INTERNAL_URL',
+  'RENDER_POSTGRES_URL',
+];
+
 function firstNonEmpty(...values) {
   for (const value of values) {
     if (typeof value === 'string' && value.trim()) {
@@ -12,17 +25,29 @@ function firstNonEmpty(...values) {
   return '';
 }
 
-function findConnectionStringFromEnv() {
-  const preferredKeys = [
-    'DATABASE_URL',
-    'POSTGRES_INTERNAL_URL',
-    'POSTGRES_URL',
-    'PG_CONNECTION_STRING',
-    'POSTGRES_PRISMA_URL',
-    'POSTGRESQL_URL',
-    'RENDER_POSTGRES_INTERNAL_URL',
-    'RENDER_POSTGRES_URL',
-  ];
+function normalizeScope(scope) {
+  return String(scope || 'default').trim().toLowerCase() || 'default';
+}
+
+function scopePrefix(scope) {
+  const normalized = normalizeScope(scope);
+  if (normalized === 'default') return '';
+  return normalized.toUpperCase().replace(/[^A-Z0-9]+/g, '_');
+}
+
+function findConnectionStringFromEnv(scope) {
+  const prefix = scopePrefix(scope);
+  const scopedKeys = prefix
+    ? [
+        `${prefix}_DATABASE_URL`,
+        `${prefix}_POSTGRES_INTERNAL_URL`,
+        `${prefix}_POSTGRES_URL`,
+        `${prefix}_PG_CONNECTION_STRING`,
+        `${prefix}_POSTGRESQL_URL`,
+      ]
+    : [];
+
+  const preferredKeys = [...scopedKeys, ...GENERIC_URL_KEYS];
 
   for (const key of preferredKeys) {
     const value = firstNonEmpty(process.env[key]);
@@ -34,58 +59,97 @@ function findConnectionStringFromEnv() {
     if (typeof value !== 'string' || !value.trim()) return false;
     if (!/url/i.test(key)) return false;
     if (!/(postgres|database|pg)/i.test(key)) return false;
+    if (prefix && !key.startsWith(`${prefix}_`)) return false;
     return /^postgres(ql)?:\/\//i.test(value.trim());
   });
 
-  return dynamicEntry ? dynamicEntry[1].trim() : '';
+  if (dynamicEntry) return dynamicEntry[1].trim();
+
+  if (prefix) {
+    const genericDynamicEntry = Object.entries(process.env).find(([key, value]) => {
+      if (typeof value !== 'string' || !value.trim()) return false;
+      if (!/url/i.test(key)) return false;
+      if (!/(postgres|database|pg)/i.test(key)) return false;
+      return /^postgres(ql)?:\/\//i.test(value.trim());
+    });
+
+    return genericDynamicEntry ? genericDynamicEntry[1].trim() : '';
+  }
+
+  return '';
+}
+
+function resolveWithScope(scope, keys) {
+  const prefix = scopePrefix(scope);
+  const scopedKeys = prefix ? keys.map((key) => `${prefix}_${key}`) : [];
+  return firstNonEmpty(...scopedKeys.map((key) => process.env[key]), ...keys.map((key) => process.env[key]));
+}
+
+function getFallbackDatabaseName(scope) {
+  const normalized = normalizeScope(scope);
+  if (normalized === 'users') return 'usuarios';
+  if (normalized === 'contracts') return 'copal';
+  return 'copal';
 }
 
 const isRender = String(process.env.RENDER || '').toLowerCase() === 'true';
 const isProductionLike = isRender || String(process.env.NODE_ENV || '').toLowerCase() === 'production';
-
-const connectionString = findConnectionStringFromEnv();
-
-const hasConnectionString = !!connectionString;
 const forceSsl = String(process.env.DB_SSL || '').toLowerCase() === 'true';
 const sslRequired = forceSsl || isProductionLike;
 
-const host = firstNonEmpty(process.env.DB_HOST, process.env.PGHOST, process.env.POSTGRES_HOST);
-const port = Number(firstNonEmpty(process.env.DB_PORT, process.env.PGPORT, process.env.POSTGRES_PORT) || 5432);
-const databaseName = firstNonEmpty(process.env.DB_NAME, process.env.PGDATABASE, process.env.POSTGRES_DB);
-const user = firstNonEmpty(process.env.DB_USER, process.env.PGUSER, process.env.POSTGRES_USER);
-const password = firstNonEmpty(process.env.DB_PASSWORD, process.env.PGPASSWORD, process.env.POSTGRES_PASSWORD);
+function resolvePoolConfig(scope) {
+  const connectionString = findConnectionStringFromEnv(scope);
+  const hasConnectionString = !!connectionString;
 
-if (!hasConnectionString && isProductionLike && !host) {
-  const urlLikeKeys = Object.keys(process.env)
-    .filter((key) => /url/i.test(key) && /(postgres|database|pg)/i.test(key))
-    .sort();
+  const host = resolveWithScope(scope, ['DB_HOST', 'PGHOST', 'POSTGRES_HOST']);
+  const port = Number(resolveWithScope(scope, ['DB_PORT', 'PGPORT', 'POSTGRES_PORT']) || 5432);
+  const databaseName = resolveWithScope(scope, ['DB_NAME', 'PGDATABASE', 'POSTGRES_DB']);
+  const dbUser = resolveWithScope(scope, ['DB_USER', 'PGUSER', 'POSTGRES_USER']);
+  const dbPassword = resolveWithScope(scope, ['DB_PASSWORD', 'PGPASSWORD', 'POSTGRES_PASSWORD']);
 
-  throw new Error(
-    `Banco não configurado para produção. Defina DATABASE_URL (ou POSTGRES_INTERNAL_URL) no ambiente do Render. Variáveis URL detectadas: ${urlLikeKeys.join(', ') || 'nenhuma'}.`
-  );
-}
+  if (!hasConnectionString && isProductionLike && !host) {
+    const urlLikeKeys = Object.keys(process.env)
+      .filter((key) => /url/i.test(key) && /(postgres|database|pg)/i.test(key))
+      .sort();
 
-const poolConfig = hasConnectionString
-  ? {
+    throw new Error(
+      `Banco '${normalizeScope(scope)}' não configurado para produção. Defina ${scopePrefix(scope) ? `${scopePrefix(scope)}_DATABASE_URL` : 'DATABASE_URL'} (ou *_POSTGRES_INTERNAL_URL) no ambiente do Render. Variáveis URL detectadas: ${urlLikeKeys.join(', ') || 'nenhuma'}.`
+    );
+  }
+
+  if (hasConnectionString) {
+    return {
       connectionString,
       ...(sslRequired ? { ssl: { rejectUnauthorized: false } } : {}),
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
-    }
-  : {
-      host: host || 'localhost',
-      port,
-      database: databaseName || user || 'copal',
-      user: user || 'postgres',
-      password: password || '',
-      max: 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
-      ...(sslRequired ? { ssl: { rejectUnauthorized: false } } : {}),
     };
+  }
 
-const pool = new Pool(poolConfig);
+  return {
+    host: host || 'localhost',
+    port,
+    database: databaseName || getFallbackDatabaseName(scope),
+    user: dbUser || 'postgres',
+    password: dbPassword || '',
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+    ...(sslRequired ? { ssl: { rejectUnauthorized: false } } : {}),
+  };
+}
+
+function getPool(scope = 'default') {
+  const normalizedScope = normalizeScope(scope);
+  if (pools.has(normalizedScope)) {
+    return pools.get(normalizedScope);
+  }
+
+  const pool = new Pool(resolvePoolConfig(normalizedScope));
+  pools.set(normalizedScope, pool);
+  return pool;
+}
 
 function translatePlaceholders(sql) {
   let index = 0;
@@ -184,11 +248,20 @@ class CompatDatabase {
   }
 }
 
-function createDatabase() {
-  return new CompatDatabase(pool);
+function createDatabase(scopeOrOptions = 'default') {
+  const scope = typeof scopeOrOptions === 'string'
+    ? scopeOrOptions
+    : (scopeOrOptions && scopeOrOptions.scope) || 'default';
+  return new CompatDatabase(getPool(scope));
 }
 
-module.exports = {
-  pool,
-  createDatabase,
-};
+const exported = { createDatabase, getPool };
+
+Object.defineProperty(exported, 'pool', {
+  enumerable: true,
+  get() {
+    return getPool('default');
+  },
+});
+
+module.exports = exported;

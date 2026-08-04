@@ -93,9 +93,27 @@ O projeto usa variáveis de ambiente para banco de dados, autenticação e e-mai
 Variáveis principais em produção:
 
 - `DATABASE_URL` (prioridade maior, conexão completa PostgreSQL)
+- `USERS_DATABASE_URL` (opcional; quando informado, módulo de usuários usa este banco)
+- `CONTRACTS_DATABASE_URL` (opcional; quando informado, módulo de contratos usa este banco)
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` (fallback para ambiente local)
 - `DB_SSL` (`true` para forçar SSL quando necessário)
 - `CORS_ORIGINS` (origens permitidas, separadas por vírgula)
+
+Exemplo para dois bancos no mesmo PostgreSQL:
+
+```env
+USERS_DB_HOST=seu-host
+USERS_DB_PORT=5432
+USERS_DB_NAME=usuarios
+USERS_DB_USER=seu-user
+USERS_DB_PASSWORD=sua-senha
+
+CONTRACTS_DB_HOST=seu-host
+CONTRACTS_DB_PORT=5432
+CONTRACTS_DB_NAME=copal
+CONTRACTS_DB_USER=seu-user
+CONTRACTS_DB_PASSWORD=sua-senha
+```
 
 Exemplo recomendado:
 
