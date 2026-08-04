@@ -883,7 +883,7 @@ app.get('/api/units', async (req, res) => {
   });
 });
 
-app.post('/api/units', async (req, res) => {
+app.post('/api/units', authenticateToken, authorizeAdmin, async (req, res) => {
   const { code, name, location, responsible, status } = req.body;
   if (!code || !name) {
     return res.status(400).json({ message: 'Código e nome da unidade são obrigatórios.' });

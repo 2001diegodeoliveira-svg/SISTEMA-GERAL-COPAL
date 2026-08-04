@@ -1552,14 +1552,14 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p style="font-size: 0.8rem; color: #64748b;">Informe o login (ADM ou seu Nome Completo de usuário) e sua senha.</p>
+                <p style="font-size: 0.8rem; color: #64748b;">Informe o e-mail e a senha do administrador para liberar o cadastro de unidades.</p>
                 <div class="form-group">
-                    <label>Login / Nome do Usuário</label>
-                    <input type="text" id="loginUsername" placeholder="Ex: ADM ou João da Silva">
+                    <label>E-mail Administrador</label>
+                    <input type="text" id="loginUsername" placeholder="Digite o e-mail do administrador" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label>Senha</label>
-                    <input type="password" id="loginPassword" placeholder="******">
+                    <input type="password" id="loginPassword" placeholder="Digite a senha do administrador" autocomplete="off">
                 </div>
             </div>
             <div class="modal-footer">
@@ -1903,6 +1903,8 @@
         let pendingUnitCode = null;
         let activeUnitCode = null;
         let authenticatedUserRef = null; // Armazena a referência do usuário logado (ADM ou Usuário Cadastrado)
+        let authToken = localStorage.getItem('accessToken') || '';
+        let pendingAdminAction = null;
 
         let pendingRequisitionCode = null;
         let currentRequesterEmail = '';
@@ -2168,6 +2170,28 @@
             document.getElementById('reqCodeHelp').innerText = 'Após clicar em Emitir Requisição, um código será enviado ao e-mail do servidor.';
         }
 
+        function getAuthHeaders(isJson = true) {
+            const headers = {};
+            if (isJson) {
+                headers['Content-Type'] = 'application/json';
+            }
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+            return headers;
+        }
+
+        function clearAdminLoginForm() {
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        function closeAdminLoginModal() {
+            clearAdminLoginForm();
+            pendingAdminAction = null;
+            adminLoginModal.classList.remove('active');
+        }
+
         // Lógica do Modal de Cadastro de Unidades
         const modal = document.getElementById('addUnitModal');
         const openModalBtn = document.getElementById('openModalBtn');
@@ -2175,7 +2199,11 @@
         const cancelModalBtn = document.getElementById('cancelModalBtn');
         const saveUnitBtn = document.getElementById('saveUnitBtn');
 
-        openModalBtn.addEventListener('click', () => modal.classList.add('active'));
+        openModalBtn.addEventListener('click', () => {
+            pendingAdminAction = 'add-unit';
+            clearAdminLoginForm();
+            adminLoginModal.classList.add('active');
+        });
         closeModalBtn.addEventListener('click', () => modal.classList.remove('active'));
         cancelModalBtn.addEventListener('click', () => modal.classList.remove('active'));
 
@@ -2193,7 +2221,7 @@
             try {
                 const res = await fetch('/api/units', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify({ code: sigla, name, location, responsible, status: 'Ativo' })
                 });
                 const data = await res.json();
@@ -2265,13 +2293,55 @@
         });
 
         // BOTÃO X E CANCELAR DO LOGIN (mantidos apenas como backup)
-        document.getElementById('closeLoginModalBtn').addEventListener('click', () => adminLoginModal.classList.remove('active'));
-        document.getElementById('cancelLoginModalBtn').addEventListener('click', () => adminLoginModal.classList.remove('active'));
+        document.getElementById('closeLoginModalBtn').addEventListener('click', closeAdminLoginModal);
+        document.getElementById('cancelLoginModalBtn').addEventListener('click', closeAdminLoginModal);
 
-        // AUTENTICAÇÃO DESATIVADA TEMPORARIAMENTE
-        document.getElementById('submitLoginBtn').addEventListener('click', () => {
+        document.getElementById('submitLoginBtn').addEventListener('click', async () => {
+            const email = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (!email || !password) {
+                alert('Informe o e-mail e a senha do administrador.');
+                return;
+            }
+
+            if (pendingAdminAction === 'add-unit') {
+                try {
+                    const res = await fetch('/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        alert(data.message || 'Falha ao autenticar administrador.');
+                        return;
+                    }
+
+                    const role = String(data.user?.role || '').toLowerCase();
+                    if (role !== 'admin' && role !== 'developer') {
+                        alert('Apenas administradores podem cadastrar novas unidades.');
+                        return;
+                    }
+
+                    authToken = data.accessToken || '';
+                    if (authToken) {
+                        localStorage.setItem('accessToken', authToken);
+                    }
+
+                    closeAdminLoginModal();
+                    modal.classList.add('active');
+                    return;
+                } catch (error) {
+                    console.error('Erro ao autenticar administrador:', error);
+                    alert('Erro de conexão ao servidor. Tente novamente.');
+                    return;
+                }
+            }
+
             if (!pendingUnitCode) return;
-            adminLoginModal.classList.remove('active');
+            closeAdminLoginModal();
             grantUnitAccess(pendingUnitCode, true);
         });
 
