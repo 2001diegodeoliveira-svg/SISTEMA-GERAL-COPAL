@@ -1844,12 +1844,29 @@
                 if (/^https?:\/\//i.test(attachmentValue)) {
                     return attachmentValue;
                 }
-                if (attachmentValue.startsWith('/')) {
-                    return apiUrl(attachmentValue);
-                }
                 if (/^data:/i.test(attachmentValue)) {
                     return attachmentValue;
                 }
+
+                const normalizedPath = attachmentValue.replace(/\\/g, '/').replace(/^\/+/, '');
+
+                if (/^uploads\//i.test(normalizedPath)) {
+                    return apiUrl(`/${encodeURI(normalizedPath)}`);
+                }
+
+                if (/^contracts\//i.test(normalizedPath)) {
+                    return apiUrl(`/uploads/${encodeURI(normalizedPath)}`);
+                }
+
+                if (attachmentValue.startsWith('/')) {
+                    return apiUrl(encodeURI(attachmentValue));
+                }
+
+                if (normalizedPath.includes('/')) {
+                    return apiUrl(`/${encodeURI(normalizedPath)}`);
+                }
+
+                return apiUrl(`/uploads/contracts/${encodeURIComponent(normalizedPath)}`);
             }
 
             if (contentValue) {
