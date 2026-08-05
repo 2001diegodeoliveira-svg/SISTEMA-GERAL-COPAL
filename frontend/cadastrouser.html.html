@@ -559,6 +559,31 @@
         .btn-reject { background-color: var(--required-red); color: #fff; margin-left: 0.4rem; }
         .btn-reject:hover { opacity: 0.9; }
 
+        .pending-access-summary {
+            margin-top: 0.35rem;
+            font-size: 0.72rem;
+            color: #475569;
+        }
+
+        .approval-permissions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.7rem;
+            margin-top: 0.7rem;
+        }
+
+        .approval-permission-item {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 0.45rem 0.55rem;
+            font-size: 0.78rem;
+            color: #334155;
+        }
+
         /* --- MODAL DE AUTENTICACAO --- */
         .modal-overlay {
             position: fixed;
@@ -627,6 +652,7 @@
             .form-row { grid-template-columns: 1fr; }
             .form-footer { flex-direction: column; gap: 1rem; align-items: stretch; }
             .footer-right-buttons { flex-direction: column; }
+            .approval-permissions-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -1060,6 +1086,29 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="approvalPermissionsModal">
+        <div class="modal-card" style="max-width: 720px;">
+            <h3><i data-lucide="key" style="width: 20px;"></i> Módulos e Permissões da Solicitação</h3>
+            <p>Defina os acessos que este usuário terá após a aprovação.</p>
+
+            <div class="approval-permissions-grid">
+                <label class="approval-permission-item"><input type="checkbox" id="approval-perm-processos"> Processos</label>
+                <label class="approval-permission-item"><input type="checkbox" id="approval-perm-unidade"> Unidade</label>
+                <label class="approval-permission-item"><input type="checkbox" id="approval-perm-cadastro-inicial"> Cadastro Inicial</label>
+                <label class="approval-permission-item"><input type="checkbox" id="approval-perm-aditivos"> Aditivos & Atualizações</label>
+                <label class="approval-permission-item"><input type="checkbox" id="approval-perm-empenho"> Empenho</label>
+                <label class="approval-permission-item"><input type="checkbox" id="approval-perm-overview"> Visão Geral</label>
+                <label class="approval-permission-item"><input type="checkbox" id="approval-perm-questionario-docs"> Questionário & Docs</label>
+                <label class="approval-permission-item"><input type="checkbox" id="approval-perm-execucao-pagamento"> Execução & Pagamento</label>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeApprovalPermissionsModal()">Fechar</button>
+                <button type="button" class="btn-submit" onclick="saveApprovalPermissions()">Salvar Permissões</button>
+            </div>
+        </div>
+    </div>
+
     <!-- RODAPÉ -->
     <footer>
         <p>COPAL SESP - Secretaria de Estado de Segurança Pública de Mato Grosso</p>
@@ -1081,6 +1130,114 @@
 
         let pendingUserRequests = [];
         let registeredUsers = [];
+        let approvalTargetUserId = null;
+        const pendingApprovalPermissions = {};
+
+        const APPROVAL_PERMISSION_MAP = {
+            processos: 'approval-perm-processos',
+            unidade: 'approval-perm-unidade',
+            cadastroInicial: 'approval-perm-cadastro-inicial',
+            aditivosAtualizacoes: 'approval-perm-aditivos',
+            empenho: 'approval-perm-empenho',
+            visaoGeral: 'approval-perm-overview',
+            questionarioDocs: 'approval-perm-questionario-docs',
+            execucaoPagamento: 'approval-perm-execucao-pagamento'
+        };
+
+        const DEFAULT_REQUEST_PERMISSIONS = {
+            processos: true,
+            unidade: true,
+            cadastroInicial: true,
+            aditivosAtualizacoes: true,
+            empenho: false,
+            visaoGeral: false,
+            questionarioDocs: false,
+            execucaoPagamento: false
+        };
+
+        function safeParsePermissions(value) {
+            if (!value) return {};
+            if (typeof value === 'object') return value;
+            try {
+                return JSON.parse(value);
+            } catch (error) {
+                return {};
+            }
+        }
+
+        function normalizeApprovalPermissions(source) {
+            const parsed = safeParsePermissions(source);
+            return {
+                processos: !!(parsed.processos ?? DEFAULT_REQUEST_PERMISSIONS.processos),
+                unidade: !!(parsed.unidade ?? DEFAULT_REQUEST_PERMISSIONS.unidade),
+                cadastroInicial: !!(parsed.cadastroInicial ?? DEFAULT_REQUEST_PERMISSIONS.cadastroInicial),
+                aditivosAtualizacoes: !!(parsed.aditivosAtualizacoes ?? DEFAULT_REQUEST_PERMISSIONS.aditivosAtualizacoes),
+                empenho: !!(parsed.empenho ?? DEFAULT_REQUEST_PERMISSIONS.empenho),
+                visaoGeral: !!(parsed.visaoGeral ?? DEFAULT_REQUEST_PERMISSIONS.visaoGeral),
+                questionarioDocs: !!(parsed.questionarioDocs ?? DEFAULT_REQUEST_PERMISSIONS.questionarioDocs),
+                execucaoPagamento: !!(parsed.execucaoPagamento ?? DEFAULT_REQUEST_PERMISSIONS.execucaoPagamento)
+            };
+        }
+
+        function getPendingRequestById(id) {
+            return pendingUserRequests.find((request) => Number(request.id) === Number(id)) || null;
+        }
+
+        function getApprovalPermissionsForUser(id) {
+            if (pendingApprovalPermissions[id]) {
+                return normalizeApprovalPermissions(pendingApprovalPermissions[id]);
+            }
+
+            const request = getPendingRequestById(id);
+            return normalizeApprovalPermissions(request?.permissions || request?.permissions_json || {});
+        }
+
+        function getPermissionsSummaryText(permissions) {
+            const enabled = Object.entries(permissions || {})
+                .filter(([, active]) => !!active)
+                .map(([key]) => key);
+
+            return enabled.length
+                ? `Módulos liberados: ${enabled.length}`
+                : 'Nenhum módulo liberado';
+        }
+
+        function openApprovalPermissionsModal(id) {
+            approvalTargetUserId = Number(id);
+            const permissions = getApprovalPermissionsForUser(approvalTargetUserId);
+
+            Object.entries(APPROVAL_PERMISSION_MAP).forEach(([key, inputId]) => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.checked = !!permissions[key];
+                }
+            });
+
+            document.getElementById('approvalPermissionsModal').classList.add('active');
+            lucide.createIcons();
+        }
+
+        function closeApprovalPermissionsModal() {
+            approvalTargetUserId = null;
+            document.getElementById('approvalPermissionsModal').classList.remove('active');
+        }
+
+        function saveApprovalPermissions() {
+            if (!approvalTargetUserId) {
+                alert('Selecione a solicitação antes de salvar permissões.');
+                return;
+            }
+
+            const permissions = {};
+            Object.entries(APPROVAL_PERMISSION_MAP).forEach(([key, inputId]) => {
+                const input = document.getElementById(inputId);
+                permissions[key] = !!(input && input.checked);
+            });
+
+            pendingApprovalPermissions[approvalTargetUserId] = permissions;
+            closeApprovalPermissionsModal();
+            renderAdminUsers();
+        }
 
         async function fetchPendingRequests() {
             if (!authToken) {
@@ -1436,6 +1593,8 @@
             }
 
             pendingUserRequests.forEach(u => {
+                const permissions = getApprovalPermissionsForUser(u.id);
+                const summaryText = getPermissionsSummaryText(permissions);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><strong>${u.name || '-'}</strong></td>
@@ -1445,6 +1604,8 @@
                     <td>${u.perfil || '-'}</td>
                     <td><span class="status-badge status-pending">${u.status || 'Pendente'}</span></td>
                     <td>
+                        <button class="btn-action btn-secondary" onclick="openApprovalPermissionsModal(${u.id})">Módulos e Permissões</button>
+                        <div class="pending-access-summary">${summaryText}</div>
                         <button class="btn-action btn-approve" onclick="approveUser(${u.id})">Aprovar</button>
                         <button class="btn-action btn-reject" onclick="deleteUser(${u.id})">Excluir</button>
                     </td>
@@ -1528,13 +1689,20 @@
         async function approveUser(id) {
             if (!confirm('Deseja aprovar esta solicitação de cadastro?')) return;
 
+            const permissions = getApprovalPermissionsForUser(id);
+
             try {
                 const res = await fetch(`/api/user-requests/${id}/approve`, {
                     method: 'PUT',
-                    headers: getAuthHeaders()
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        permissions,
+                        canViewOverview: !!permissions.visaoGeral
+                    })
                 });
                 const data = await res.json();
                 if (res.ok) {
+                    delete pendingApprovalPermissions[id];
                     fetchPendingRequests();
                 } else {
                     alert(data.message || 'Erro ao aprovar usuário.');

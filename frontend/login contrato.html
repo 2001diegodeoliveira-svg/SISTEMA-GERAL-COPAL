@@ -121,29 +121,7 @@
     <script src="api-client.js"></script>
 
     <script>
-        async function hasValidSession() {
-            const token = localStorage.getItem('accessToken') || '';
-            if (!token) return false;
-            try {
-                const data = await apiFetchJson('/auth/me', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                const status = String(data?.user?.status || '').toLowerCase();
-                const accountStatus = String(data?.user?.accountStatus || 'ativo').toLowerCase();
-                return status === 'aprovado' && accountStatus === 'ativo';
-            } catch (error) {
-                return false;
-            }
-        }
-
-        (async () => {
-            if (await hasValidSession()) {
-                                const target = (window.location.hostname || '').toLowerCase().includes('vercel.app')
-                                    ? '/frontend/contratos.html.html'
-                                    : 'contratos.html.html';
-                                window.location.href = target;
-            }
-        })();
+        // Login automático desativado: o usuário precisa sempre informar credenciais.
 
         document.getElementById('contractsLoginForm').addEventListener('submit', async (event) => {
             event.preventDefault();

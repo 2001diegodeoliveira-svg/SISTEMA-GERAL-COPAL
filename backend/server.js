@@ -1203,15 +1203,25 @@ app.post('/api/contracts', async (req, res) => {
 });
 
 app.get('/api/user-requests', authenticateToken, authorizeAdmin, async (req, res) => {
-  db.all("SELECT id, email, name, cpf, matricula, phone, cargo, unidade, perfil, status, verified FROM users WHERE lower(coalesce(status, 'pendente')) <> 'aprovado' ORDER BY id DESC", [], (err, rows) => {
+  db.all("SELECT id, email, name, cpf, matricula, phone, cargo, unidade, perfil, status, verified, permissions_json, can_view_overview FROM users WHERE lower(coalesce(status, 'pendente')) <> 'aprovado' ORDER BY id DESC", [], (err, rows) => {
     if (err) return res.status(500).json({ message: 'Erro ao buscar solicitações de usuários.' });
-    res.json({ requests: rows });
+    const requests = rows.map((row) => ({
+      ...row,
+      permissions: safeJsonParse(row.permissions_json, {}),
+      canViewOverview: !!row.can_view_overview,
+    }));
+    res.json({ requests });
   });
 });
 
 app.put('/api/user-requests/:id/approve', authenticateToken, authorizeAdmin, async (req, res) => {
   const { id } = req.params;
-  db.run('UPDATE users SET verified = TRUE, status = ? WHERE id = ?', ['Aprovado', id], function (err) {
+  const incomingPermissions = req.body?.permissions;
+  const parsedPermissions = safeJsonParse(incomingPermissions, {});
+  const permissionsJson = JSON.stringify(parsedPermissions || {});
+  const canViewOverview = !!(req.body?.canViewOverview || parsedPermissions?.visaoGeral);
+
+  db.run('UPDATE users SET verified = TRUE, status = ?, account_status = ?, permissions_json = ?, can_view_overview = ? WHERE id = ?', ['Aprovado', 'ativo', permissionsJson, canViewOverview ? 1 : 0, id], function (err) {
     if (err) return res.status(500).json({ message: 'Erro ao aprovar usuário.' });
     res.json({ success: true });
   });

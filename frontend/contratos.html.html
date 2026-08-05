@@ -276,6 +276,36 @@
             gap: 1rem;
         }
 
+        .header-user-profile {
+            display: none;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 0.15rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.12);
+            min-width: 180px;
+        }
+
+        .header-user-profile.visible {
+            display: flex;
+        }
+
+        .header-user-name {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--white);
+            line-height: 1.2;
+        }
+
+        .header-user-role {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.2;
+        }
+
         .system-badge-tag {
             background-color: rgba(255, 255, 255, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -777,6 +807,11 @@
                 <svg id="theme-icon" class="theme-icon" viewBox="0 0 24 24"></svg>
                 <span id="btn-text">Modo Escuro</span>
             </button>
+
+            <div id="contractsUserProfile" class="header-user-profile" aria-live="polite">
+                <span id="contractsUserName" class="header-user-name"></span>
+                <span id="contractsUserRole" class="header-user-role"></span>
+            </div>
 
             <div class="system-badge-tag">
                 <i data-lucide="shield-check" style="width: 16px;"></i>
@@ -1757,7 +1792,7 @@
         lucide.createIcons();
 
         let DB_CONTRATOS = {};
-        let contractsAuthToken = localStorage.getItem('accessToken') || '';
+        let contractsAuthToken = '';
         let contractsCurrentUser = null;
         const RATEIO_DEFAULT_UNITS = ['PM-MT', 'CBM-MT', 'CIOPAER', 'PJC-MT', 'POLITEC', 'SESP', 'COPAL'];
 
@@ -2293,6 +2328,51 @@
             return permissions;
         }
 
+        function normalizeProfileText(value) {
+            return String(value || '').trim();
+        }
+
+        function getContractsUserDisplayName(user) {
+            return normalizeProfileText(user?.nome || user?.name || user?.fullName || user?.matricula || user?.email);
+        }
+
+        function getContractsUserDisplayRole(user) {
+            const cargo = normalizeProfileText(user?.cargo || user?.position || user?.jobTitle);
+            if (cargo) return cargo;
+
+            const role = normalizeProfileText(user?.role);
+            if (!role) return '';
+
+            const roleMap = {
+                admin: 'Administrador',
+                developer: 'Desenvolvedor',
+                user: 'Usuário'
+            };
+
+            return roleMap[role.toLowerCase()] || role;
+        }
+
+        function updateContractsHeaderUserProfile(user) {
+            const profile = document.getElementById('contractsUserProfile');
+            const nameEl = document.getElementById('contractsUserName');
+            const roleEl = document.getElementById('contractsUserRole');
+            if (!profile || !nameEl || !roleEl) return;
+
+            const name = getContractsUserDisplayName(user);
+            const role = getContractsUserDisplayRole(user);
+
+            if (!name) {
+                nameEl.innerText = '';
+                roleEl.innerText = '';
+                profile.classList.remove('visible');
+                return;
+            }
+
+            nameEl.innerText = name;
+            roleEl.innerText = role || 'Cargo não informado';
+            profile.classList.add('visible');
+        }
+
         function setContractsTabVisibility(tabId, isVisible) {
             const content = document.getElementById(tabId);
             const btn = document.getElementById(`btn-${tabId}`);
@@ -2324,6 +2404,7 @@
 
         function applyContractsPermissions(user) {
             const permissions = normalizePermissions(user);
+            updateContractsHeaderUserProfile(user);
 
             Object.entries(CONTRACT_TABS_MAP).forEach(([permissionKey, tabId]) => {
                 setContractsTabVisibility(tabId, !!permissions[permissionKey]);
@@ -2486,14 +2567,11 @@
                 });
             }
 
-            validateExistingContractsSession().then((isValid) => {
-                if (isValid) {
-                    hideContractsLoginOverlay();
-                } else {
-                    applyContractsPermissions(null);
-                    showContractsLoginOverlay();
-                }
-            });
+            // Login automático desativado: exige preenchimento manual das credenciais.
+            contractsAuthToken = '';
+            contractsCurrentUser = null;
+            applyContractsPermissions(null);
+            showContractsLoginOverlay();
 
             loadRateioUnits();
 
