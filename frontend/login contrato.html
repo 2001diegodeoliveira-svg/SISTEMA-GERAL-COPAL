@@ -125,11 +125,9 @@
             const token = localStorage.getItem('accessToken') || '';
             if (!token) return false;
             try {
-                const response = await fetch('/auth/me', {
+                const data = await apiFetchJson('/auth/me', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                if (!response.ok) return false;
-                const data = await response.json();
                 const status = String(data?.user?.status || '').toLowerCase();
                 const accountStatus = String(data?.user?.accountStatus || 'ativo').toLowerCase();
                 return status === 'aprovado' && accountStatus === 'ativo';
@@ -165,17 +163,11 @@
             loginMessage.innerText = '';
 
             try {
-                const response = await fetch('/auth/login', {
+                const data = await apiFetchJson('/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ matricula, password })
                 });
-
-                const data = await response.json();
-                if (!response.ok) {
-                    loginMessage.innerText = data.message || 'Usuário não encontrado ou senha inválida.';
-                    return;
-                }
 
                 if (!data.accessToken) {
                     loginMessage.innerText = 'Falha na autenticação. Tente novamente.';
@@ -200,7 +192,7 @@
                                     : 'contratos.html.html';
                                 window.location.href = target;
             } catch (error) {
-                loginMessage.innerText = 'Não foi possível conectar ao servidor.';
+                loginMessage.innerText = error?.message || 'Não foi possível conectar ao servidor.';
             } finally {
                 loginBtn.disabled = false;
                 loginBtn.innerText = 'Entrar';
