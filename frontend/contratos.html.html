@@ -762,7 +762,7 @@
     </style>
 </head>
 <body>
-    <div id="contractsLoginOverlay" class="contracts-login-overlay" role="dialog" aria-modal="true" aria-labelledby="contractsLoginTitle">
+    <div id="contractsLoginOverlay" class="contracts-login-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="contractsLoginTitle">
         <div class="contracts-login-card">
             <div class="contracts-login-visual"></div>
             <div class="contracts-login-form">
@@ -2544,34 +2544,67 @@
             localStorage.setItem('tema', isDark ? 'escuro' : 'claro');
         }
 
+        function getContractsLoginTarget() {
+            return (window.location.hostname || '').toLowerCase().includes('vercel.app')
+                ? '/frontend/login%20contrato.html'
+                : 'login%20contrato.html';
+        }
+
+        function redirectToContractsLogin(clearSession = true) {
+            if (clearSession) {
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('userRole');
+            }
+            sessionStorage.removeItem('contractsAuthBootstrap');
+            window.location.href = getContractsLoginTarget();
+        }
+
+        function readContractsAuthBootstrap() {
+            try {
+                const raw = sessionStorage.getItem('contractsAuthBootstrap');
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                const age = Date.now() - Number(parsed?.at || 0);
+                if (!parsed || Number.isNaN(age) || age > 2 * 60 * 1000) {
+                    sessionStorage.removeItem('contractsAuthBootstrap');
+                    return null;
+                }
+                return parsed;
+            } catch (error) {
+                sessionStorage.removeItem('contractsAuthBootstrap');
+                return null;
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('tema') === 'escuro') {
                 atualizarInterface(true);
             } else {
                 atualizarInterface(false);
             }
+            const tokenFromStorage = localStorage.getItem('accessToken') || '';
 
-            const loginBtn = document.getElementById('contractsLoginBtn');
-            const matriculaInput = document.getElementById('contractsLoginMatricula');
-            const passwordInput = document.getElementById('contractsLoginPassword');
-
-            if (loginBtn) loginBtn.addEventListener('click', handleContractsLogin);
-            if (matriculaInput) {
-                matriculaInput.addEventListener('keydown', (event) => {
-                    if (event.key === 'Enter') handleContractsLogin();
-                });
-            }
-            if (passwordInput) {
-                passwordInput.addEventListener('keydown', (event) => {
-                    if (event.key === 'Enter') handleContractsLogin();
-                });
+            if (!tokenFromStorage) {
+                redirectToContractsLogin(false);
+                return;
             }
 
-            // Login automático desativado: exige preenchimento manual das credenciais.
-            contractsAuthToken = '';
-            contractsCurrentUser = null;
-            applyContractsPermissions(null);
-            showContractsLoginOverlay();
+            contractsAuthToken = tokenFromStorage;
+
+            (async () => {
+                const isValidSession = await validateExistingContractsSession();
+                sessionStorage.removeItem('contractsAuthBootstrap');
+
+                if (!isValidSession) {
+                    contractsAuthToken = '';
+                    contractsCurrentUser = null;
+                    applyContractsPermissions(null);
+                    redirectToContractsLogin(true);
+                    return;
+                }
+
+                hideContractsLoginOverlay();
+            })();
 
             loadRateioUnits();
 

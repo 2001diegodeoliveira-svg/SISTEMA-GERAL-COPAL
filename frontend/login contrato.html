@@ -165,6 +165,11 @@
                     localStorage.setItem('userRole', data.user.role);
                 }
 
+                sessionStorage.setItem('contractsAuthBootstrap', JSON.stringify({
+                    at: Date.now(),
+                    user: data.user || null
+                }));
+
                                 const target = (window.location.hostname || '').toLowerCase().includes('vercel.app')
                                     ? '/frontend/contratos.html.html'
                                     : 'contratos.html.html';
