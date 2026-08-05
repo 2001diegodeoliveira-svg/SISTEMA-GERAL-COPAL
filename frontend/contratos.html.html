@@ -553,6 +553,16 @@
             color: var(--text-dark);
         }
 
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            text-transform: uppercase;
+        }
+
+        .form-group input[type="email"] {
+            text-transform: none;
+        }
+
         input:focus, select:focus, textarea:focus {
             border-color: var(--sesp-light-blue);
             box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15);
@@ -2014,6 +2024,10 @@
             });
 
             loadRateioUnits();
+
+            document.addEventListener('input', (event) => {
+                enforceUppercaseValue(event.target);
+            });
         });
 
         /* ==========================================================================
@@ -2113,6 +2127,28 @@
 
         function formatMoney(num) {
             return "R$ " + num.toFixed(2).replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+        }
+
+        function enforceUppercaseValue(target) {
+            if (!target) return;
+            if (!(target instanceof HTMLInputElement) && !(target instanceof HTMLTextAreaElement)) return;
+            if (!target.closest('.form-group')) return;
+
+            if (target instanceof HTMLInputElement) {
+                const nonTextTypes = ['email', 'number', 'date', 'datetime-local', 'time', 'month', 'week', 'password', 'file', 'hidden'];
+                if (nonTextTypes.includes((target.type || '').toLowerCase())) return;
+            }
+
+            const original = String(target.value || '');
+            const upper = original.toUpperCase();
+            if (original !== upper) {
+                const start = target.selectionStart;
+                const end = target.selectionEnd;
+                target.value = upper;
+                if (typeof start === 'number' && typeof end === 'number') {
+                    target.setSelectionRange(start, end);
+                }
+            }
         }
 
         // CÁLCULO DE VIGÊNCIA DE CONTRATO
