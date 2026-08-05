@@ -1722,7 +1722,28 @@
 
         let DB_CONTRATOS = {};
         let contractsAuthToken = localStorage.getItem('accessToken') || '';
+        let contractsCurrentUser = null;
         const RATEIO_DEFAULT_UNITS = ['PM-MT', 'CBM-MT', 'CIOPAER', 'PJC-MT', 'POLITEC', 'SESP', 'COPAL'];
+
+        const CONTRACT_TABS_MAP = {
+            cadastroInicial: 'tab-cadastro',
+            aditivosAtualizacoes: 'tab-atualizacoes',
+            empenho: 'tab-empenho',
+            visaoGeral: 'tab-overview',
+            unidade: 'tab-unidade',
+            questionarioDocs: 'tab-questionario',
+            execucaoPagamento: 'tab-execucao'
+        };
+
+        const DEFAULT_PERMISSIONS = {
+            cadastroInicial: true,
+            aditivosAtualizacoes: true,
+            empenho: false,
+            visaoGeral: false,
+            unidade: true,
+            questionarioDocs: false,
+            execucaoPagamento: false
+        };
 
         function setContractsLoginError(message) {
             const errorEl = document.getElementById('contractsLoginError');
@@ -1748,12 +1769,83 @@
                 });
                 if (!response.ok) return false;
                 const data = await response.json();
+                contractsCurrentUser = data?.user || null;
+                applyContractsPermissions(contractsCurrentUser);
                 const status = String(data?.user?.status || '').toLowerCase();
                 const accountStatus = String(data?.user?.accountStatus || 'ativo').toLowerCase();
                 return status === 'aprovado' && accountStatus === 'ativo';
             } catch (error) {
+                contractsCurrentUser = null;
                 return false;
             }
+        }
+
+        function normalizePermissions(user) {
+            const role = String(user?.role || '').toLowerCase();
+            if (role === 'admin' || role === 'developer') {
+                return {
+                    cadastroInicial: true,
+                    aditivosAtualizacoes: true,
+                    empenho: true,
+                    visaoGeral: true,
+                    unidade: true,
+                    questionarioDocs: true,
+                    execucaoPagamento: true
+                };
+            }
+
+            const raw = user?.permissions && typeof user.permissions === 'object' ? user.permissions : {};
+            const hasExplicitPermissions = Object.keys(raw).length > 0;
+            const permissions = { ...(hasExplicitPermissions ? {} : DEFAULT_PERMISSIONS) };
+
+            permissions.cadastroInicial = !!(hasExplicitPermissions ? raw.cadastroInicial : permissions.cadastroInicial);
+            permissions.aditivosAtualizacoes = !!(hasExplicitPermissions ? raw.aditivosAtualizacoes : permissions.aditivosAtualizacoes);
+            permissions.empenho = !!(hasExplicitPermissions ? raw.empenho : permissions.empenho);
+            permissions.unidade = !!(hasExplicitPermissions ? raw.unidade : permissions.unidade);
+            permissions.questionarioDocs = !!(hasExplicitPermissions ? raw.questionarioDocs : permissions.questionarioDocs);
+            permissions.execucaoPagamento = !!(hasExplicitPermissions ? raw.execucaoPagamento : permissions.execucaoPagamento);
+            permissions.visaoGeral = !!(user?.canViewOverview || raw.visaoGeral || permissions.visaoGeral);
+
+            return permissions;
+        }
+
+        function setContractsTabVisibility(tabId, isVisible) {
+            const content = document.getElementById(tabId);
+            const btn = document.getElementById(`btn-${tabId}`);
+
+            if (content) content.style.display = isVisible ? '' : 'none';
+            if (btn) btn.style.display = isVisible ? '' : 'none';
+        }
+
+        function activateFirstVisibleContractTab() {
+            const orderedTabs = [
+                'tab-cadastro',
+                'tab-atualizacoes',
+                'tab-empenho',
+                'tab-overview',
+                'tab-unidade',
+                'tab-questionario',
+                'tab-execucao'
+            ];
+
+            const firstVisibleTabId = orderedTabs.find((tabId) => {
+                const content = document.getElementById(tabId);
+                return content && content.style.display !== 'none';
+            });
+
+            if (firstVisibleTabId) {
+                switchTab(null, firstVisibleTabId);
+            }
+        }
+
+        function applyContractsPermissions(user) {
+            const permissions = normalizePermissions(user);
+
+            Object.entries(CONTRACT_TABS_MAP).forEach(([permissionKey, tabId]) => {
+                setContractsTabVisibility(tabId, !!permissions[permissionKey]);
+            });
+
+            activateFirstVisibleContractTab();
         }
 
         async function handleContractsLogin() {
@@ -1796,6 +1888,8 @@
                 }
 
                 contractsAuthToken = data.accessToken || '';
+                contractsCurrentUser = data.user || null;
+                applyContractsPermissions(contractsCurrentUser);
                 if (contractsAuthToken) {
                     localStorage.setItem('accessToken', contractsAuthToken);
                 }
@@ -1919,6 +2013,7 @@
                 if (isValid) {
                     hideContractsLoginOverlay();
                 } else {
+                    applyContractsPermissions(null);
                     showContractsLoginOverlay();
                 }
             });

@@ -885,35 +885,35 @@
 
                             <div class="permissions-grid">
                                 <label class="permission-card">
-                                    <input type="checkbox" checked>
+                                    <input type="checkbox" id="perm-processos" checked>
                                     <div class="permission-details">
                                         <h4>Processos</h4>
                                         <p>Gerenciar processos</p>
                                     </div>
                                 </label>
                                 <label class="permission-card">
-                                    <input type="checkbox" checked>
+                                    <input type="checkbox" id="perm-unidade" checked>
                                     <div class="permission-details">
                                         <h4>Unidade</h4>
                                         <p>Gerenciar unidades</p>
                                     </div>
                                 </label>
                                 <label class="permission-card">
-                                    <input type="checkbox" checked>
+                                    <input type="checkbox" id="perm-cadastro-inicial" checked>
                                     <div class="permission-details">
                                         <h4>Cadastro Inicial</h4>
                                         <p>Gerenciar cadastro inicial</p>
                                     </div>
                                 </label>
                                 <label class="permission-card">
-                                    <input type="checkbox" checked>
+                                    <input type="checkbox" id="perm-aditivos" checked>
                                     <div class="permission-details">
                                         <h4>Aditivos & Atualizações</h4>
                                         <p>Gerenciar aditivos e atualizações</p>
                                     </div>
                                 </label>
                                 <label class="permission-card">
-                                    <input type="checkbox">
+                                    <input type="checkbox" id="perm-empenho">
                                     <div class="permission-details">
                                         <h4>Empenho</h4>
                                         <p>Gerenciar empenhos</p>
@@ -927,14 +927,14 @@
                                     </div>
                                 </label>
                                 <label class="permission-card">
-                                    <input type="checkbox">
+                                    <input type="checkbox" id="perm-questionario-docs">
                                     <div class="permission-details">
                                         <h4>Questionário Docs</h4>
                                         <p>Gerenciar questionários e documentos</p>
                                     </div>
                                 </label>
                                 <label class="permission-card">
-                                    <input type="checkbox">
+                                    <input type="checkbox" id="perm-execucao-pagamento">
                                     <div class="permission-details">
                                         <h4>Execução & Pagamento</h4>
                                         <p>Gerenciar execução e pagamento</p>
@@ -1370,6 +1370,17 @@
                 return;
             }
 
+            const selectedPermissions = {
+                processos: document.getElementById('perm-processos').checked,
+                unidade: document.getElementById('perm-unidade').checked,
+                cadastroInicial: document.getElementById('perm-cadastro-inicial').checked,
+                aditivosAtualizacoes: document.getElementById('perm-aditivos').checked,
+                empenho: document.getElementById('perm-empenho').checked,
+                visaoGeral: document.getElementById('perm-overview').checked,
+                questionarioDocs: document.getElementById('perm-questionario-docs').checked,
+                execucaoPagamento: document.getElementById('perm-execucao-pagamento').checked
+            };
+
             const payload = {
                 email: document.getElementById('email').value.trim(),
                 password: pass1,
@@ -1377,6 +1388,7 @@
                 unidade: document.getElementById('unidade-setor').value,
                 perfil: document.getElementById('perfil-acesso').value,
                 canViewOverview: document.getElementById('perm-overview').checked,
+                permissions: selectedPermissions,
                 role: 'user',
                 cpf: document.getElementById('cpf').value.trim(),
                 matricula: document.getElementById('matricula').value.trim(),
