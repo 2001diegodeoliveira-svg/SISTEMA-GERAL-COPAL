@@ -1768,11 +1768,9 @@
         async function validateExistingContractsSession() {
             if (!contractsAuthToken) return false;
             try {
-                const response = await fetch('/auth/me', {
+                const data = await apiFetchJson('/auth/me', {
                     headers: { Authorization: `Bearer ${contractsAuthToken}` }
                 });
-                if (!response.ok) return false;
-                const data = await response.json();
                 contractsCurrentUser = data?.user || null;
                 applyContractsPermissions(contractsCurrentUser);
                 const status = String(data?.user?.status || '').toLowerCase();
@@ -1870,17 +1868,11 @@
             setContractsLoginError('');
 
             try {
-                const response = await fetch('/auth/login', {
+                const data = await apiFetchJson('/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ matricula, password })
                 });
-
-                const data = await response.json();
-                if (!response.ok) {
-                    setContractsLoginError(data.message || 'Falha ao autenticar.');
-                    return;
-                }
 
                 const status = String(data?.user?.status || '').toLowerCase();
                 const accountStatus = String(data?.user?.accountStatus || 'ativo').toLowerCase();
@@ -1903,7 +1895,7 @@
 
                 hideContractsLoginOverlay();
             } catch (error) {
-                setContractsLoginError('Não foi possível conectar ao servidor de autenticação.');
+                setContractsLoginError(error?.message || 'Não foi possível conectar ao servidor de autenticação.');
             } finally {
                 loginButton.disabled = false;
                 loginButton.innerText = 'Entrar no Contratos';
@@ -1916,11 +1908,7 @@
             const normalizedNumber = normalizeContractNumber(numContrato);
             if (!normalizedNumber) return null;
             try {
-                const res = await fetch(`/api/contracts?numContrato=${encodeURIComponent(normalizedNumber)}`);
-                if (!res.ok) {
-                    return null;
-                }
-                const data = await res.json();
+                const data = await apiFetchJson(`/api/contracts?numContrato=${encodeURIComponent(normalizedNumber)}`);
                 if (data && data.numContrato) {
                     DB_CONTRATOS[normalizeContractNumber(data.numContrato)] = data;
                 }
@@ -1938,19 +1926,16 @@
                     numContrato: normalizeContractNumber(contractObj.numContrato),
                 };
 
-                const res = await fetch('/api/contracts', {
+                const data = await apiFetchJson('/api/contracts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(normalizedContract)
                 });
-                const data = await res.json();
-                if (res.ok) {
-                    if (normalizedContract.numContrato) {
-                        DB_CONTRATOS[normalizedContract.numContrato] = normalizedContract;
-                    }
-                    return data;
+
+                if (normalizedContract.numContrato) {
+                    DB_CONTRATOS[normalizedContract.numContrato] = normalizedContract;
                 }
-                throw new Error(data.message || 'Erro ao salvar contrato.');
+                return data;
             } catch (error) {
                 console.error(error);
                 throw error;
@@ -2299,8 +2284,7 @@
 
         async function loadRateioUnits() {
             try {
-                const res = await fetch('/api/units');
-                const data = await res.json();
+                const data = await apiFetchJson('/api/units');
                 const units = Array.isArray(data.units) ? data.units.map(u => u.code) : [];
                 if (units.length) {
                     renderRateioUnitOptions(units);
@@ -2755,9 +2739,8 @@
         // ABA UNIDADES
         async function fetchAllContracts() {
             try {
-                const res = await fetch('/api/contracts');
-                const data = await res.json();
-                if (res.ok && Array.isArray(data.contracts)) {
+                const data = await apiFetchJson('/api/contracts');
+                if (Array.isArray(data.contracts)) {
                     DB_CONTRATOS = {};
                     data.contracts.forEach(contract => {
                         DB_CONTRATOS[normalizeContractNumber(contract.numContrato)] = contract;
