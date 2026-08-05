@@ -1022,6 +1022,7 @@
                                         <th>Papel</th>
                                         <th>Situação</th>
                                         <th>Verificado</th>
+                                        <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="adminAccessUsersList">
@@ -1471,13 +1472,15 @@
             tbody.innerHTML = '';
 
             if (!registeredUsers.length) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#94a3b8;">Nenhum usuário cadastrado encontrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#94a3b8;">Nenhum usuário cadastrado encontrado.</td></tr>';
                 return;
             }
 
             registeredUsers.forEach((u) => {
                 const statusLabel = u.account_status || u.status || 'Não informado';
                 const verifiedLabel = u.verified ? 'Sim' : 'Não';
+                const userRole = String(u.role || '').toLowerCase();
+                const canRevoke = userRole !== 'admin' && userRole !== 'developer';
                 const tr = document.createElement('tr');
 
                 tr.innerHTML = `
@@ -1489,10 +1492,37 @@
                     <td>${u.role || '-'}</td>
                     <td><span class="status-badge ${getStatusBadgeClass(statusLabel)}">${statusLabel}</span></td>
                     <td><span class="status-badge ${u.verified ? 'status-approved' : 'status-pending'}">${verifiedLabel}</span></td>
+                    <td>
+                        ${canRevoke
+                            ? `<button class="btn-action btn-reject" onclick="revokeUserAccess(${u.id}, '${String(u.name || '').replace(/'/g, "\\'")}')">Excluir Acesso</button>`
+                            : '<span style="color:#94a3b8; font-size:0.72rem; font-weight:700;">Protegido</span>'}
+                    </td>
                 `;
 
                 tbody.appendChild(tr);
             });
+        }
+
+        async function revokeUserAccess(id, name) {
+            if (!confirm(`Deseja remover o acesso do usuário ${name || 'selecionado'}?`)) return;
+
+            try {
+                const res = await fetch(`/auth/users/${id}/revoke-access`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders()
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || 'Acesso removido com sucesso.');
+                    fetchRegisteredUsers();
+                } else {
+                    alert(data.message || 'Erro ao remover acesso do usuário.');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Erro de conexão ao servidor.');
+            }
         }
 
         async function approveUser(id) {

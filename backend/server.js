@@ -804,6 +804,51 @@ app.get('/auth/users', async (req, res) => {
   );
 });
 
+app.put('/auth/users/:id/revoke-access', authenticateToken, authorizeAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  db.get('SELECT id, role, name, email FROM users WHERE id = ?', [id], (findErr, user) => {
+    if (findErr) {
+      return res.status(500).json({ message: 'Erro ao localizar usuário.' });
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
+
+    const role = String(user.role || '').toLowerCase();
+    if (role === 'admin' || role === 'developer') {
+      return res.status(403).json({ message: 'Não é permitido remover acesso de administrador.' });
+    }
+
+    if (String(req.user.user_id) === String(user.id)) {
+      return res.status(400).json({ message: 'Você não pode remover o próprio acesso.' });
+    }
+
+    db.run(
+      'UPDATE users SET account_status = ?, status = ? WHERE id = ?',
+      ['inativo', 'Inativo', id],
+      function (updateErr) {
+        if (updateErr) {
+          return res.status(500).json({ message: 'Erro ao remover acesso do usuário.' });
+        }
+
+        return res.json({
+          success: true,
+          message: 'Acesso do usuário removido com sucesso.',
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            account_status: 'inativo',
+            status: 'Inativo',
+          },
+        });
+      }
+    );
+  });
+});
+
 app.post('/auth/upload-background', authenticateToken, upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'Arquivo não enviado.' });
