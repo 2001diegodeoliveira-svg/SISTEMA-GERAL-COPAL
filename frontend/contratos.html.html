@@ -2503,7 +2503,7 @@
                 });
             });
 
-            const processarESalvar = async (base64File = null) => {
+            const processarESalvar = async () => {
                 const contractObject = {
                     numContrato: num,
                     numProcesso: document.getElementById('numProcesso').value,
@@ -2519,7 +2519,6 @@
                     dtInicial: document.getElementById('dtInicial').value,
                     dtFinal: document.getElementById('dtFinal').value,
                     arquivoContrato: nomeAnexo,
-                    conteudoArquivoBase64: base64File,
                     lotes: lotesContratoData,
                     unidades: unidadesData,
                     aditivos: [],
@@ -2538,14 +2537,11 @@
             };
 
             if(fileInput.files.length > 0) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    processarESalvar(e.target.result);
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
                 processarESalvar();
+                return;
             }
+
+            processarESalvar();
         }
 
         // BUSCAS
@@ -2643,7 +2639,7 @@
 
             let nomeAnexo = fileInput.files.length > 0 ? fileInput.files[0].name : null;
 
-            const processarSalvarEmpenho = async (base64File = null) => {
+            const processarSalvarEmpenho = async () => {
                 let contract = DB_CONTRATOS[numContrato] || await fetchContract(numContrato);
                 if (!contract) {
                     alert(`Contrato ${numContrato} não encontrado para o lançamento de empenho.`);
@@ -2660,7 +2656,6 @@
                     tipoEmpenho: tipoEmpenho,
                     valorEmpenho: valorEmpenho,
                     arquivoNotaEmpenho: nomeAnexo,
-                    conteudoArquivoBase64: base64File,
                     dataLancamento: new Date().toLocaleDateString('pt-BR')
                 });
 
@@ -2682,14 +2677,11 @@
             };
 
             if(fileInput.files.length > 0) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    processarSalvarEmpenho(e.target.result);
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
                 processarSalvarEmpenho();
+                return;
             }
+
+            processarSalvarEmpenho();
         }
 
         // ADITIVOS DINÂMICOS
