@@ -846,8 +846,16 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="numContrato">Nº do Contrato *</label>
-                        <input type="text" id="numContrato" placeholder="Ex: 123/2026/SESP" required>
-                    </div>
+                        <input type="text" id="numContrato" placeholder="Ex: 0000/0000/SESP" required oninput="maskContractNumber(this)" onblur="finalizeContractNumber(this)">
+                            <small style="display:block; color: var(--text-muted); margin-top: 4px;">Use o padrão 0000/0000/SESP para facilitar a localização e edição.</small>
+                            <div style="display:flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                                <button type="button" class="btn btn-secondary" onclick="carregarContratoParaEdicao()">
+                                    <i data-lucide="edit-3" style="width:14px;"></i> Visualizar / Editar contrato salvo
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="abrirContratoAtualNaVisaoGeral()">
+                                    <i data-lucide="eye" style="width:14px;"></i> Abrir na visão geral
+                                </button>
+                            </div>
                     <div class="form-group">
                         <label for="numProcesso">Nº do Processo Aquisitivo *</label>
                         <input type="text" id="numProcesso" placeholder="Ex: SESP-PRO-2026/00123" required>
@@ -1095,6 +1103,7 @@
                         <i data-lucide="save" style="width:16px;"></i> Salvar e Avançar
                     </button>
                 </div>
+                <div id="cadastroContratoStatus" class="info-box" style="display:none; margin-top: 1rem;"></div>
             </section>
         </div>
 
@@ -1442,6 +1451,23 @@
                     <h2 class="step-title">Informações Complementares e Conformidade</h2>
                 </div>
 
+                <div class="form-grid" style="margin-bottom: 1rem;">
+                    <div class="form-group full-width" style="display:flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 260px;">
+                            <label for="buscaContratoQuestionario">Contrato para Processo de Pagamento *</label>
+                            <input type="text" id="buscaContratoQuestionario" placeholder="Ex: 0000/0000/SESP" oninput="maskContractNumber(this)" onblur="finalizeContractNumber(this)">
+                        </div>
+                        <button class="btn btn-secondary" type="button" onclick="localizarContratoQuestionario()">
+                            <i data-lucide="search" style="width:16px;"></i> Localizar contrato
+                        </button>
+                        <button class="btn btn-primary" type="button" onclick="abrirContratoQuestionarioNaVisaoGeral()">
+                            <i data-lucide="sliders" style="width:16px;"></i> Ver na visão geral
+                        </button>
+                    </div>
+                </div>
+
+                <div id="questionarioContratoDetalhes" class="info-box" style="display:none; margin-bottom: 1rem;"></div>
+
                 <div class="question-item">
                     <span class="question-title">1. O valor faturado está de acordo com a última atualização / contrato?</span>
                     <div class="radio-options">
@@ -1762,7 +1788,436 @@
         }
 
         function normalizeContractNumber(value) {
-            return String(value || '').trim().replace(/\s+/g, ' ');
+            return String(value || '').trim().replace(/\s+/g, ' ').toUpperCase();
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function escapeJsString(value) {
+            return String(value || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        }
+
+        function maskContractNumber(input) {
+            if (!input) return;
+            const raw = String(input.value || '').toUpperCase();
+            const cleaned = raw.replace(/[^A-Z0-9]/g, '');
+            const firstPart = cleaned.slice(0, 4);
+            const secondPart = cleaned.slice(4, 8);
+            const thirdPart = cleaned.slice(8, 12);
+
+            let formatted = firstPart;
+            if (cleaned.length > 4) {
+                formatted += `/${secondPart}`;
+            }
+            if (cleaned.length > 8) {
+                formatted += `/${thirdPart}`;
+            }
+
+            input.value = formatted;
+        }
+
+        function finalizeContractNumber(input) {
+            if (!input) return;
+            const normalized = normalizeContractNumber(input.value).toUpperCase();
+            const digits = normalized.replace(/[^A-Z0-9]/g, '');
+            if (/^\d{8}$/.test(digits)) {
+                input.value = `${digits.slice(0, 4)}/${digits.slice(4, 8)}/SESP`;
+                return;
+            }
+            input.value = normalized;
+        }
+
+        function getAttachmentUrl(contract) {
+            if (!contract) return '';
+
+            const attachmentValue = String(contract.arquivoContrato || '').trim();
+            const contentValue = String(contract.conteudoArquivoBase64 || '').trim();
+
+            if (attachmentValue) {
+                if (/^https?:\/\//i.test(attachmentValue)) {
+                    return attachmentValue;
+                }
+                if (attachmentValue.startsWith('/')) {
+                    return apiUrl(attachmentValue);
+                }
+                if (/^data:/i.test(attachmentValue)) {
+                    return attachmentValue;
+                }
+            }
+
+            if (contentValue) {
+                return `data:application/pdf;base64,${contentValue}`;
+            }
+
+            return '';
+        }
+
+        function getAttachmentLabel(contract) {
+            const label = String(contract?.arquivoContrato || '').trim();
+            if (label) return label.split('/').pop();
+            return contract?.conteudoArquivoBase64 ? 'Documento em base64' : 'Sem anexo';
+        }
+
+        function renderAttachmentLinks(contract) {
+            const attachmentUrl = getAttachmentUrl(contract);
+            if (!attachmentUrl) {
+                return '<span style="color: var(--text-muted);">Nenhum documento anexado.</span>';
+            }
+
+            const label = escapeHtml(getAttachmentLabel(contract));
+            const isPdf = /\.pdf($|\?)/i.test(String(contract?.arquivoContrato || '')) || /^data:application\/pdf/i.test(attachmentUrl);
+            const previewLabel = isPdf ? 'Visualizar PDF' : 'Abrir anexo';
+
+            return `
+                <a class="btn btn-secondary" href="${attachmentUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:6px; margin-right:8px; margin-top:8px;">
+                    <i data-lucide="paperclip" style="width:14px;"></i> ${previewLabel}
+                </a>
+                <span style="display:inline-block; margin-top:8px; color: var(--text-muted);">${label}</span>
+            `;
+        }
+
+        function getContractUnitNames(contract) {
+            return Array.from(new Set((contract?.unidades || []).map(u => String(u?.unidade || u || '').trim()).filter(Boolean)));
+        }
+
+        function renderContractDetailsHtml(contract, options = {}) {
+            if (!contract) return '';
+
+            const units = getContractUnitNames(contract);
+            const lotes = Array.isArray(contract.lotes) ? contract.lotes : [];
+            const aditivos = Array.isArray(contract.aditivos) ? contract.aditivos : [];
+            const empenhos = Array.isArray(contract.empenhos) ? contract.empenhos : [];
+            const includeActions = options.includeActions !== false;
+
+            const lotesHtml = lotes.length
+                ? `<ul style="margin: 0.4rem 0 0 1rem; padding-left: 1rem;">${lotes.map((lote) => `<li><strong>${escapeHtml(lote.lote || '-')}</strong> / Item ${escapeHtml(lote.item || '-')} - ${escapeHtml(lote.descricao || '-')}</li>`).join('')}</ul>`
+                : '<span style="color: var(--text-muted);">Nenhum lote cadastrado.</span>';
+
+            const fiscalHtml = units.length
+                ? `<ul style="margin: 0.4rem 0 0 1rem; padding-left: 1rem;">${units.map((unitName) => `<li>${escapeHtml(unitName)}</li>`).join('')}</ul>`
+                : '<span style="color: var(--text-muted);">Nenhuma unidade vinculada.</span>';
+
+            const attachmentHtml = renderAttachmentLinks(contract);
+
+            return `
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem;">
+                    <div><strong>Contrato:</strong> ${escapeHtml(contract.numContrato || '-')}</div>
+                    <div><strong>Processo:</strong> ${escapeHtml(contract.numProcesso || '-')}</div>
+                    <div><strong>Credor:</strong> ${escapeHtml(getCompanyName(contract) || '-')}</div>
+                    <div><strong>Valor Global:</strong> ${escapeHtml(contract.valorGlobal || '-')}</div>
+                    <div><strong>Objeto:</strong> ${escapeHtml(contract.objeto || '-')}</div>
+                    <div><strong>Vigência:</strong> ${escapeHtml(contract.dtInicial || '-')} até ${escapeHtml(contract.dtFinal || '-')}</div>
+                    <div><strong>Endereço:</strong> ${escapeHtml([contract.logradouro, contract.numEndereco, contract.bairro, contract.cidade, contract.uf].filter(Boolean).join(', ') || '-')}</div>
+                    <div><strong>CEP:</strong> ${escapeHtml(contract.cep || '-')}</div>
+                    <div><strong>Lotes:</strong> ${lotes.length}</div>
+                    <div><strong>Unidades:</strong> ${units.length}</div>
+                    <div><strong>Aditivos:</strong> ${aditivos.length}</div>
+                    <div><strong>Empenhos:</strong> ${empenhos.length}</div>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <strong>Documentos anexados</strong>
+                    <div style="margin-top: 0.5rem;">${attachmentHtml}</div>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <strong>Lotes cadastrados</strong>
+                    ${lotesHtml}
+                </div>
+                <div style="margin-top: 1rem;">
+                    <strong>Unidades vinculadas</strong>
+                    ${fiscalHtml}
+                </div>
+                <div style="margin-top: 1rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem;">
+                    <div><strong>Última atualização:</strong> ${escapeHtml(getContractLastUpdate(contract) || '-')}</div>
+                    <div><strong>Status:</strong> ${escapeHtml(contract.status || 'ativo')}</div>
+                </div>
+                ${includeActions ? `
+                    <div style="margin-top: 1rem; display:flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-secondary" onclick="carregarContratoParaEdicao('${escapeJsString(contract.numContrato || '')}')">
+                            <i data-lucide="edit-3" style="width:14px;"></i> Editar contrato
+                        </button>
+                        ${attachmentHtml.includes('href=') ? `<a class="btn btn-primary" href="${getAttachmentUrl(contract)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:6px;"><i data-lucide="eye" style="width:14px;"></i> Abrir documento</a>` : ''}
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function getContractLastUpdate(contract) {
+            const dates = [];
+            (contract?.aditivos || []).forEach((item) => item?.data && dates.push(new Date(item.data)));
+            (contract?.empenhos || []).forEach((item) => (item?.data || item?.dataLancamento || item?.dtEmpenho) && dates.push(new Date(item.data || item.dataLancamento || item.dtEmpenho)));
+            const validDates = dates.filter((date) => date instanceof Date && !Number.isNaN(date.getTime()));
+            if (!validDates.length) return '';
+            return validDates.sort((a, b) => b - a)[0].toLocaleDateString('pt-BR');
+        }
+
+        async function uploadContractAttachment(numContrato, file) {
+            if (!file) return null;
+
+            const formData = new FormData();
+            formData.append('numContrato', normalizeContractNumber(numContrato));
+            formData.append('file', file);
+
+            const response = await fetch(apiUrl('/api/contracts/upload-attachment'), {
+                method: 'POST',
+                headers: contractsAuthToken ? { Authorization: `Bearer ${contractsAuthToken}` } : {},
+                body: formData,
+            });
+
+            const responseText = await response.text();
+            const contentType = response.headers.get('content-type') || '';
+            let data = null;
+
+            if (contentType.includes('application/json')) {
+                try {
+                    data = responseText ? JSON.parse(responseText) : null;
+                } catch (error) {
+                    throw new Error('O servidor retornou uma resposta inválida ao enviar o arquivo.');
+                }
+            }
+
+            if (!response.ok) {
+                const message = data?.message || responseText || 'Falha ao enviar o arquivo do contrato.';
+                throw new Error(message);
+            }
+
+            return data;
+        }
+
+        function rebuildContractLotesTable(lotes = []) {
+            const tbody = document.getElementById('tbody-lotes-contrato');
+            if (!tbody) return;
+
+            const rows = lotes.length ? lotes : [{}];
+            tbody.innerHTML = rows.map((lote) => `
+                <tr>
+                    <td><input type="text" class="lote-num" value="${escapeHtml(lote.lote || '')}" placeholder="Lote 1" onchange="atualizarSelectsLotesUnidades()"></td>
+                    <td><input type="text" class="lote-item" value="${escapeHtml(lote.item || '')}" placeholder="1"></td>
+                    <td><input type="text" class="lote-siag" value="${escapeHtml(lote.codSiag || '')}" placeholder="SIAG-001"></td>
+                    <td><textarea class="lote-descricao" rows="2" placeholder="Detalhamento técnico do item...">${escapeHtml(lote.descricao || '')}</textarea></td>
+                    <td><input type="text" class="lote-marca" value="${escapeHtml(lote.marca || '')}" placeholder="Marca / Modelo"></td>
+                    <td><input type="number" class="lote-qtd" min="1" value="${escapeHtml(lote.quantidade || 1)}" oninput="calcularTotalLote(this)"></td>
+                    <td><input type="text" class="lote-vunit" value="${escapeHtml(lote.valorUnitario || '')}" placeholder="R$ 0,00" oninput="maskMoney(this); calcularTotalLote(this)"></td>
+                    <td><input type="text" class="lote-vtotal" value="${escapeHtml(lote.valorTotal || '')}" placeholder="R$ 0,00" readonly style="font-weight: 700; color: var(--sesp-light-blue);"></td>
+                    <td style="text-align: center;"><button type="button" class="btn btn-danger" onclick="removerLinhaLote(this)"><i data-lucide="trash-2" style="width:14px;"></i></button></td>
+                </tr>
+            `).join('');
+
+            if (!lotes.length) {
+                tbody.querySelector('.lote-qtd').value = 1;
+            }
+
+            lucide.createIcons();
+            atualizarSelectsLotesUnidades();
+        }
+
+        function rebuildContractUnits(contractUnits = []) {
+            const selectedUnits = getContractUnitNames({ unidades: contractUnits });
+            const allUnits = Array.from(new Set([...RATEIO_DEFAULT_UNITS, ...selectedUnits]));
+            renderRateioUnitOptions(allUnits);
+
+            document.querySelectorAll('.chk-unidade').forEach((checkbox) => {
+                checkbox.checked = selectedUnits.includes(checkbox.value);
+            });
+
+            renderUnidades();
+
+            const unitDataByName = new Map((contractUnits || []).map((item) => [String(item?.unidade || '').trim(), item]));
+            document.querySelectorAll('.unit-card').forEach((card) => {
+                const unitName = card.querySelector('h4')?.innerText.replace('UNIDADE DESTINATÁRIA: ', '').trim() || '';
+                const data = unitDataByName.get(unitName);
+                if (!data) return;
+
+                const valueField = card.querySelector('.val-unidade');
+                if (valueField) valueField.value = data.valor || '';
+
+                const fields = [
+                    ['.f-tit-nome', data.fiscalTitular?.nome || ''],
+                    ['.f-tit-mat', data.fiscalTitular?.matricula || ''],
+                    ['.f-tit-email', data.fiscalTitular?.email || ''],
+                    ['.f-tit-wsp', data.fiscalTitular?.whatsapp || ''],
+                    ['.f-sub-nome', data.fiscalSubstituto?.nome || ''],
+                    ['.f-sub-mat', data.fiscalSubstituto?.matricula || ''],
+                    ['.f-sub-email', data.fiscalSubstituto?.email || ''],
+                    ['.f-sub-wsp', data.fiscalSubstituto?.whatsapp || ''],
+                    ['.g-tit-nome', data.gestorTitular?.nome || ''],
+                    ['.g-tit-mat', data.gestorTitular?.matricula || ''],
+                    ['.g-tit-email', data.gestorTitular?.email || ''],
+                    ['.g-tit-wsp', data.gestorTitular?.whatsapp || ''],
+                    ['.g-sub-nome', data.gestorSubstituto?.nome || ''],
+                    ['.g-sub-mat', data.gestorSubstituto?.matricula || ''],
+                    ['.g-sub-email', data.gestorSubstituto?.email || ''],
+                    ['.g-sub-wsp', data.gestorSubstituto?.whatsapp || ''],
+                ];
+
+                fields.forEach(([selector, value]) => {
+                    const field = card.querySelector(selector);
+                    if (field) field.value = value;
+                });
+
+                const tbody = card.querySelector(`#tbody-itens-${unitName}`);
+                if (!tbody) return;
+
+                const items = Array.isArray(data.itensDetalhados) && data.itensDetalhados.length ? data.itensDetalhados : [{}];
+                tbody.innerHTML = items.map((item) => `
+                    <tr>
+                        <td>
+                            <select class="select-lote-unidade" onchange="calcularTotalItemUnidade(this)">
+                                <option value="">Selecione o Lote...</option>
+                            </select>
+                        </td>
+                        <td><input type="number" class="item-qtd" min="1" value="${escapeHtml(item.quantidade || 1)}" placeholder="Qtd" oninput="calcularTotalItemUnidade(this)"></td>
+                        <td><input type="text" class="item-vtotal" value="${escapeHtml(item.valorTotal || '')}" placeholder="R$ 0,00" readonly style="font-weight: 700; color: var(--sesp-light-blue);"></td>
+                        <td style="text-align: center;"><button type="button" class="btn btn-danger" onclick="removerLinhaItem(this)"><i data-lucide="trash-2" style="width:14px;"></i></button></td>
+                    </tr>
+                `).join('');
+
+                atualizarSelectsLotesUnidades();
+                tbody.querySelectorAll('tr').forEach((row, index) => {
+                    const select = row.querySelector('.select-lote-unidade');
+                    const currentItem = items[index] || {};
+                    if (select && currentItem.loteIndex) {
+                        select.value = currentItem.loteIndex;
+                    }
+                });
+                calcularTotalCardUnidade(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        function fillContractForm(contract) {
+            if (!contract) return;
+
+            const setValue = (id, value) => {
+                const field = document.getElementById(id);
+                if (field) field.value = value || '';
+            };
+
+            setValue('numContrato', contract.numContrato || '');
+            setValue('numProcesso', contract.numProcesso || '');
+            setValue('credor', contract.credor || '');
+            setValue('cep', contract.cep || '');
+            setValue('logradouro', contract.logradouro || '');
+            setValue('numEndereco', contract.numEndereco || '');
+            setValue('bairro', contract.bairro || '');
+            setValue('cidade', contract.cidade || '');
+            setValue('uf', contract.uf || '');
+            setValue('complemento', contract.complemento || '');
+            setValue('telefoneFixo', contract.telefoneFixo || '');
+            setValue('telefoneWhatsapp', contract.telefoneWhatsapp || '');
+            setValue('emailEmpresa', contract.emailEmpresa || '');
+            setValue('obsEmpresa', contract.obsEmpresa || '');
+            setValue('objetoContrato', contract.objeto || '');
+            setValue('valorGlobal', contract.valorGlobal || '');
+            setValue('dtInicial', contract.dtInicial || '');
+            setValue('dtFinal', contract.dtFinal || '');
+            setValue('prazoEntrega', contract.prazoEntrega || '');
+            setValue('formaContagem', contract.formaContagem || 'CORRIDO');
+            setValue('tipoEntrega', contract.tipoEntrega || 'TOTAL');
+            setValue('anexoContrato', '');
+
+            ['buscaNumContrato', 'buscaContratoEmpenho', 'buscaContratoQuestionario'].forEach((fieldId) => setValue(fieldId, contract.numContrato || ''));
+
+            rebuildContractLotesTable(Array.isArray(contract.lotes) ? contract.lotes : []);
+            rebuildContractUnits(Array.isArray(contract.unidades) ? contract.unidades : []);
+
+            const statusBox = document.getElementById('cadastroContratoStatus');
+            if (statusBox) {
+                const attachmentUrl = getAttachmentUrl(contract);
+                statusBox.style.display = 'block';
+                statusBox.innerHTML = `
+                    <strong>Contrato carregado para edição:</strong> ${escapeHtml(contract.numContrato || '-')}
+                    <br>
+                    <strong>Anexo atual:</strong> ${attachmentUrl ? renderAttachmentLinks(contract) : 'Nenhum documento anexado.'}
+                `;
+            }
+
+            if (typeof calcVigencia === 'function') calcVigencia();
+            if (typeof calcDataLimiteEntrega === 'function') calcDataLimiteEntrega();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function carregarContratoParaEdicao(numContratoInformado) {
+            const input = document.getElementById('numContrato');
+            const candidate = normalizeContractNumber(numContratoInformado || input?.value || '');
+            if (!candidate) {
+                alert('Informe o número do contrato para carregar a edição.');
+                return;
+            }
+
+            const contract = DB_CONTRATOS[candidate] || await fetchContract(candidate);
+            if (!contract) {
+                alert(`Contrato ${candidate} não foi localizado para edição.`);
+                return;
+            }
+
+            fillContractForm(contract);
+            updateLocalContractCache(contract);
+        }
+
+        async function abrirContratoAtualNaVisaoGeral() {
+            const numContrato = normalizeContractNumber(document.getElementById('numContrato')?.value || '');
+            if (!numContrato) {
+                alert('Informe o número do contrato para abrir na visão geral.');
+                return;
+            }
+
+            await loadOverviewTab();
+            showOverviewContractDetails(numContrato);
+            switchTab(null, 'tab-overview');
+        }
+
+        async function localizarContratoQuestionario() {
+            const input = document.getElementById('buscaContratoQuestionario');
+            const numContrato = normalizeContractNumber(input?.value || '');
+            const target = document.getElementById('questionarioContratoDetalhes');
+
+            if (!numContrato) {
+                if (target) {
+                    target.style.display = 'none';
+                    target.innerHTML = '';
+                }
+                alert('Informe o número do contrato para iniciar o processo de pagamento.');
+                return;
+            }
+
+            const contract = DB_CONTRATOS[numContrato] || await fetchContract(numContrato);
+            if (!contract) {
+                if (target) {
+                    target.style.display = 'block';
+                    target.innerHTML = `<span style="color: var(--danger);">Contrato ${escapeHtml(numContrato)} não localizado.</span>`;
+                }
+                return;
+            }
+
+            if (target) {
+                target.style.display = 'block';
+                target.innerHTML = renderContractDetailsHtml(contract, { includeActions: true });
+            }
+
+            updateLocalContractCache(contract);
+            if (document.getElementById('buscaContratoEmpenho')) {
+                document.getElementById('buscaContratoEmpenho').value = contract.numContrato || numContrato;
+            }
+        }
+
+        async function abrirContratoQuestionarioNaVisaoGeral() {
+            const numContrato = normalizeContractNumber(document.getElementById('buscaContratoQuestionario')?.value || '');
+            if (!numContrato) {
+                alert('Informe o contrato antes de abrir a visão geral.');
+                return;
+            }
+
+            await loadOverviewTab();
+            showOverviewContractDetails(numContrato);
+            switchTab(null, 'tab-overview');
         }
 
         function hideContractsLoginOverlay() {
@@ -2540,6 +2995,15 @@
             });
 
             const processarESalvar = async () => {
+                const existingContract = DB_CONTRATOS[num] || await fetchContract(num);
+                let arquivoContrato = existingContract?.arquivoContrato || '';
+                const conteudoArquivoBase64 = existingContract?.conteudoArquivoBase64 || '';
+
+                if (fileInput.files.length > 0) {
+                    const uploadResult = await uploadContractAttachment(num, fileInput.files[0]);
+                    arquivoContrato = uploadResult?.arquivoContrato || arquivoContrato;
+                }
+
                 const contractObject = {
                     numContrato: num,
                     numProcesso: document.getElementById('numProcesso').value,
@@ -2554,19 +3018,28 @@
                     objeto: document.getElementById('objetoContrato').value,
                     dtInicial: document.getElementById('dtInicial').value,
                     dtFinal: document.getElementById('dtFinal').value,
-                    arquivoContrato: nomeAnexo,
+                    arquivoContrato: arquivoContrato || nomeAnexo || '',
+                    conteudoArquivoBase64: conteudoArquivoBase64,
                     lotes: lotesContratoData,
                     unidades: unidadesData,
-                    aditivos: [],
-                    empenhos: []
+                    aditivos: existingContract?.aditivos || [],
+                    empenhos: existingContract?.empenhos || [],
+                    status: existingContract?.status || 'ativo'
                 };
 
                 try {
                     await saveContract(contractObject);
                     alert(`Contrato ${num} cadastrado com sucesso no banco de dados SESP!`);
                     updateLocalContractCache(contractObject);
+                    const statusBox = document.getElementById('cadastroContratoStatus');
+                    if (statusBox) {
+                        statusBox.style.display = 'block';
+                        statusBox.innerHTML = `Contrato ${escapeHtml(num)} salvo com sucesso. ${contractObject.arquivoContrato ? renderAttachmentLinks(contractObject) : ''}`;
+                    }
                     switchTab(null, 'tab-atualizacoes');
                     document.getElementById('buscaNumContrato').value = num;
+                    const questionarioInput = document.getElementById('buscaContratoQuestionario');
+                    if (questionarioInput) questionarioInput.value = num;
                 } catch (error) {
                     alert(error.message || 'Erro ao salvar contrato.');
                 }
@@ -2959,21 +3432,9 @@
                 return;
             }
 
-            const unidades = (contract.unidades || []).map(u => u.unidade || u).filter(Boolean);
-            const aditivos = (contract.aditivos || []).length;
-            const empenhos = (contract.empenhos || []).length;
-
-            content.innerHTML = `
-                <strong>Contrato:</strong> ${contract.numContrato || '-'}<br>
-                <strong>Processo:</strong> ${contract.numProcesso || '-'}<br>
-                <strong>Credor:</strong> ${getCompanyName(contract) || '-'}<br>
-                <strong>Valor Global:</strong> ${contract.valorGlobal || '-'}<br>
-                <strong>Objeto:</strong> ${contract.objeto || '-'}<br>
-                <strong>Período:</strong> ${contract.dtInicial || '-'} até ${contract.dtFinal || '-'}<br>
-                <strong>Unidades:</strong> ${unidades.length ? unidades.join(', ') : '-'}<br>
-                <strong>Aditivos:</strong> ${aditivos} | <strong>Empenhos:</strong> ${empenhos}
-            `;
+            content.innerHTML = renderContractDetailsHtml(contract, { includeActions: true });
             panel.style.display = 'block';
+            lucide.createIcons();
         }
 
         function formatOverviewMonth(month) {

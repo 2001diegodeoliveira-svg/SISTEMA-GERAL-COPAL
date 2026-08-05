@@ -200,6 +200,15 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
+function sanitizeFileNamePart(value) {
+  return String(value || '')
+    .trim()
+    .replace(/[^a-z0-9]+/gi, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'arquivo';
+}
+
 const DEV_TOKEN = 'dev-access-token';
 
 async function initDatabase() {
@@ -874,6 +883,34 @@ app.post('/auth/upload-background', authenticateToken, upload.single('file'), as
         return res.json({ backgroundImage: publicPath });
       }
     );
+  });
+});
+
+app.post('/api/contracts/upload-attachment', authenticateToken, upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'Arquivo não enviado.' });
+  }
+
+  const contractNumber = sanitizeFileNamePart(req.body?.numContrato || 'contrato');
+  const contractsUploadDir = path.join(UPLOAD_DIR, 'contracts');
+  if (!fs.existsSync(contractsUploadDir)) {
+    fs.mkdirSync(contractsUploadDir, { recursive: true });
+  }
+
+  const extension = path.extname(req.file.originalname || '').toLowerCase() || (req.file.mimetype === 'application/pdf' ? '.pdf' : '');
+  const fileName = `${contractNumber}-${Date.now()}${extension}`;
+  const destination = path.join(contractsUploadDir, fileName);
+
+  fs.rename(req.file.path, destination, (err) => {
+    if (err) {
+      return res.status(500).json({ message: 'Erro ao salvar o arquivo.' });
+    }
+
+    return res.json({
+      arquivoContrato: `/uploads/contracts/${fileName}`,
+      arquivoOriginal: req.file.originalname || fileName,
+      tipoArquivo: req.file.mimetype || '',
+    });
   });
 });
 
