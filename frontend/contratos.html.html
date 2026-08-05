@@ -1751,6 +1751,10 @@
             errorEl.innerText = message || '';
         }
 
+        function normalizeContractNumber(value) {
+            return String(value || '').trim().replace(/\s+/g, ' ');
+        }
+
         function hideContractsLoginOverlay() {
             const overlay = document.getElementById('contractsLoginOverlay');
             if (overlay) overlay.classList.add('hidden');
@@ -1909,15 +1913,16 @@
         // Cache local de contratos para acelerar buscas
 
         async function fetchContract(numContrato) {
-            if (!numContrato) return null;
+            const normalizedNumber = normalizeContractNumber(numContrato);
+            if (!normalizedNumber) return null;
             try {
-                const res = await fetch(`/api/contracts?numContrato=${encodeURIComponent(numContrato)}`);
+                const res = await fetch(`/api/contracts?numContrato=${encodeURIComponent(normalizedNumber)}`);
                 if (!res.ok) {
                     return null;
                 }
                 const data = await res.json();
                 if (data && data.numContrato) {
-                    DB_CONTRATOS[data.numContrato] = data;
+                    DB_CONTRATOS[normalizeContractNumber(data.numContrato)] = data;
                 }
                 return data;
             } catch (error) {
@@ -1928,15 +1933,20 @@
 
         async function saveContract(contractObj) {
             try {
+                const normalizedContract = {
+                    ...contractObj,
+                    numContrato: normalizeContractNumber(contractObj.numContrato),
+                };
+
                 const res = await fetch('/api/contracts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(contractObj)
+                    body: JSON.stringify(normalizedContract)
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    if (contractObj.numContrato) {
-                        DB_CONTRATOS[contractObj.numContrato] = contractObj;
+                    if (normalizedContract.numContrato) {
+                        DB_CONTRATOS[normalizedContract.numContrato] = normalizedContract;
                     }
                     return data;
                 }
@@ -1949,7 +1959,7 @@
 
         function updateLocalContractCache(contract) {
             if (contract && contract.numContrato) {
-                DB_CONTRATOS[contract.numContrato] = contract;
+                DB_CONTRATOS[normalizeContractNumber(contract.numContrato)] = contract;
             }
         }
 
@@ -2390,7 +2400,7 @@
 
         // SALVAR CONTRATO
         function salvarEtapa01a05() {
-            const num = document.getElementById('numContrato').value;
+            const num = normalizeContractNumber(document.getElementById('numContrato').value);
             if(!num) { alert('Informe o número do contrato!'); return; }
 
             const fileInput = document.getElementById('anexoContrato');
@@ -2513,7 +2523,8 @@
             const res = document.getElementById('resultadoBuscaContrato');
             const painel = document.getElementById('painelAditivos');
 
-            const contract = DB_CONTRATOS[num] || await fetchContract(num);
+            const normalizedNum = normalizeContractNumber(num);
+            const contract = DB_CONTRATOS[normalizedNum] || await fetchContract(normalizedNum);
             if (contract) {
                 res.style.display = 'block';
                 res.innerHTML = `<strong>Contrato Encontrado:</strong> ${contract.numContrato} | Credor: ${contract.credor} | Valor Atual: ${contract.valorGlobal}`;
@@ -2533,7 +2544,8 @@
             const painel = document.getElementById('painelLancamentoEmpenho');
             const containerUnidades = document.getElementById('containerUnidadesEmpenho');
 
-            const contract = DB_CONTRATOS[num] || await fetchContract(num);
+            const normalizedNum = normalizeContractNumber(num);
+            const contract = DB_CONTRATOS[normalizedNum] || await fetchContract(normalizedNum);
             if (contract) {
                 res.style.display = 'block';
                 res.innerHTML = `<strong>Contrato Localizado:</strong> ${contract.numContrato} | Credor: ${contract.credor} | Valor Global: ${contract.valorGlobal}`;
@@ -2570,7 +2582,7 @@
         }
 
         function salvarLancamentoEmpenho() {
-            const numContrato = document.getElementById('buscaContratoEmpenho').value.trim();
+            const numContrato = normalizeContractNumber(document.getElementById('buscaContratoEmpenho').value.trim());
             const numEmpenho = document.getElementById('numEmpenhoLancamento').value.trim();
             const tipoEmpenho = document.getElementById('tipoEmpenho').value;
             const valorEmpenho = document.getElementById('valorEmpenho').value;
@@ -2681,7 +2693,7 @@
         }
 
         async function salvarAditivo() {
-            const num = document.getElementById('buscaNumContrato').value;
+            const num = normalizeContractNumber(document.getElementById('buscaNumContrato').value);
             if(!num) {
                 alert('Informe o número do contrato antes de registrar o aditivo.');
                 return;
@@ -2748,7 +2760,7 @@
                 if (res.ok && Array.isArray(data.contracts)) {
                     DB_CONTRATOS = {};
                     data.contracts.forEach(contract => {
-                        DB_CONTRATOS[contract.numContrato] = contract;
+                        DB_CONTRATOS[normalizeContractNumber(contract.numContrato)] = contract;
                     });
                 }
             } catch (error) {
@@ -2880,7 +2892,7 @@
         }
 
         function showOverviewContractDetails(numContrato) {
-            const contract = DB_CONTRATOS[numContrato];
+            const contract = DB_CONTRATOS[normalizeContractNumber(numContrato)];
             const panel = document.getElementById('overviewDetailsPanel');
             const content = document.getElementById('overviewDetailsContent');
 
@@ -2961,14 +2973,15 @@
         function exibirPainelContratoUnidade(numContrato) {
             const painelDetalhes = document.getElementById('detalhesContratoUnidade');
             const unidadeSigla = document.getElementById('selectUnidadeConsulta').value;
+            const normalizedNumContrato = normalizeContractNumber(numContrato);
 
-            if(!numContrato || !DB_CONTRATOS[numContrato]) {
+            if(!normalizedNumContrato || !DB_CONTRATOS[normalizedNumContrato]) {
                 painelDetalhes.style.display = 'none';
                 return;
             }
 
             painelDetalhes.style.display = 'block';
-            const c = DB_CONTRATOS[numContrato];
+            const c = DB_CONTRATOS[normalizedNumContrato];
             const uData = c.unidades.find(u => u.unidade === unidadeSigla) || { valor: c.valorGlobal, itensDetalhados: [] };
 
             document.getElementById('resumoGeralContratoUnidade').innerHTML = `

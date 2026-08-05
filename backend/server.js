@@ -1063,7 +1063,8 @@ function mapContractRow(row) {
 app.get('/api/contracts', async (req, res) => {
   const { numContrato } = req.query;
   if (numContrato) {
-    contractsDb.get('SELECT * FROM contracts WHERE numContrato = ?', [numContrato], (err, row) => {
+    const normalizedNumContrato = String(numContrato || '').trim();
+    contractsDb.get('SELECT * FROM contracts WHERE lower(trim(numContrato)) = lower(trim(?))', [normalizedNumContrato], (err, row) => {
       if (err) return res.status(500).json({ message: 'Erro ao buscar contrato.' });
       if (!row) return res.status(404).json({ message: 'Contrato não encontrado.' });
       return res.json(mapContractRow(row));
@@ -1080,7 +1081,8 @@ app.get('/api/contracts', async (req, res) => {
 
 app.get('/api/contracts/:numContrato', async (req, res) => {
   const { numContrato } = req.params;
-  contractsDb.get('SELECT * FROM contracts WHERE numContrato = ?', [numContrato], (err, row) => {
+  const normalizedNumContrato = String(numContrato || '').trim();
+  contractsDb.get('SELECT * FROM contracts WHERE lower(trim(numContrato)) = lower(trim(?))', [normalizedNumContrato], (err, row) => {
     if (err) return res.status(500).json({ message: 'Erro ao buscar contrato.' });
     if (!row) return res.status(404).json({ message: 'Contrato não encontrado.' });
     res.json(mapContractRow(row));
@@ -1104,7 +1106,9 @@ app.post('/api/contracts', async (req, res) => {
     empenhos,
   } = req.body;
 
-  if (!numContrato) {
+  const normalizedNumContrato = String(numContrato || '').trim();
+
+  if (!normalizedNumContrato) {
     return res.status(400).json({ message: 'Número do contrato é obrigatório.' });
   }
 
@@ -1140,7 +1144,7 @@ app.post('/api/contracts', async (req, res) => {
         empenhos = EXCLUDED.empenhos,
         updated_at = NOW()`,
     [
-      numContrato,
+      normalizedNumContrato,
       numProcesso || '',
       credor || '',
       valorGlobal || '',
