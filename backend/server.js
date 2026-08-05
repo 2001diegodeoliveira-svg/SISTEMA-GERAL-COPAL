@@ -793,7 +793,7 @@ app.get('/auth/users', async (req, res) => {
   }
 
   db.all(
-    'SELECT id, email, name, role, unidade, perfil, access_level, account_status, status, verified, permissions_json, background_image FROM users ORDER BY id DESC',
+    'SELECT id, email, name, matricula, role, unidade, perfil, access_level, account_status, status, verified, permissions_json, background_image FROM users ORDER BY id DESC',
     [],
     (err, rows) => {
       if (err) {

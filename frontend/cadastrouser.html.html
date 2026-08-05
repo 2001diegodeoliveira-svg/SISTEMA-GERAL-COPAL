@@ -504,6 +504,44 @@
 
         .status-pending { background-color: #fef9c3; color: #a16207; }
         .status-approved { background-color: #dcfce7; color: #15803d; }
+        .status-rejected { background-color: #fee2e2; color: #b91c1c; }
+
+        .admin-section-nav {
+            display: flex;
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.8rem;
+        }
+
+        .admin-section-btn {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            padding: 0.45rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .admin-section-btn.active,
+        .admin-section-btn:hover {
+            background: #e0efff;
+            border-color: #93c5fd;
+            color: #0f3c78;
+        }
+
+        .admin-section-content {
+            display: none;
+        }
+
+        .admin-section-content.active {
+            display: block;
+        }
 
         .btn-action {
             background: none;
@@ -937,27 +975,60 @@
                 </div>
 
                 <div class="panel-body">
-                    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
-                        Relação de usuários cadastrados e pendentes de validação no sistema COPAL.
-                    </p>
+                    <div class="admin-section-nav">
+                        <button type="button" class="admin-section-btn active" id="adminSectionPendingBtn" onclick="switchAdminSection('pending')">Solicitações Pendentes</button>
+                        <button type="button" class="admin-section-btn" id="adminSectionAccessBtn" onclick="switchAdminSection('access')">Controle de Acesso</button>
+                    </div>
 
-                    <div class="system-table-container">
-                        <table class="system-table">
-                            <thead>
-                                <tr>
-                                    <th>Nome</th>
-                                    <th>Matrícula / Login</th>
-                                    <th>E-mail</th>
-                                    <th>Unidade</th>
-                                    <th>Perfil</th>
-                                    <th>Status</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adminUsersList">
-                                <!-- Inserido via JavaScript -->
-                            </tbody>
-                        </table>
+                    <div class="admin-section-content active" id="adminSectionPending">
+                        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
+                            Relação de usuários pendentes de validação no sistema COPAL.
+                        </p>
+
+                        <div class="system-table-container">
+                            <table class="system-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Matrícula / Login</th>
+                                        <th>E-mail</th>
+                                        <th>Unidade</th>
+                                        <th>Perfil</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminUsersList">
+                                    <!-- Inserido via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="admin-section-content" id="adminSectionAccess">
+                        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
+                            Lista completa de usuários cadastrados para controle de acesso ao sistema.
+                        </p>
+
+                        <div class="system-table-container">
+                            <table class="system-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Matrícula / Login</th>
+                                        <th>E-mail</th>
+                                        <th>Unidade</th>
+                                        <th>Perfil</th>
+                                        <th>Papel</th>
+                                        <th>Situação</th>
+                                        <th>Verificado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminAccessUsersList">
+                                    <!-- Inserido via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1008,6 +1079,7 @@
         }
 
         let pendingUserRequests = [];
+        let registeredUsers = [];
 
         async function fetchPendingRequests() {
             if (!authToken) {
@@ -1034,6 +1106,34 @@
                 console.error(error);
                 pendingUserRequests = [];
                 renderAdminUsers();
+            }
+        }
+
+        async function fetchRegisteredUsers() {
+            if (!authToken) {
+                registeredUsers = [];
+                renderAccessUsers();
+                return;
+            }
+
+            try {
+                const res = await fetch('/auth/users', {
+                    headers: getAuthHeaders(false)
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    registeredUsers = data.users || [];
+                    renderAccessUsers();
+                } else {
+                    console.error('Falha ao carregar usuários cadastrados:', data);
+                    registeredUsers = [];
+                    renderAccessUsers();
+                }
+            } catch (error) {
+                console.error(error);
+                registeredUsers = [];
+                renderAccessUsers();
             }
         }
 
@@ -1181,6 +1281,29 @@
             document.getElementById('adminAuthModal').classList.remove('active');
         }
 
+        function switchAdminSection(section) {
+            const pendingBtn = document.getElementById('adminSectionPendingBtn');
+            const accessBtn = document.getElementById('adminSectionAccessBtn');
+            const pendingSection = document.getElementById('adminSectionPending');
+            const accessSection = document.getElementById('adminSectionAccess');
+
+            pendingBtn.classList.remove('active');
+            accessBtn.classList.remove('active');
+            pendingSection.classList.remove('active');
+            accessSection.classList.remove('active');
+
+            if (section === 'access') {
+                accessBtn.classList.add('active');
+                accessSection.classList.add('active');
+                fetchRegisteredUsers();
+                return;
+            }
+
+            pendingBtn.classList.add('active');
+            pendingSection.classList.add('active');
+            fetchPendingRequests();
+        }
+
         document.getElementById('adminAuthForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
@@ -1212,6 +1335,7 @@
                 document.getElementById('adminPass').value = '';
                 switchTab('admin');
                 fetchPendingRequests();
+                fetchRegisteredUsers();
                 alert('Administrador autenticado com sucesso. Painel de cadastros liberado.');
             } catch (error) {
                 console.error('Erro ao autenticar administrador:', error);
@@ -1229,7 +1353,9 @@
             } else if (tab === 'admin') {
                 document.getElementById('tabBtnAdmin').classList.add('active');
                 document.getElementById('tabAdmin').classList.add('active');
+                switchAdminSection('pending');
                 fetchPendingRequests();
+                fetchRegisteredUsers();
             }
         }
 
@@ -1310,6 +1436,49 @@
                         <button class="btn-action btn-reject" onclick="deleteUser(${u.id})">Excluir</button>
                     </td>
                 `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function getStatusBadgeClass(statusValue) {
+            const normalized = String(statusValue || '').toLowerCase();
+
+            if (normalized === 'aprovado' || normalized === 'ativo') {
+                return 'status-approved';
+            }
+
+            if (normalized === 'rejeitado' || normalized === 'inativo' || normalized === 'bloqueado') {
+                return 'status-rejected';
+            }
+
+            return 'status-pending';
+        }
+
+        function renderAccessUsers() {
+            const tbody = document.getElementById('adminAccessUsersList');
+            tbody.innerHTML = '';
+
+            if (!registeredUsers.length) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#94a3b8;">Nenhum usuário cadastrado encontrado.</td></tr>';
+                return;
+            }
+
+            registeredUsers.forEach((u) => {
+                const statusLabel = u.account_status || u.status || 'Não informado';
+                const verifiedLabel = u.verified ? 'Sim' : 'Não';
+                const tr = document.createElement('tr');
+
+                tr.innerHTML = `
+                    <td><strong>${u.name || '-'}</strong></td>
+                    <td>${u.matricula || u.email || u.id || '-'}</td>
+                    <td>${u.email || '-'}</td>
+                    <td>${u.unidade || '-'}</td>
+                    <td>${u.perfil || '-'}</td>
+                    <td>${u.role || '-'}</td>
+                    <td><span class="status-badge ${getStatusBadgeClass(statusLabel)}">${statusLabel}</span></td>
+                    <td><span class="status-badge ${u.verified ? 'status-approved' : 'status-pending'}">${verifiedLabel}</span></td>
+                `;
+
                 tbody.appendChild(tr);
             });
         }
