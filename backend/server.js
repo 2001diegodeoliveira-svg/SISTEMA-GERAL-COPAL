@@ -129,6 +129,200 @@ function safeJsonParse(value, fallback = []) {
   }
 }
 
+const SIAG_ITEM_LIST_URL = 'https://aquisicoes.seplag.mt.gov.br/sgc/faces/pub/sgc/central/ItemCompraPageList.jsp';
+
+function decodeHtmlEntities(value) {
+  return String(value || '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&ccedil;/gi, 'c')
+    .replace(/&Ccedil;/gi, 'C')
+    .replace(/&atilde;/gi, 'a')
+    .replace(/&Atilde;/gi, 'A')
+    .replace(/&aacute;/gi, 'a')
+    .replace(/&Aacute;/gi, 'A')
+    .replace(/&agrave;/gi, 'a')
+    .replace(/&Agrave;/gi, 'A')
+    .replace(/&acirc;/gi, 'a')
+    .replace(/&Acirc;/gi, 'A')
+    .replace(/&eacute;/gi, 'e')
+    .replace(/&Eacute;/gi, 'E')
+    .replace(/&ecirc;/gi, 'e')
+    .replace(/&Ecirc;/gi, 'E')
+    .replace(/&iacute;/gi, 'i')
+    .replace(/&Iacute;/gi, 'I')
+    .replace(/&oacute;/gi, 'o')
+    .replace(/&Oacute;/gi, 'O')
+    .replace(/&ocirc;/gi, 'o')
+    .replace(/&Ocirc;/gi, 'O')
+    .replace(/&otilde;/gi, 'o')
+    .replace(/&Otilde;/gi, 'O')
+    .replace(/&uacute;/gi, 'u')
+    .replace(/&Uacute;/gi, 'U')
+    .replace(/&#(\d+);/g, (_, code) => {
+      const parsed = Number(code);
+      return Number.isFinite(parsed) ? String.fromCharCode(parsed) : _;
+    });
+}
+
+function cleanHtmlText(value) {
+  return decodeHtmlEntities(String(value || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+}
+
+function normalizeSiagCode(value) {
+  return String(value || '').replace(/\D/g, '');
+}
+
+function extractViewState(html) {
+  const match = String(html || '').match(/name="javax\.faces\.ViewState"[^>]*value="([^"]*)"/i);
+  return match ? match[1] : '';
+}
+
+function parseSetCookieHeader(response) {
+  try {
+    const rawCookie = typeof response?.headers?.raw === 'function' ? response.headers.raw()['set-cookie'] : null;
+    if (!Array.isArray(rawCookie) || !rawCookie.length) return '';
+    return rawCookie.map((cookie) => String(cookie).split(';')[0]).join('; ');
+  } catch (error) {
+    return '';
+  }
+}
+
+function parseSiagSearchRows(html) {
+  const tbodyMatch = String(html || '').match(/<tbody[^>]*id="form_PesquisaItemPageList:editalDataTable:tb"[^>]*>([\s\S]*?)<\/tbody>/i);
+  if (!tbodyMatch) return [];
+
+  const rows = [];
+  const rowRegex = /<tr\b[\s\S]*?<\/tr>/gi;
+  let rowMatch;
+  while ((rowMatch = rowRegex.exec(tbodyMatch[1])) !== null) {
+    const rowHtml = rowMatch[0];
+
+    const indexMatch = rowHtml.match(/editalDataTable:(\d+):/i);
+    const codeMatch = rowHtml.match(/idItemCompraText"[^>]*>([\s\S]*?)<\/span>/i);
+    const descMatch = rowHtml.match(/descResumidaItemCompraText"[^>]*>([\s\S]*?)<\/span>/i);
+    const idItemCompraMatch = rowHtml.match(/'idItemCompra':'([^']+)'/i);
+
+    rows.push({
+      index: indexMatch ? Number(indexMatch[1]) : 0,
+      codigo: cleanHtmlText(codeMatch ? codeMatch[1] : ''),
+      descricaoResumida: cleanHtmlText(descMatch ? descMatch[1] : ''),
+      idItemCompra: idItemCompraMatch ? idItemCompraMatch[1] : '',
+    });
+  }
+
+  return rows.filter((row) => row.codigo && row.idItemCompra);
+}
+
+async function fetchSiagItemByCode(code) {
+  const lookupCode = String(code || '').trim();
+  if (!lookupCode) {
+    throw new Error('Código SIAG não informado.');
+  }
+
+  const initialResponse = await fetchApi(SIAG_ITEM_LIST_URL, { method: 'GET' });
+  if (!initialResponse.ok) {
+    throw new Error(`Falha ao carregar página de pesquisa SIAG (${initialResponse.status}).`);
+  }
+
+  const initialHtml = await initialResponse.text();
+  const viewState = extractViewState(initialHtml);
+  if (!viewState) {
+    throw new Error('Não foi possível iniciar sessão de consulta SIAG.');
+  }
+
+  let cookieHeader = parseSetCookieHeader(initialResponse);
+
+  const searchParams = new URLSearchParams();
+  searchParams.set('form_PesquisaItemPageList', 'form_PesquisaItemPageList');
+  searchParams.set('form_PesquisaItemPageList:procurarPorCombo', '1');
+  searchParams.set('form_PesquisaItemPageList:palavraChaveInput', lookupCode);
+  searchParams.set('form_PesquisaItemPageList:pesquisarButton', 'Pesquisar');
+  searchParams.set('javax.faces.ViewState', viewState);
+
+  const searchResponse = await fetchApi(SIAG_ITEM_LIST_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+    },
+    body: searchParams.toString(),
+  });
+
+  if (!searchResponse.ok) {
+    throw new Error(`Falha na pesquisa SIAG (${searchResponse.status}).`);
+  }
+
+  const searchHtml = await searchResponse.text();
+  const searchRows = parseSiagSearchRows(searchHtml);
+  if (!searchRows.length || /Nenhum\s+registro\s+encontrado/i.test(searchHtml)) {
+    return null;
+  }
+
+  cookieHeader = parseSetCookieHeader(searchResponse) || cookieHeader;
+  const normalizedLookup = normalizeSiagCode(lookupCode);
+
+  const selectedRow = searchRows.find((row) => normalizeSiagCode(row.codigo) === normalizedLookup)
+    || searchRows.find((row) => String(row.codigo || '').trim() === lookupCode)
+    || searchRows[0];
+
+  const searchViewState = extractViewState(searchHtml);
+  if (!searchViewState) {
+    return {
+      codigo: selectedRow.codigo,
+      descricao: selectedRow.descricaoResumida,
+      unidadeMedida: '',
+      situacao: '',
+      fonte: 'SIAG',
+    };
+  }
+
+  const detailParams = new URLSearchParams();
+  detailParams.set('form_PesquisaItemPageList', 'form_PesquisaItemPageList');
+  detailParams.set('form_PesquisaItemPageList:procurarPorCombo', '1');
+  detailParams.set('form_PesquisaItemPageList:palavraChaveInput', lookupCode);
+  detailParams.set(`form_PesquisaItemPageList:editalDataTable:${selectedRow.index}:abriDetalhesLink`, `form_PesquisaItemPageList:editalDataTable:${selectedRow.index}:abriDetalhesLink`);
+  detailParams.set('idItemCompra', selectedRow.idItemCompra);
+  detailParams.set('javax.faces.ViewState', searchViewState);
+
+  const detailResponse = await fetchApi(SIAG_ITEM_LIST_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+    },
+    body: detailParams.toString(),
+  });
+
+  if (!detailResponse.ok) {
+    return {
+      codigo: selectedRow.codigo,
+      descricao: selectedRow.descricaoResumida,
+      unidadeMedida: '',
+      situacao: '',
+      fonte: 'SIAG',
+    };
+  }
+
+  const detailHtml = await detailResponse.text();
+  const descricaoMatch = detailHtml.match(/id="form1:descricaoItemText"[^>]*>([\s\S]*?)<\/span>/i);
+  const unidadeMatch = detailHtml.match(/id="form1:unidadeText"[^>]*>([\s\S]*?)<\/span>/i);
+  const situacaoMatch = detailHtml.match(/id="form1:situacaoText"[^>]*>([\s\S]*?)<\/span>/i);
+
+  return {
+    codigo: selectedRow.codigo,
+    descricao: cleanHtmlText(descricaoMatch ? descricaoMatch[1] : selectedRow.descricaoResumida),
+    unidadeMedida: cleanHtmlText(unidadeMatch ? unidadeMatch[1] : ''),
+    situacao: cleanHtmlText(situacaoMatch ? situacaoMatch[1] : ''),
+    fonte: 'SIAG',
+  };
+}
+
 // As senhas são persistidas como hash para compatibilidade com o esquema PostgreSQL.
 
 app.use(express.json());
@@ -957,6 +1151,25 @@ app.post('/api/contracts/upload-attachment', authenticateToken, upload.single('f
       tipoArquivo: req.file.mimetype || '',
     });
   });
+});
+
+app.get('/api/siag/item/:codigo', async (req, res) => {
+  const codigo = String(req.params?.codigo || '').trim();
+  if (!codigo) {
+    return res.status(400).json({ message: 'Código SIAG é obrigatório.' });
+  }
+
+  try {
+    const item = await fetchSiagItemByCode(codigo);
+    if (!item) {
+      return res.status(404).json({ message: 'Item SIAG não encontrado.' });
+    }
+
+    return res.json(item);
+  } catch (error) {
+    console.error('[SIAG] Falha ao consultar item:', error?.message || error);
+    return res.status(502).json({ message: 'Falha ao consultar o SIAG no momento.' });
+  }
 });
 
 app.get('/api/contacts', async (req, res) => {
