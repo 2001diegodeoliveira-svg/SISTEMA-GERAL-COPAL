@@ -185,9 +185,21 @@ function extractViewState(html) {
 
 function parseSetCookieHeader(response) {
   try {
-    const rawCookie = typeof response?.headers?.raw === 'function' ? response.headers.raw()['set-cookie'] : null;
-    if (!Array.isArray(rawCookie) || !rawCookie.length) return '';
-    return rawCookie.map((cookie) => String(cookie).split(';')[0]).join('; ');
+    let cookieList = [];
+
+    if (typeof response?.headers?.getSetCookie === 'function') {
+      cookieList = response.headers.getSetCookie();
+    } else if (typeof response?.headers?.raw === 'function') {
+      cookieList = response.headers.raw()['set-cookie'] || [];
+    } else {
+      const singleCookie = response?.headers?.get ? response.headers.get('set-cookie') : '';
+      if (singleCookie) {
+        cookieList = [singleCookie];
+      }
+    }
+
+    if (!Array.isArray(cookieList) || !cookieList.length) return '';
+    return cookieList.map((cookie) => String(cookie).split(';')[0]).join('; ');
   } catch (error) {
     return '';
   }
