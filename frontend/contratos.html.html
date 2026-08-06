@@ -1449,10 +1449,11 @@
                                     <th>Data</th>
                                     <th>Tipo de Alteração</th>
                                     <th>Detalhamento / Observações</th>
+                                    <th>Anexo (PDF)</th>
                                 </tr>
                             </thead>
                             <tbody id="tbodyAditivosUnidade">
-                                <tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Nenhum aditivo/alteração registrado.</td></tr>
+                                <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Nenhum aditivo/alteração registrado.</td></tr>
                             </tbody>
                         </table>
 
@@ -1933,6 +1934,21 @@
                 </a>
                 <span style="display:inline-block; margin-top:8px; color: var(--text-muted);">${label}</span>
             `;
+        }
+
+        function getAditivoAttachmentUrl(aditivo) {
+            return getAttachmentUrl({
+                arquivoContrato: aditivo?.arquivoAditivo || '',
+                conteudoArquivoBase64: ''
+            });
+        }
+
+        function renderAditivoAttachmentLink(aditivo) {
+            const url = getAditivoAttachmentUrl(aditivo);
+            if (!url) return 'Sem anexo';
+
+            const label = escapeHtml(aditivo?.arquivoAditivoOriginal || String(aditivo?.arquivoAditivo || '').split('/').pop() || 'Anexo PDF');
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:var(--sesp-light-blue); font-weight:600;"><i data-lucide="paperclip" style="width:14px;"></i> ${label}</a>`;
         }
 
         function getContractUnitNames(contract) {
@@ -3350,6 +3366,20 @@
                     </div>
                 `;
             }
+
+            if (tipo) {
+                target.insertAdjacentHTML('beforeend', `
+                    <div class="form-grid" style="margin-top: 10px;">
+                        <div class="form-group full-width" style="border-top: 1px dashed var(--border-color); padding-top: 12px;">
+                            <label for="aditivoAnexoPdf"><i data-lucide="paperclip" style="width:14px; vertical-align:middle;"></i> Anexar PDF do Aditivo</label>
+                            <input type="file" id="aditivoAnexoPdf" accept=".pdf,application/pdf" style="padding: 0.4rem;">
+                            <small style="color: var(--text-muted); font-size: 0.75rem;">Anexe o documento em PDF referente a este aditivo/atualização.</small>
+                        </div>
+                    </div>
+                `);
+            }
+
+            lucide.createIcons();
         }
 
         async function salvarAditivo() {
@@ -3362,6 +3392,23 @@
             const tipo = document.getElementById('tipoAditivo').value;
             const valorAditivo = document.getElementById('aditivoValor') ? document.getElementById('aditivoValor').value : 'R$ 0,00';
             const obsAditivo = document.getElementById('aditivoObs') ? document.getElementById('aditivoObs').value : '';
+            const aditivoFileInput = document.getElementById('aditivoAnexoPdf');
+            const aditivoFile = aditivoFileInput && aditivoFileInput.files && aditivoFileInput.files.length ? aditivoFileInput.files[0] : null;
+
+            if (!tipo) {
+                alert('Selecione o tipo de alteração antes de salvar.');
+                return;
+            }
+
+            if (aditivoFile) {
+                const fileName = String(aditivoFile.name || '').toLowerCase();
+                const fileType = String(aditivoFile.type || '').toLowerCase();
+                const isPdf = fileName.endsWith('.pdf') || fileType === 'application/pdf';
+                if (!isPdf) {
+                    alert('O anexo do aditivo deve estar em formato PDF.');
+                    return;
+                }
+            }
 
             const contract = DB_CONTRATOS[num] || await fetchContract(num);
             if (!contract) {
@@ -3369,18 +3416,35 @@
                 return;
             }
 
+            let arquivoAditivo = '';
+            let arquivoAditivoOriginal = '';
+
+            if (aditivoFile) {
+                try {
+                    const uploadResult = await uploadContractAttachment(num, aditivoFile);
+                    arquivoAditivo = uploadResult?.arquivoContrato || '';
+                    arquivoAditivoOriginal = uploadResult?.arquivoOriginal || aditivoFile.name || '';
+                } catch (error) {
+                    alert(error.message || 'Erro ao enviar o PDF do aditivo.');
+                    return;
+                }
+            }
+
             contract.aditivos = contract.aditivos || [];
             contract.aditivos.push({ 
                 tipo: tipo, 
                 data: new Date().toLocaleDateString('pt-BR'),
                 valor: valorAditivo,
-                obs: obsAditivo
+                obs: obsAditivo,
+                arquivoAditivo,
+                arquivoAditivoOriginal
             });
 
             try {
                 await saveContract(contract);
                 updateLocalContractCache(contract);
                 alert('Atualização contratual registrada com sucesso!');
+                if (aditivoFileInput) aditivoFileInput.value = '';
             } catch (error) {
                 alert(error.message || 'Erro ao registrar aditivo.');
             }
@@ -3675,15 +3739,18 @@
             if(c.aditivos && c.aditivos.length > 0) {
                 c.aditivos.forEach(ad => {
                     const tr = document.createElement('tr');
+                    const linkAditivo = renderAditivoAttachmentLink(ad);
                     tr.innerHTML = `
                         <td>${ad.data}</td>
                         <td><strong>${ad.tipo}</strong></td>
                         <td>${ad.valor ? 'Valor: ' + ad.valor + ' | ' : ''} ${ad.obs || 'Atualização contratual registrada.'}</td>
+                        <td>${linkAditivo}</td>
                     `;
                     tbodyAditivos.appendChild(tr);
                 });
+                lucide.createIcons();
             } else {
-                tbodyAditivos.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Nenhum aditivo/alteração registrado.</td></tr>`;
+                tbodyAditivos.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Nenhum aditivo/alteração registrado.</td></tr>`;
             }
 
             const tbodyEmpenhos = document.getElementById('tbodyEmpenhosUnidade');
