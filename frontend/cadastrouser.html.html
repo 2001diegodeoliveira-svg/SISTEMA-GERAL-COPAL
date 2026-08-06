@@ -1109,6 +1109,29 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="accessPermissionsModal">
+        <div class="modal-card" style="max-width: 720px;">
+            <h3><i data-lucide="sliders-horizontal" style="width: 20px;"></i> Editar Permissões de Acesso</h3>
+            <p>Ajuste os módulos liberados para o usuário selecionado.</p>
+
+            <div class="approval-permissions-grid">
+                <label class="approval-permission-item"><input type="checkbox" id="access-perm-processos"> Processos</label>
+                <label class="approval-permission-item"><input type="checkbox" id="access-perm-unidade"> Unidade</label>
+                <label class="approval-permission-item"><input type="checkbox" id="access-perm-cadastro-inicial"> Cadastro Inicial</label>
+                <label class="approval-permission-item"><input type="checkbox" id="access-perm-aditivos"> Aditivos & Atualizações</label>
+                <label class="approval-permission-item"><input type="checkbox" id="access-perm-empenho"> Empenho</label>
+                <label class="approval-permission-item"><input type="checkbox" id="access-perm-overview"> Visão Geral</label>
+                <label class="approval-permission-item"><input type="checkbox" id="access-perm-questionario-docs"> Questionário & Docs</label>
+                <label class="approval-permission-item"><input type="checkbox" id="access-perm-execucao-pagamento"> Execução & Pagamento</label>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeAccessPermissionsModal()">Fechar</button>
+                <button type="button" class="btn-submit" onclick="saveAccessPermissions()">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
     <!-- RODAPÉ -->
     <footer>
         <p>COPAL SESP - Secretaria de Estado de Segurança Pública de Mato Grosso</p>
@@ -1131,6 +1154,7 @@
         let pendingUserRequests = [];
         let registeredUsers = [];
         let approvalTargetUserId = null;
+        let accessPermissionTargetUserId = null;
         const pendingApprovalPermissions = {};
 
         const APPROVAL_PERMISSION_MAP = {
@@ -1142,6 +1166,17 @@
             visaoGeral: 'approval-perm-overview',
             questionarioDocs: 'approval-perm-questionario-docs',
             execucaoPagamento: 'approval-perm-execucao-pagamento'
+        };
+
+        const ACCESS_PERMISSION_MAP = {
+            processos: 'access-perm-processos',
+            unidade: 'access-perm-unidade',
+            cadastroInicial: 'access-perm-cadastro-inicial',
+            aditivosAtualizacoes: 'access-perm-aditivos',
+            empenho: 'access-perm-empenho',
+            visaoGeral: 'access-perm-overview',
+            questionarioDocs: 'access-perm-questionario-docs',
+            execucaoPagamento: 'access-perm-execucao-pagamento'
         };
 
         const DEFAULT_REQUEST_PERMISSIONS = {
@@ -1183,6 +1218,10 @@
             return pendingUserRequests.find((request) => Number(request.id) === Number(id)) || null;
         }
 
+        function getRegisteredUserById(id) {
+            return registeredUsers.find((user) => Number(user.id) === Number(id)) || null;
+        }
+
         function getApprovalPermissionsForUser(id) {
             if (pendingApprovalPermissions[id]) {
                 return normalizeApprovalPermissions(pendingApprovalPermissions[id]);
@@ -1220,6 +1259,67 @@
         function closeApprovalPermissionsModal() {
             approvalTargetUserId = null;
             document.getElementById('approvalPermissionsModal').classList.remove('active');
+        }
+
+        function getAccessPermissionsForUser(id) {
+            const user = getRegisteredUserById(id);
+            return normalizeApprovalPermissions(user?.permissions || user?.permissions_json || {});
+        }
+
+        function openAccessPermissionsModal(id) {
+            accessPermissionTargetUserId = Number(id);
+            const permissions = getAccessPermissionsForUser(accessPermissionTargetUserId);
+
+            Object.entries(ACCESS_PERMISSION_MAP).forEach(([key, inputId]) => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.checked = !!permissions[key];
+                }
+            });
+
+            document.getElementById('accessPermissionsModal').classList.add('active');
+            lucide.createIcons();
+        }
+
+        function closeAccessPermissionsModal() {
+            accessPermissionTargetUserId = null;
+            document.getElementById('accessPermissionsModal').classList.remove('active');
+        }
+
+        async function saveAccessPermissions() {
+            if (!accessPermissionTargetUserId) {
+                alert('Selecione um usuário antes de salvar permissões.');
+                return;
+            }
+
+            const permissions = {};
+            Object.entries(ACCESS_PERMISSION_MAP).forEach(([key, inputId]) => {
+                const input = document.getElementById(inputId);
+                permissions[key] = !!(input && input.checked);
+            });
+
+            try {
+                const res = await fetch(`/auth/users/${accessPermissionTargetUserId}/permissions`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        permissions,
+                        canViewOverview: !!permissions.visaoGeral
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || 'Permissões atualizadas com sucesso.');
+                    closeAccessPermissionsModal();
+                    fetchRegisteredUsers();
+                } else {
+                    alert(data.message || 'Erro ao atualizar permissões do usuário.');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Erro de conexão ao servidor.');
+            }
         }
 
         function saveApprovalPermissions() {
@@ -1642,6 +1742,8 @@
                 const verifiedLabel = u.verified ? 'Sim' : 'Não';
                 const userRole = String(u.role || '').toLowerCase();
                 const canRevoke = userRole !== 'admin' && userRole !== 'developer';
+                const userPermissions = normalizeApprovalPermissions(u.permissions || u.permissions_json || {});
+                const permissionsSummary = getPermissionsSummaryText(userPermissions);
                 const tr = document.createElement('tr');
 
                 tr.innerHTML = `
@@ -1655,7 +1757,9 @@
                     <td><span class="status-badge ${u.verified ? 'status-approved' : 'status-pending'}">${verifiedLabel}</span></td>
                     <td>
                         ${canRevoke
-                            ? `<button class="btn-action btn-reject" onclick="revokeUserAccess(${u.id}, '${String(u.name || '').replace(/'/g, "\\'")}')">Excluir Acesso</button>`
+                            ? `<button class="btn-action btn-secondary" onclick="openAccessPermissionsModal(${u.id})">Editar Permissões</button>
+                               <div class="pending-access-summary">${permissionsSummary}</div>
+                               <button class="btn-action btn-reject" onclick="revokeUserAccess(${u.id}, '${String(u.name || '').replace(/'/g, "\\'")}')">Excluir Acesso</button>`
                             : '<span style="color:#94a3b8; font-size:0.72rem; font-weight:700;">Protegido</span>'}
                     </td>
                 `;
