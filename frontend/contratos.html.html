@@ -2566,6 +2566,40 @@
                 : 'login%20contrato.html';
         }
 
+        function consumeDashboardContractTarget() {
+            const target = sessionStorage.getItem('contractsDashboardTarget') || '';
+            if (target) {
+                sessionStorage.removeItem('contractsDashboardTarget');
+            }
+            return normalizeContractNumber(target);
+        }
+
+        async function openDashboardSelectedContract() {
+            const targetContractNumber = consumeDashboardContractTarget();
+            if (!targetContractNumber) return;
+
+            await fetchAllContracts();
+            const contract = DB_CONTRATOS[targetContractNumber] || await fetchContract(targetContractNumber);
+            if (!contract) return;
+
+            const overviewButton = document.getElementById('btn-tab-overview');
+            const overviewVisible = overviewButton && overviewButton.style.display !== 'none';
+
+            if (overviewVisible) {
+                await loadOverviewTab();
+                const overviewField = document.getElementById('overviewContractNumber');
+                if (overviewField) {
+                    overviewField.value = targetContractNumber;
+                }
+                showOverviewContractDetails(targetContractNumber);
+                switchTab(null, 'tab-overview');
+                return;
+            }
+
+            fillContractForm(contract);
+            switchTab(null, 'tab-cadastro');
+        }
+
         function redirectToContractsLogin(clearSession = true) {
             if (clearSession) {
                 localStorage.removeItem('accessToken');
@@ -2620,6 +2654,7 @@
                 }
 
                 hideContractsLoginOverlay();
+                await openDashboardSelectedContract();
             })();
 
             loadRateioUnits();
