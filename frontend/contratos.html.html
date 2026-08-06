@@ -679,6 +679,68 @@
             padding: 0.4rem;
         }
 
+        .siag-cell-wrap {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.4rem;
+            align-items: center;
+        }
+
+        .btn-siag-search {
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--card-bg);
+            color: var(--sesp-blue);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-siag-search:hover {
+            background: rgba(0, 102, 204, 0.08);
+        }
+
+        .btn-siag-search:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .lote-siag-feedback {
+            margin-top: 0.25rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            min-height: 16px;
+        }
+
+        .lote-siag-feedback.error,
+        .lote-siag-error {
+            color: var(--danger);
+        }
+
+        .lote-siag-feedback.warn,
+        .siag-inativo {
+            color: #b45309;
+        }
+
+        .lote-siag-feedback.ok {
+            color: var(--success);
+        }
+
+        .siag-loading .lote-siag,
+        .siag-loading .lote-descricao,
+        .siag-loading .lote-unidade-medida,
+        .siag-loading .lote-situacao-siag {
+            background-color: rgba(148, 163, 184, 0.18);
+        }
+
+        .lote-siag.siag-error {
+            border-color: var(--danger);
+        }
+
         /* BOTÕES DE AÇÃO */
         .action-bar {
             display: flex;
@@ -1072,8 +1134,10 @@
                                     <tr>
                                         <th style="width: 90px;">LOTE</th>
                                         <th style="width: 90px;">ITEM</th>
-                                        <th style="width: 120px;">COD SIAG</th>
+                                        <th style="width: 180px;">COD SIAG</th>
                                         <th style="min-width: 250px;">DESCRIÇÃO</th>
+                                        <th style="width: 170px;">UNIDADE DE MEDIDA</th>
+                                        <th style="width: 150px;">SITUAÇÃO SIAG</th>
                                         <th style="width: 180px;">MARCA/MODELO</th>
                                         <th style="width: 100px;">QTD</th>
                                         <th style="width: 140px;">VALOR UNITÁRIO</th>
@@ -1085,8 +1149,16 @@
                                     <tr>
                                         <td><input type="text" class="lote-num" placeholder="Lote 1" onchange="atualizarSelectsLotesUnidades()"></td>
                                         <td><input type="text" class="lote-item" placeholder="1"></td>
-                                        <td><input type="text" class="lote-siag" placeholder="SIAG-001"></td>
+                                        <td>
+                                            <div class="siag-cell-wrap">
+                                                <input type="text" class="lote-siag" placeholder="SIAG-001" onchange="buscarItemSiag(this)" onblur="buscarItemSiag(this)">
+                                                <button type="button" class="btn-siag-search" onclick="buscarItemSiag(this.closest('tr').querySelector('.lote-siag'))" title="Buscar item SIAG"><i data-lucide="search" style="width:14px;"></i></button>
+                                            </div>
+                                            <div class="lote-siag-feedback"></div>
+                                        </td>
                                         <td><textarea class="lote-descricao" rows="2" placeholder="Detalhamento técnico do item..."></textarea></td>
+                                        <td><input type="text" class="lote-unidade-medida" placeholder="Ex.: UN" readonly></td>
+                                        <td><input type="text" class="lote-situacao-siag" placeholder="ATIVO" readonly></td>
                                         <td><input type="text" class="lote-marca" placeholder="Marca / Modelo"></td>
                                         <td><input type="number" class="lote-qtd" min="1" value="1" oninput="calcularTotalLote(this)"></td>
                                         <td><input type="text" class="lote-vunit" placeholder="R$ 0,00" oninput="maskMoney(this); calcularTotalLote(this)"></td>
@@ -1955,6 +2027,85 @@
             return Array.from(new Set((contract?.unidades || []).map(u => String(u?.unidade || u || '').trim()).filter(Boolean)));
         }
 
+        function formatContractDateLabel(value) {
+            const raw = String(value || '').trim();
+            if (!raw) return '-';
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return raw;
+
+            const parsed = new Date(raw);
+            if (Number.isNaN(parsed.getTime())) return raw;
+            return parsed.toLocaleDateString('pt-BR');
+        }
+
+        function parseContractDate(value) {
+            const raw = String(value || '').trim();
+            if (!raw) return null;
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+                const parts = raw.split('/');
+                const parsedBr = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
+                return Number.isNaN(parsedBr.getTime()) ? null : parsedBr;
+            }
+            const parsed = new Date(raw);
+            return Number.isNaN(parsed.getTime()) ? null : parsed;
+        }
+
+        function getContractDurationLabel(contract) {
+            const start = parseContractDate(contract?.dtInicial);
+            const end = parseContractDate(contract?.dtFinal);
+            if (!start || !end || end < start) return '-';
+
+            const totalMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+            return `${Math.max(1, totalMonths + 1)} Meses`;
+        }
+
+        function getContractAddressLabel(contract) {
+            const parts = [
+                contract?.logradouro,
+                contract?.numEndereco,
+                contract?.bairro,
+                contract?.cidade,
+                contract?.uf,
+                contract?.cep
+            ].map((part) => String(part || '').trim()).filter(Boolean);
+            return parts.length ? parts.join(', ') : '-';
+        }
+
+        function getContractPhoneLabel(contract) {
+            const phones = [
+                String(contract?.telefoneFixo || '').trim(),
+                String(contract?.telefoneWhatsapp || '').trim()
+            ].filter(Boolean);
+            return phones.length ? phones.join(', ') : '-';
+        }
+
+        function renderContractPdfLinks(contract) {
+            const links = [];
+            const mainUrl = getAttachmentUrl(contract);
+            if (mainUrl) {
+                links.push({
+                    label: `Visualizar PDF ${getAttachmentLabel(contract)}`,
+                    url: mainUrl
+                });
+            }
+
+            (Array.isArray(contract?.aditivos) ? contract.aditivos : []).forEach((aditivo, index) => {
+                const url = getAditivoAttachmentUrl(aditivo);
+                if (!url) return;
+
+                const aditivoLabel = String(aditivo?.arquivoAditivoOriginal || aditivo?.arquivoAditivo || '').trim();
+                links.push({
+                    label: `Aditivo ${index + 1}: ${aditivoLabel || 'Visualizar PDF'}`,
+                    url
+                });
+            });
+
+            if (!links.length) {
+                return '<span style="color: var(--text-muted);">Nenhum PDF anexado.</span>';
+            }
+
+            return `<div style="display:flex; flex-direction:column; gap:6px; margin-top: 0.2rem;">${links.map((item) => `<a href="${item.url}" target="_blank" rel="noopener noreferrer" style="color: var(--sesp-light-blue); font-weight: 600;">${escapeHtml(item.label)}</a>`).join('')}</div>`;
+        }
+
         function renderContractDetailsHtml(contract, options = {}) {
             if (!contract) return '';
 
@@ -1963,54 +2114,58 @@
             const aditivos = Array.isArray(contract.aditivos) ? contract.aditivos : [];
             const empenhos = Array.isArray(contract.empenhos) ? contract.empenhos : [];
             const includeActions = options.includeActions !== false;
+            const mainAttachmentUrl = getAttachmentUrl(contract);
 
-            const lotesHtml = lotes.length
-                ? `<ul style="margin: 0.4rem 0 0 1rem; padding-left: 1rem;">${lotes.map((lote) => `<li><strong>${escapeHtml(lote.lote || '-')}</strong> / Item ${escapeHtml(lote.item || '-')} - ${escapeHtml(lote.descricao || '-')}</li>`).join('')}</ul>`
+            const status = String(contract?.status || 'Ativo').trim() || 'Ativo';
+            const empresa = String(contract?.razaoSocial || contract?.nomeFantasia || getCompanyName(contract) || '-').trim();
+            const email = String(contract?.emailEmpresa || '').trim() || '-';
+            const prazoEntrega = String(contract?.prazoEntrega || '').trim();
+            const tipoContagem = String(contract?.formaContagem || '').trim();
+            const prazoEntregaLabel = prazoEntrega ? `${prazoEntrega} dias ${tipoContagem ? tipoContagem.toLowerCase() : ''}`.trim() : '-';
+            const lotesTexto = lotes.length
+                ? lotes.map((lote) => `${lote?.item ? `ITEM ${escapeHtml(lote.item)} - ` : ''}${escapeHtml(lote?.descricao || 'Sem descrição')}`).join('<br>')
                 : '<span style="color: var(--text-muted);">Nenhum lote cadastrado.</span>';
-
-            const fiscalHtml = units.length
-                ? `<ul style="margin: 0.4rem 0 0 1rem; padding-left: 1rem;">${units.map((unitName) => `<li>${escapeHtml(unitName)}</li>`).join('')}</ul>`
-                : '<span style="color: var(--text-muted);">Nenhuma unidade vinculada.</span>';
-
-            const attachmentHtml = renderAttachmentLinks(contract);
+            const unidadesTexto = units.length ? escapeHtml(units.join(', ')) : '<span style="color: var(--text-muted);">Nenhuma unidade vinculada.</span>';
+            const documentosPdfHtml = renderContractPdfLinks(contract);
 
             return `
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem; color: #0f172a;">
                     <div><strong>Contrato:</strong> ${escapeHtml(contract.numContrato || '-')}</div>
                     <div><strong>Processo:</strong> ${escapeHtml(contract.numProcesso || '-')}</div>
+                    <div><strong>Status:</strong> ${escapeHtml(status)}</div>
                     <div><strong>Credor:</strong> ${escapeHtml(getCompanyName(contract) || '-')}</div>
-                    <div><strong>Valor Global:</strong> ${escapeHtml(contract.valorGlobal || '-')}</div>
-                    <div><strong>Objeto:</strong> ${escapeHtml(contract.objeto || '-')}</div>
-                    <div><strong>Vigência:</strong> ${escapeHtml(contract.dtInicial || '-')} até ${escapeHtml(contract.dtFinal || '-')}</div>
-                    <div><strong>Endereço:</strong> ${escapeHtml([contract.logradouro, contract.numEndereco, contract.bairro, contract.cidade, contract.uf].filter(Boolean).join(', ') || '-')}</div>
-                    <div><strong>CEP:</strong> ${escapeHtml(contract.cep || '-')}</div>
+                    <div><strong>Nome da Contratada:</strong> ${escapeHtml(empresa)}</div>
+                    <div style="grid-column: 1 / -1;"><strong>Endereço:</strong> ${escapeHtml(getContractAddressLabel(contract))}</div>
+                    <div style="grid-column: 1 / -1;"><em><strong>Endereço Eletrônico:</strong> ${escapeHtml(email)}</em> &nbsp;&nbsp;&nbsp; <strong>Telefone:</strong> ${escapeHtml(getContractPhoneLabel(contract))}</div>
+                    <div style="grid-column: 1 / -1;"><strong>Objeto:</strong> ${escapeHtml(contract.objeto || '-')}</div>
+                    <div><strong>Vigência:</strong> ${escapeHtml(getContractDurationLabel(contract))}</div>
+                    <div><strong>Prazo de vigência:</strong> ${escapeHtml(formatContractDateLabel(contract.dtInicial))} a ${escapeHtml(formatContractDateLabel(contract.dtFinal))}</div>
+                    <div><strong>Tipo de Entrega:</strong> ${escapeHtml(contract.tipoEntrega || '-')}</div>
+                    <div><strong>Prazo de entrega:</strong> ${escapeHtml(prazoEntregaLabel)}</div>
                     <div><strong>Lotes:</strong> ${lotes.length}</div>
                     <div><strong>Unidades:</strong> ${units.length}</div>
                     <div><strong>Aditivos:</strong> ${aditivos.length}</div>
                     <div><strong>Empenhos:</strong> ${empenhos.length}</div>
                 </div>
                 <div style="margin-top: 1rem;">
-                    <strong>Documentos anexados</strong>
-                    <div style="margin-top: 0.5rem;">${attachmentHtml}</div>
+                    <strong>Documentos anexados:</strong>
+                    ${documentosPdfHtml}
                 </div>
                 <div style="margin-top: 1rem;">
                     <strong>Lotes cadastrados</strong>
-                    ${lotesHtml}
+                    <div style="margin-top: 0.35rem;">${lotesTexto}</div>
                 </div>
                 <div style="margin-top: 1rem;">
                     <strong>Unidades vinculadas</strong>
-                    ${fiscalHtml}
+                    <div style="margin-top: 0.35rem;">${unidadesTexto}</div>
                 </div>
-                <div style="margin-top: 1rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem;">
-                    <div><strong>Última atualização:</strong> ${escapeHtml(getContractLastUpdate(contract) || '-')}</div>
-                    <div><strong>Status:</strong> ${escapeHtml(contract.status || 'ativo')}</div>
-                </div>
+                <div style="margin-top: 1rem;"><strong>Última atualização:</strong> ${escapeHtml(getContractLastUpdate(contract) || '-')}</div>
                 ${includeActions ? `
                     <div style="margin-top: 1rem; display:flex; gap: 8px; flex-wrap: wrap;">
                         <button type="button" class="btn btn-secondary" onclick="carregarContratoParaEdicao('${escapeJsString(contract.numContrato || '')}')">
                             <i data-lucide="edit-3" style="width:14px;"></i> Editar contrato
                         </button>
-                        ${attachmentHtml.includes('href=') ? `<a class="btn btn-primary" href="${getAttachmentUrl(contract)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:6px;"><i data-lucide="eye" style="width:14px;"></i> Abrir documento</a>` : ''}
+                        ${mainAttachmentUrl ? `<a class="btn btn-primary" href="${mainAttachmentUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:6px;"><i data-lucide="eye" style="width:14px;"></i> Abrir PDF principal</a>` : ''}
                     </div>
                 ` : ''}
             `;
@@ -2067,8 +2222,16 @@
                 <tr>
                     <td><input type="text" class="lote-num" value="${escapeHtml(lote.lote || '')}" placeholder="Lote 1" onchange="atualizarSelectsLotesUnidades()"></td>
                     <td><input type="text" class="lote-item" value="${escapeHtml(lote.item || '')}" placeholder="1"></td>
-                    <td><input type="text" class="lote-siag" value="${escapeHtml(lote.codSiag || '')}" placeholder="SIAG-001"></td>
+                    <td>
+                        <div class="siag-cell-wrap">
+                            <input type="text" class="lote-siag" value="${escapeHtml(lote.codSiag || '')}" placeholder="SIAG-001" onchange="buscarItemSiag(this)" onblur="buscarItemSiag(this)">
+                            <button type="button" class="btn-siag-search" onclick="buscarItemSiag(this.closest('tr').querySelector('.lote-siag'))" title="Buscar item SIAG"><i data-lucide="search" style="width:14px;"></i></button>
+                        </div>
+                        <div class="lote-siag-feedback"></div>
+                    </td>
                     <td><textarea class="lote-descricao" rows="2" placeholder="Detalhamento técnico do item...">${escapeHtml(lote.descricao || '')}</textarea></td>
+                    <td><input type="text" class="lote-unidade-medida" value="${escapeHtml(lote.unidadeMedida || '')}" placeholder="Ex.: UN" readonly></td>
+                    <td><input type="text" class="lote-situacao-siag ${String(lote.situacaoSiag || '').toUpperCase() !== 'ATIVO' && String(lote.situacaoSiag || '').trim() ? 'siag-inativo' : ''}" value="${escapeHtml(lote.situacaoSiag || '')}" placeholder="ATIVO" readonly></td>
                     <td><input type="text" class="lote-marca" value="${escapeHtml(lote.marca || '')}" placeholder="Marca / Modelo"></td>
                     <td><input type="number" class="lote-qtd" min="1" value="${escapeHtml(lote.quantidade || 1)}" oninput="calcularTotalLote(this)"></td>
                     <td><input type="text" class="lote-vunit" value="${escapeHtml(lote.valorUnitario || '')}" placeholder="R$ 0,00" oninput="maskMoney(this); calcularTotalLote(this)"></td>
@@ -2847,6 +3010,113 @@
             atualizarSelectsLotesUnidades();
         }
 
+        async function buscarItemSiag(inputElement) {
+            const input = inputElement instanceof HTMLElement ? inputElement : null;
+            if (!input) return;
+
+            const tr = input.closest('tr');
+            if (!tr) return;
+
+            const codigo = String(input.value || '').trim();
+            const descricaoEl = tr.querySelector('.lote-descricao');
+            const unidadeEl = tr.querySelector('.lote-unidade-medida');
+            const situacaoEl = tr.querySelector('.lote-situacao-siag');
+            const feedbackEl = tr.querySelector('.lote-siag-feedback');
+            const buttonEl = tr.querySelector('.btn-siag-search');
+
+            const setFeedback = (message, type = '') => {
+                if (!feedbackEl) return;
+                feedbackEl.className = `lote-siag-feedback ${type}`.trim();
+                feedbackEl.innerText = message || '';
+            };
+
+            const clearAutofill = () => {
+                if (descricaoEl) descricaoEl.value = '';
+                if (unidadeEl) unidadeEl.value = '';
+                if (situacaoEl) {
+                    situacaoEl.value = '';
+                    situacaoEl.classList.remove('siag-inativo');
+                }
+            };
+
+            input.classList.remove('siag-error');
+
+            if (!codigo) {
+                clearAutofill();
+                setFeedback('Informe o código SIAG para consultar.', 'error');
+                return;
+            }
+
+            tr.classList.add('siag-loading');
+            if (buttonEl) buttonEl.disabled = true;
+            setFeedback('Consultando item no SIAG...', '');
+
+            try {
+                const response = await fetch(apiUrl(`/api/siag/item/${encodeURIComponent(codigo)}`), {
+                    method: 'GET',
+                    headers: contractsAuthToken ? { Authorization: `Bearer ${contractsAuthToken}` } : {}
+                });
+
+                let data = null;
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    const rawText = await response.text();
+                    if (rawText && (rawText.trim().startsWith('{') || rawText.trim().startsWith('['))) {
+                        try {
+                            data = JSON.parse(rawText);
+                        } catch (error) {
+                            data = null;
+                        }
+                    }
+                }
+
+                if (response.status === 404) {
+                    clearAutofill();
+                    input.classList.add('siag-error');
+                    setFeedback('Item SIAG não encontrado.', 'error');
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(data?.message || 'Falha ao consultar item SIAG.');
+                }
+
+                const descricao = String(data?.descricao || '').trim();
+                const unidadeMedida = String(data?.unidadeMedida || data?.unidade || '').trim();
+                const situacao = String(data?.situacao || '').trim();
+
+                if (descricaoEl) {
+                    descricaoEl.value = descricao;
+                }
+
+                if (unidadeEl) {
+                    unidadeEl.value = unidadeMedida;
+                }
+
+                if (situacaoEl) {
+                    situacaoEl.value = situacao;
+                    const inactive = situacao && situacao.toUpperCase() !== 'ATIVO';
+                    situacaoEl.classList.toggle('siag-inativo', inactive);
+                    if (inactive) {
+                        setFeedback(`Atenção: item em situação "${situacao}" no SIAG.`, 'warn');
+                    } else {
+                        setFeedback('Item SIAG localizado com sucesso.', 'ok');
+                    }
+                } else {
+                    setFeedback('Item SIAG localizado com sucesso.', 'ok');
+                }
+            } catch (error) {
+                clearAutofill();
+                input.classList.add('siag-error');
+                setFeedback(error?.message || 'Erro ao consultar SIAG.', 'error');
+            } finally {
+                tr.classList.remove('siag-loading');
+                if (buttonEl) buttonEl.disabled = false;
+            }
+        }
+
         function obterLotesCadastrados() {
             const lotes = [];
             document.querySelectorAll('#tbody-lotes-contrato tr').forEach((row, index) => {
@@ -2887,8 +3157,16 @@
             tr.innerHTML = `
                 <td><input type="text" class="lote-num" placeholder="Lote ${numLinhas}" onchange="atualizarSelectsLotesUnidades()"></td>
                 <td><input type="text" class="lote-item" placeholder="${numLinhas}"></td>
-                <td><input type="text" class="lote-siag" placeholder="SIAG-00${numLinhas}"></td>
+                <td>
+                    <div class="siag-cell-wrap">
+                        <input type="text" class="lote-siag" placeholder="SIAG-00${numLinhas}" onchange="buscarItemSiag(this)" onblur="buscarItemSiag(this)">
+                        <button type="button" class="btn-siag-search" onclick="buscarItemSiag(this.closest('tr').querySelector('.lote-siag'))" title="Buscar item SIAG"><i data-lucide="search" style="width:14px;"></i></button>
+                    </div>
+                    <div class="lote-siag-feedback"></div>
+                </td>
                 <td><textarea class="lote-descricao" rows="2" placeholder="Detalhamento técnico do item..."></textarea></td>
+                <td><input type="text" class="lote-unidade-medida" placeholder="Ex.: UN" readonly></td>
+                <td><input type="text" class="lote-situacao-siag" placeholder="ATIVO" readonly></td>
                 <td><input type="text" class="lote-marca" placeholder="Marca / Modelo"></td>
                 <td><input type="number" class="lote-qtd" min="1" value="1" oninput="calcularTotalLote(this)"></td>
                 <td><input type="text" class="lote-vunit" placeholder="R$ 0,00" oninput="maskMoney(this); calcularTotalLote(this)"></td>
@@ -3108,6 +3386,8 @@
                 const item = row.querySelector('.lote-item').value;
                 const codSiag = row.querySelector('.lote-siag').value;
                 const descricao = row.querySelector('.lote-descricao').value;
+                const unidadeMedida = row.querySelector('.lote-unidade-medida') ? row.querySelector('.lote-unidade-medida').value : '';
+                const situacaoSiag = row.querySelector('.lote-situacao-siag') ? row.querySelector('.lote-situacao-siag').value : '';
                 const marca = row.querySelector('.lote-marca').value;
                 const qtd = row.querySelector('.lote-qtd').value;
                 const vUnit = row.querySelector('.lote-vunit').value;
@@ -3119,6 +3399,8 @@
                         item: item,
                         codSiag: codSiag,
                         descricao: descricao,
+                        unidadeMedida: unidadeMedida,
+                        situacaoSiag: situacaoSiag,
                         marca: marca,
                         quantidade: qtd,
                         valorUnitario: vUnit,

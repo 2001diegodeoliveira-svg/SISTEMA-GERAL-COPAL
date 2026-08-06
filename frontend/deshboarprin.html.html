@@ -357,6 +357,31 @@
             font-size: 12px;
         }
 
+        .contract-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .contract-details-block {
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .contract-details-title {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
         .topbar-user {
             display: flex;
             align-items: center;
@@ -426,12 +451,7 @@
         <header class="topbar">
             <div class="page-title" id="pageTitle">Dashboard Executivo</div>
             <div class="topbar-actions">
-                <button class="btn btn-secondary" type="button" onclick="app.reloadData()"><i class="fa-solid fa-rotate"></i> Atualizar</button>
-                <button class="btn btn-primary" type="button" onclick="openContractsModule()"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir Contratos</button>
-                <div class="topbar-user">
-                    <div class="topbar-avatar" id="topbarAvatar">SG</div>
-                    <div id="topbarUserName" style="font-size: 13px; font-weight: 600;">Monitoria SGC</div>
-                </div>
+                <button class="btn btn-primary" type="button" onclick="openHomePage()"><i class="fa-solid fa-house"></i> HOME</button>
             </div>
         </header>
         <div class="content-area" id="appContent"></div>
@@ -452,11 +472,63 @@
             return String(relativePath || '');
         }
 
+        function openHomePage() {
+            window.location.href = resolveFrontendPath('home.html.html');
+        }
+
         function openContractsModule(numContrato) {
             if (numContrato) {
                 sessionStorage.setItem('contractsDashboardTarget', String(numContrato));
             }
             window.location.href = resolveFrontendPath('contratos.html.html');
+        }
+
+        function getContractAttachmentUrl(contract) {
+            const attachmentValue = String(contract?.arquivoContrato || '').trim();
+            const contentValue = String(contract?.conteudoArquivoBase64 || '').trim();
+
+            if (attachmentValue) {
+                if (/^https?:\/\//i.test(attachmentValue) || /^data:/i.test(attachmentValue)) {
+                    return attachmentValue;
+                }
+
+                const normalizedPath = attachmentValue.replace(/\\/g, '/').replace(/^\/+/, '');
+
+                if (/^uploads\//i.test(normalizedPath)) {
+                    return apiUrl(`/${encodeURI(normalizedPath)}`);
+                }
+
+                if (/^contracts\//i.test(normalizedPath)) {
+                    return apiUrl(`/uploads/${encodeURI(normalizedPath)}`);
+                }
+
+                if (attachmentValue.startsWith('/')) {
+                    return apiUrl(encodeURI(attachmentValue));
+                }
+
+                if (normalizedPath.includes('/')) {
+                    return apiUrl(`/${encodeURI(normalizedPath)}`);
+                }
+
+                return apiUrl(`/uploads/contracts/${encodeURIComponent(normalizedPath)}`);
+            }
+
+            if (contentValue) {
+                return `data:application/pdf;base64,${contentValue}`;
+            }
+
+            return '';
+        }
+
+        function openContractPdf(numContrato) {
+            const contract = dashboardState.contratos.find((item) => utils.getContractNumber(item) === String(numContrato || '').trim());
+            const attachmentUrl = getContractAttachmentUrl(contract);
+            if (!attachmentUrl) {
+                alert('Este contrato não possui PDF/anexo cadastrado.');
+                return;
+            }
+
+            window.open(attachmentUrl, '_blank', 'noopener,noreferrer');
         }
 
         const utils = {
@@ -492,6 +564,9 @@
             },
             getContractObject(contract) {
                 return String(contract?.objeto || '-').trim();
+            },
+            getContractProcess(contract) {
+                return String(contract?.numProcesso || contract?.processo || '-').trim();
             },
             getContractValue(contract) {
                 return this.parseMoney(contract?.valorGlobal || contract?.valor || 0);
@@ -614,8 +689,130 @@
             getUserInitials(user) {
                 const parts = this.getUserDisplayName(user).split(/\s+/).filter(Boolean).slice(0, 2);
                 return parts.map((part) => part.charAt(0).toUpperCase()).join('') || 'SG';
+            },
+            parseSmartDate(value) {
+                if (!value) return null;
+                const raw = String(value).trim();
+                if (!raw) return null;
+
+                const br = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+                if (br) {
+                    const iso = `${br[3]}-${br[2]}-${br[1]}`;
+                    const date = new Date(iso);
+                    return Number.isNaN(date.getTime()) ? null : date;
+                }
+
+                const date = new Date(raw);
+                return Number.isNaN(date.getTime()) ? null : date;
+            },
+            getLastUpdateLabel(contract) {
+                const candidates = [];
+                (Array.isArray(contract?.aditivos) ? contract.aditivos : []).forEach((item) => {
+                    const date = this.parseSmartDate(item?.data);
+                    if (date) candidates.push(date);
+                });
+                (Array.isArray(contract?.empenhos) ? contract.empenhos : []).forEach((item) => {
+                    const date = this.parseSmartDate(item?.dataLancamento || item?.data || item?.dtEmpenho);
+                    if (date) candidates.push(date);
+                });
+                if (!candidates.length) return '-';
+                return candidates.sort((a, b) => b - a)[0].toLocaleDateString('pt-BR');
+            },
+            getContractDurationMonths(contract) {
+                const start = this.getValidDate(this.getStartDate(contract));
+                const end = this.getValidDate(this.getEndDate(contract));
+                if (!start || !end || end < start) return '-';
+                const totalMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+                const safeMonths = Math.max(1, totalMonths + 1);
+                return `${safeMonths} Meses`;
+            },
+            getAddressText(contract) {
+                const parts = [
+                    contract?.logradouro,
+                    contract?.numEndereco,
+                    contract?.bairro,
+                    contract?.cidade,
+                    contract?.uf,
+                    contract?.cep
+                ].map((item) => String(item || '').trim()).filter(Boolean);
+                return parts.length ? parts.join(', ') : '-';
+            },
+            getContactText(contract) {
+                const email = String(contract?.emailEmpresa || '').trim();
+                const foneA = String(contract?.telefoneFixo || '').trim();
+                const foneB = String(contract?.telefoneWhatsapp || '').trim();
+                const phone = [foneA, foneB].filter(Boolean).join(' / ');
+                if (!email && !phone) return '-';
+                if (email && phone) return `${email} | ${phone}`;
+                return email || phone;
             }
         };
+
+        function getContractByNumber(numContrato) {
+            const target = String(numContrato || '').trim().toLowerCase();
+            return dashboardState.contratos.find((contract) => utils.getContractNumber(contract).toLowerCase() === target) || null;
+        }
+
+        function renderContractDetailsInDashboard(contract) {
+            const detailsPanel = document.getElementById('contratosDetailsPanel');
+            const detailsContent = document.getElementById('contratosDetailsContent');
+            if (!detailsPanel || !detailsContent) return;
+
+            if (!contract) {
+                detailsPanel.style.display = 'none';
+                detailsContent.innerHTML = '';
+                return;
+            }
+
+            const attachmentUrl = getContractAttachmentUrl(contract);
+            const attachmentLabel = String(contract?.arquivoContrato || '').split('/').pop() || 'Visualizar PDF';
+            const lotes = Array.isArray(contract?.lotes) ? contract.lotes : [];
+            const unidades = utils.getUnitEntries(contract).map((entry) => utils.getUnitName(entry)).filter(Boolean);
+            const aditivos = Array.isArray(contract?.aditivos) ? contract.aditivos : [];
+            const empenhos = Array.isArray(contract?.empenhos) ? contract.empenhos : [];
+
+            detailsContent.innerHTML = `
+                <div class="contract-details-grid">
+                    <div class="contract-details-block"><strong>Contrato:</strong> ${utils.escapeHtml(utils.getContractNumber(contract))}</div>
+                    <div class="contract-details-block"><strong>Processo:</strong> ${utils.escapeHtml(utils.getContractProcess(contract))}</div>
+                    <div class="contract-details-block"><strong>Status:</strong> ${utils.escapeHtml(utils.getStatus(contract))}</div>
+                    <div class="contract-details-block"><strong>Credor:</strong> ${utils.escapeHtml(String(contract?.credor || '-'))}</div>
+                    <div class="contract-details-block"><strong>Nome da Contratada:</strong> ${utils.escapeHtml(utils.getCompanyName(contract))}</div>
+                    <div class="contract-details-block"><strong>Endereço:</strong> ${utils.escapeHtml(utils.getAddressText(contract))}</div>
+                    <div class="contract-details-block"><strong>Contato:</strong> ${utils.escapeHtml(utils.getContactText(contract))}</div>
+                    <div class="contract-details-block"><strong>Vigência:</strong> ${utils.escapeHtml(utils.getContractDurationMonths(contract))}</div>
+                    <div class="contract-details-block"><strong>Prazo de vigência:</strong> ${utils.escapeHtml(utils.formatDate(utils.getStartDate(contract)))} até ${utils.escapeHtml(utils.formatDate(utils.getEndDate(contract)))}</div>
+                    <div class="contract-details-block"><strong>Tipo de entrega:</strong> ${utils.escapeHtml(String(contract?.tipoEntrega || '-'))}</div>
+                    <div class="contract-details-block"><strong>Prazo de entrega:</strong> ${utils.escapeHtml(String(contract?.prazoEntrega || '-'))}</div>
+                </div>
+
+                <div class="contract-details-block" style="margin-bottom: 12px;"><strong>Objeto:</strong> ${utils.escapeHtml(utils.getContractObject(contract))}</div>
+
+                <div class="contract-details-grid">
+                    <div class="contract-details-block"><strong>Lotes:</strong> ${lotes.length}</div>
+                    <div class="contract-details-block"><strong>Unidades:</strong> ${unidades.length}</div>
+                    <div class="contract-details-block"><strong>Aditivos:</strong> ${aditivos.length}</div>
+                    <div class="contract-details-block"><strong>Empenhos:</strong> ${empenhos.length}</div>
+                </div>
+
+                <div class="contract-details-block" style="margin-bottom: 12px;">
+                    <strong>Documentos anexados:</strong><br>
+                    ${attachmentUrl ? `<a href="${attachmentUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--brand-cyan); font-weight: 600;">Visualizar PDF ${utils.escapeHtml(attachmentLabel)}</a>` : 'Sem anexo cadastrado'}
+                </div>
+
+                <div class="contract-details-title">Lotes cadastrados</div>
+                <div class="contract-details-block" style="margin-bottom: 12px;">
+                    ${lotes.length ? lotes.map((lote) => `${utils.escapeHtml(String(lote?.lote || 'Lote'))}${lote?.descricao ? ` - ${utils.escapeHtml(String(lote.descricao))}` : ''}`).join('<br>') : 'Nenhum lote cadastrado.'}
+                </div>
+
+                <div class="contract-details-title">Unidades vinculadas</div>
+                <div class="contract-details-block" style="margin-bottom: 12px;">${unidades.length ? utils.escapeHtml(unidades.join(' / ')) : 'Nenhuma unidade vinculada.'}</div>
+
+                <div class="contract-details-block"><strong>Última atualização:</strong> ${utils.escapeHtml(utils.getLastUpdateLabel(contract))}</div>
+            `;
+
+            detailsPanel.style.display = 'block';
+        }
 
         function updateTopbarUser() {
             const avatar = document.getElementById('topbarAvatar');
@@ -749,7 +946,7 @@
                                         <tr>
                                             <td style="width: 40px; text-align: center; color: var(--warning);"><i class="fa-solid fa-circle-exclamation"></i></td>
                                             <td><strong>Contrato ${utils.escapeHtml(utils.getContractNumber(contract))}</strong> - ${dias < 0 ? 'vigência encerrada' : `vence em ${dias} dias`}. Empresa: ${utils.escapeHtml(utils.getCompanyName(contract))}</td>
-                                            <td style="text-align: right;"><button class="btn btn-primary" type="button" style="padding: 6px 12px; font-size: 11px;" onclick="openContractsModule('${utils.escapeHtml(utils.getContractNumber(contract))}')">Abrir Contrato</button></td>
+                                            <td style="text-align: right;"><button class="btn btn-primary" type="button" style="padding: 6px 12px; font-size: 11px;" onclick="openContractPdf('${utils.escapeHtml(utils.getContractNumber(contract))}')">Abrir Contrato</button></td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -929,12 +1126,20 @@
                                             </td>
                                             <td style="font-size:12px;">${units.length} vinculadas<br><span style="color:var(--text-muted)">${utils.escapeHtml(units.join(', ') || 'Sem unidade')}</span></td>
                                             <td><span class="badge ${utils.getBadgeClass(status)}">${status}</span></td>
-                                            <td><button class="btn btn-secondary" type="button" onclick="openContractsModule('${utils.escapeHtml(utils.getContractNumber(contract))}')"><i class="fa-solid fa-eye"></i> Abrir</button></td>
+                                            <td><button class="btn btn-secondary" type="button" onclick="renderContractDetailsInDashboard(getContractByNumber('${utils.escapeHtml(utils.getContractNumber(contract))}'))"><i class="fa-solid fa-eye"></i> Abrir</button></td>
                                         </tr>
                                     `;
                                 }).join('')}
                             </tbody>
                         </table>
+                    </div>
+
+                    <div class="card" id="contratosDetailsPanel" style="display:none;">
+                        <div class="card-header">
+                            <div class="card-title">Detalhes do Contrato</div>
+                            <button class="btn btn-secondary" type="button" onclick="document.getElementById('contratosDetailsPanel').style.display='none'">Fechar</button>
+                        </div>
+                        <div id="contratosDetailsContent"></div>
                     </div>
                 `;
             },
