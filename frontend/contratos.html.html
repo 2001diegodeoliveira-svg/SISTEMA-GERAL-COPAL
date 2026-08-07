@@ -2310,10 +2310,6 @@
                     ['.g-tit-mat', data.gestorTitular?.matricula || ''],
                     ['.g-tit-email', data.gestorTitular?.email || ''],
                     ['.g-tit-wsp', data.gestorTitular?.whatsapp || ''],
-                    ['.g-sub-nome', data.gestorSubstituto?.nome || ''],
-                    ['.g-sub-mat', data.gestorSubstituto?.matricula || ''],
-                    ['.g-sub-email', data.gestorSubstituto?.email || ''],
-                    ['.g-sub-wsp', data.gestorSubstituto?.whatsapp || ''],
                 ];
 
                 fields.forEach(([selector, value]) => {
@@ -3365,20 +3361,6 @@
                             <input type="text" class="val-unidade" readonly placeholder="R$ 0,00" style="font-weight: 700; background-color: rgba(0,0,0,0.03);">
                         </div>
 
-                        <!-- FISCAL TITULAR -->
-                        <div class="form-group full-width" style="margin-top: 15px;"><strong style="color:var(--text-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 4px; display: block;">FISCAL TITULAR</strong></div>
-                        <div class="form-group"><label>Nome Fiscal</label><input type="text" class="f-tit-nome"></div>
-                        <div class="form-group"><label>Matrícula</label><input type="text" class="f-tit-mat"></div>
-                        <div class="form-group"><label>E-mail</label><input type="email" class="f-tit-email"></div>
-                        <div class="form-group"><label>WhatsApp</label><input type="text" class="f-tit-wsp" oninput="maskPhone(this)"></div>
-
-                        <!-- FISCAL SUBSTITUTO (NOVO) -->
-                        <div class="form-group full-width" style="margin-top: 10px;"><strong style="color:var(--text-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 4px; display: block;">FISCAL SUBSTITUTO</strong></div>
-                        <div class="form-group"><label>Nome Fiscal Substituto</label><input type="text" class="f-sub-nome"></div>
-                        <div class="form-group"><label>Matrícula</label><input type="text" class="f-sub-mat"></div>
-                        <div class="form-group"><label>E-mail</label><input type="email" class="f-sub-email"></div>
-                        <div class="form-group"><label>WhatsApp</label><input type="text" class="f-sub-wsp" oninput="maskPhone(this)"></div>
-
                         <!-- GESTOR TITULAR -->
                         <div class="form-group full-width" style="margin-top: 15px;"><strong style="color:var(--text-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 4px; display: block;">GESTOR TITULAR</strong></div>
                         <div class="form-group"><label>Nome Gestor</label><input type="text" class="g-tit-nome"></div>
@@ -3386,12 +3368,19 @@
                         <div class="form-group"><label>E-mail</label><input type="email" class="g-tit-email"></div>
                         <div class="form-group"><label>WhatsApp</label><input type="text" class="g-tit-wsp" oninput="maskPhone(this)"></div>
 
-                        <!-- GESTOR SUBSTITUTO (NOVO) -->
-                        <div class="form-group full-width" style="margin-top: 10px;"><strong style="color:var(--text-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 4px; display: block;">GESTOR SUBSTITUTO</strong></div>
-                        <div class="form-group"><label>Nome Gestor Substituto</label><input type="text" class="g-sub-nome"></div>
-                        <div class="form-group"><label>Matrícula</label><input type="text" class="g-sub-mat"></div>
-                        <div class="form-group"><label>E-mail</label><input type="email" class="g-sub-email"></div>
-                        <div class="form-group"><label>WhatsApp</label><input type="text" class="g-sub-wsp" oninput="maskPhone(this)"></div>
+                        <!-- FISCAL TITULAR -->
+                        <div class="form-group full-width" style="margin-top: 15px;"><strong style="color:var(--text-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 4px; display: block;">FISCAL TITULAR</strong></div>
+                        <div class="form-group"><label>Nome Fiscal</label><input type="text" class="f-tit-nome"></div>
+                        <div class="form-group"><label>Matrícula</label><input type="text" class="f-tit-mat"></div>
+                        <div class="form-group"><label>E-mail</label><input type="email" class="f-tit-email"></div>
+                        <div class="form-group"><label>WhatsApp</label><input type="text" class="f-tit-wsp" oninput="maskPhone(this)"></div>
+
+                        <!-- FISCAL SUBSTITUTO -->
+                        <div class="form-group full-width" style="margin-top: 10px;"><strong style="color:var(--text-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 4px; display: block;">FISCAL SUBSTITUTO</strong></div>
+                        <div class="form-group"><label>Nome Fiscal Substituto</label><input type="text" class="f-sub-nome"></div>
+                        <div class="form-group"><label>Matrícula</label><input type="text" class="f-sub-mat"></div>
+                        <div class="form-group"><label>E-mail</label><input type="email" class="f-sub-email"></div>
+                        <div class="form-group"><label>WhatsApp</label><input type="text" class="f-sub-wsp" oninput="maskPhone(this)"></div>
                     </div>
                 `;
                 container.appendChild(card);
@@ -3474,12 +3463,6 @@
                         matricula: card.querySelector('.g-tit-mat').value,
                         email: card.querySelector('.g-tit-email').value,
                         whatsapp: card.querySelector('.g-tit-wsp').value
-                    },
-                    gestorSubstituto: {
-                        nome: card.querySelector('.g-sub-nome').value,
-                        matricula: card.querySelector('.g-sub-mat').value,
-                        email: card.querySelector('.g-sub-email').value,
-                        whatsapp: card.querySelector('.g-sub-wsp').value
                     }
                 });
             });
