@@ -753,9 +753,56 @@
             return dashboardState.contratos.find((contract) => utils.getContractNumber(contract).toLowerCase() === target) || null;
         }
 
-        function renderContractDetailsInDashboard(contract) {
-            const detailsPanel = document.getElementById('contratosDetailsPanel');
-            const detailsContent = document.getElementById('contratosDetailsContent');
+        async function fetchDashboardContractByNumber(numContrato) {
+            const normalizedNumber = String(numContrato || '').trim();
+            if (!normalizedNumber) return null;
+
+            try {
+                const data = await apiFetchJson(`/api/contracts?numContrato=${encodeURIComponent(normalizedNumber)}`);
+                if (data && utils.getContractNumber(data)) {
+                    const currentIndex = dashboardState.contratos.findIndex((contract) => utils.getContractNumber(contract) === utils.getContractNumber(data));
+                    if (currentIndex >= 0) {
+                        dashboardState.contratos[currentIndex] = data;
+                    } else {
+                        dashboardState.contratos.unshift(data);
+                    }
+                }
+                return data;
+            } catch (error) {
+                console.error('Falha ao buscar detalhes do contrato no banco:', error);
+                return getContractByNumber(normalizedNumber);
+            }
+        }
+
+        function getContractDetailsElements(view) {
+            const safeView = view === 'busca' ? 'busca' : 'contratos';
+            return {
+                panel: document.getElementById(safeView === 'busca' ? 'searchDetailsPanel' : 'contratosDetailsPanel'),
+                content: document.getElementById(safeView === 'busca' ? 'searchDetailsContent' : 'contratosDetailsContent')
+            };
+        }
+
+        async function openDashboardContractDetails(numContrato, view = 'contratos') {
+            const normalizedNumber = String(numContrato || '').trim();
+            if (!normalizedNumber) return;
+
+            if (view && dashboardState.lastView !== view) {
+                app.navigate(view);
+            }
+
+            if (view === 'contratos' && !document.getElementById('contratosDetailsPanel')) {
+                app.renderContratos();
+            }
+            if (view === 'busca' && !document.getElementById('searchDetailsPanel')) {
+                app.renderBusca();
+            }
+
+            const contract = await fetchDashboardContractByNumber(normalizedNumber);
+            renderContractDetailsInDashboard(contract, view);
+        }
+
+        function renderContractDetailsInDashboard(contract, view = 'contratos') {
+            const { panel: detailsPanel, content: detailsContent } = getContractDetailsElements(view);
             if (!detailsPanel || !detailsContent) return;
 
             if (!contract) {
@@ -770,6 +817,9 @@
             const unidades = utils.getUnitEntries(contract).map((entry) => utils.getUnitName(entry)).filter(Boolean);
             const aditivos = Array.isArray(contract?.aditivos) ? contract.aditivos : [];
             const empenhos = Array.isArray(contract?.empenhos) ? contract.empenhos : [];
+            const totalValue = utils.getContractValue(contract);
+            const usedValue = utils.getGlobalUsed(contract);
+            const availableValue = Math.max(totalValue - usedValue, 0);
 
             detailsContent.innerHTML = `
                 <div class="contract-details-grid">
@@ -787,6 +837,12 @@
                 </div>
 
                 <div class="contract-details-block" style="margin-bottom: 12px;"><strong>Objeto:</strong> ${utils.escapeHtml(utils.getContractObject(contract))}</div>
+
+                <div class="contract-details-grid">
+                    <div class="contract-details-block"><strong>Valor total:</strong> ${utils.escapeHtml(utils.formatMoney(totalValue))}</div>
+                    <div class="contract-details-block"><strong>Valor usado:</strong> ${utils.escapeHtml(utils.formatMoney(usedValue))}</div>
+                    <div class="contract-details-block"><strong>Saldo disponível:</strong> ${utils.escapeHtml(utils.formatMoney(availableValue))}</div>
+                </div>
 
                 <div class="contract-details-grid">
                     <div class="contract-details-block"><strong>Lotes:</strong> ${lotes.length}</div>
@@ -1068,7 +1124,7 @@
                                                     <div class="progress-container"><div class="progress-bar" style="width: ${Math.min(percent, 100)}%; background-color: ${percent > 80 ? 'var(--warning)' : 'var(--brand-blue)'}"></div></div>
                                                 </td>
                                                 <td style="font-weight: 600; color: var(--success);">${utils.formatMoney(Math.max(allocated - used, 0))}</td>
-                                                <td><button class="btn btn-secondary" type="button" onclick="openContractsModule('${utils.escapeHtml(utils.getContractNumber(contract))}')">Abrir</button></td>
+                                                <td><button class="btn btn-secondary" type="button" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'contratos')">Abrir</button></td>
                                             </tr>
                                         `;
                                     }).join('')}
@@ -1126,7 +1182,7 @@
                                             </td>
                                             <td style="font-size:12px;">${units.length} vinculadas<br><span style="color:var(--text-muted)">${utils.escapeHtml(units.join(', ') || 'Sem unidade')}</span></td>
                                             <td><span class="badge ${utils.getBadgeClass(status)}">${status}</span></td>
-                                            <td><button class="btn btn-secondary" type="button" onclick="renderContractDetailsInDashboard(getContractByNumber('${utils.escapeHtml(utils.getContractNumber(contract))}'))"><i class="fa-solid fa-eye"></i> Abrir</button></td>
+                                            <td><button class="btn btn-secondary" type="button" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'contratos')"><i class="fa-solid fa-eye"></i> Abrir</button></td>
                                         </tr>
                                     `;
                                 }).join('')}
@@ -1155,6 +1211,13 @@
                         </div>
                     </div>
                     <div id="searchResults"></div>
+                    <div class="card" id="searchDetailsPanel" style="display:none; margin-top: 16px;">
+                        <div class="card-header">
+                            <div class="card-title">Detalhes do Contrato</div>
+                            <button class="btn btn-secondary" type="button" onclick="document.getElementById('searchDetailsPanel').style.display='none'">Fechar</button>
+                        </div>
+                        <div id="searchDetailsContent"></div>
+                    </div>
                 `;
                 const input = document.getElementById('searchInput');
                 if (input) {
@@ -1195,7 +1258,7 @@
                                             <td>${utils.escapeHtml(utils.getContractObject(contract))}</td>
                                             <td>${utils.escapeHtml(units || '-')}</td>
                                             <td><span class="badge ${utils.getBadgeClass(status)}">${status}</span></td>
-                                            <td><button class="btn btn-secondary" type="button" onclick="openContractsModule('${utils.escapeHtml(utils.getContractNumber(contract))}')">Abrir</button></td>
+                                            <td><button class="btn btn-secondary" type="button" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'busca')">Abrir</button></td>
                                         </tr>
                                     `;
                                 }).join('')}

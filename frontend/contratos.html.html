@@ -1868,6 +1868,7 @@
         let contractsAuthToken = '';
         let contractsCurrentUser = null;
         const CONTRACTS_CACHE_KEY = 'sgc_contracts_cache_v2';
+        let attachmentRuntimeConfigPromise = null;
         const RATEIO_DEFAULT_UNITS = ['PM-MT', 'CBM-MT', 'CIOPAER', 'PJC-MT', 'POLITEC', 'SESP', 'COPAL'];
 
         const CONTRACT_TABS_MAP = {
@@ -1943,69 +1944,100 @@
             input.value = secondPart ? `${firstPart}/${secondPart}` : firstPart;
         }
 
-        function getAttachmentUrl(contract) {
-            if (!contract) return '';
+        async function loadAttachmentRuntimeConfig() {
+            if (attachmentRuntimeConfigPromise) return attachmentRuntimeConfigPromise;
+
+            attachmentRuntimeConfigPromise = (async () => {
+                const candidates = ['app-config.json', '/frontend/app-config.json', 'frontend/app-config.json'];
+                for (const candidate of candidates) {
+                    try {
+                        const response = await fetch(candidate, { cache: 'no-store' });
+                        if (!response.ok) continue;
+                        return await response.json();
+                    } catch (error) {
+                        continue;
+                    }
+                }
+
+                return {
+                    localApiBase: 'http://localhost:3000',
+                    productionApiBase: '',
+                    productionApiFallbacks: []
+                };
+            })();
+
+            return attachmentRuntimeConfigPromise;
+        }
+
+        function getAttachmentCandidateUrlsSync(contract) {
+            if (!contract) return [];
 
             const attachmentValue = String(contract.arquivoContrato || '').trim();
             const contentValue = String(contract.conteudoArquivoBase64 || '').trim();
 
-            if (contentValue && /^data:/i.test(contentValue)) {
-                return contentValue;
-            }
-
-            if (contentValue && window.location.protocol === 'file:') {
-                return `data:application/pdf;base64,${contentValue}`;
-            }
-
-            if (attachmentValue) {
-                if (/^https?:\/\//i.test(attachmentValue)) {
-                    return attachmentValue;
-                }
-                if (/^data:/i.test(attachmentValue)) {
-                    return attachmentValue;
-                }
-
-                const normalizedPath = attachmentValue.replace(/\\/g, '/').replace(/^\/+/, '');
-
-                const resolveAssetUrl = (assetPath) => {
-                    const normalizedAssetPath = String(assetPath || '');
-                    const preferredBase = String(window.API_BASE_URL || localStorage.getItem('API_BASE_URL') || '').trim().replace(/\/$/, '');
-
-                    if (preferredBase) {
-                        return `${preferredBase}${normalizedAssetPath.startsWith('/') ? normalizedAssetPath : `/${normalizedAssetPath}`}`;
-                    }
-
-                    if (window.location.protocol === 'file:') {
-                        return `http://localhost:3000${normalizedAssetPath.startsWith('/') ? normalizedAssetPath : `/${normalizedAssetPath}`}`;
-                    }
-
-                    return apiUrl(normalizedAssetPath.startsWith('/') ? normalizedAssetPath : `/${normalizedAssetPath}`);
-                };
-
-                if (/^uploads\//i.test(normalizedPath)) {
-                    return resolveAssetUrl(`/${encodeURI(normalizedPath)}`);
-                }
-
-                if (/^contracts\//i.test(normalizedPath)) {
-                    return resolveAssetUrl(`/uploads/${encodeURI(normalizedPath)}`);
-                }
-
-                if (attachmentValue.startsWith('/')) {
-                    return resolveAssetUrl(encodeURI(attachmentValue));
-                }
-
-                if (normalizedPath.includes('/')) {
-                    return resolveAssetUrl(`/${encodeURI(normalizedPath)}`);
-                }
-
-                return resolveAssetUrl(`/uploads/contracts/${encodeURIComponent(normalizedPath)}`);
-            }
-
             if (contentValue) {
-                return `data:application/pdf;base64,${contentValue}`;
+                if (/^data:/i.test(contentValue)) {
+                    return [contentValue];
+                }
+                return [`data:application/pdf;base64,${contentValue}`];
             }
 
-            return '';
+            if (!attachmentValue) return [];
+            if (/^https?:\/\//i.test(attachmentValue) || /^data:/i.test(attachmentValue)) {
+                return [attachmentValue];
+            }
+
+            const normalizedPath = attachmentValue.replace(/\\/g, '/').replace(/^\/+/, '');
+            const assetPath = /^uploads\//i.test(normalizedPath)
+                ? `/${encodeURI(normalizedPath)}`
+                : /^contracts\//i.test(normalizedPath)
+                    ? `/uploads/${encodeURI(normalizedPath)}`
+                    : attachmentValue.startsWith('/')
+                        ? encodeURI(attachmentValue)
+                        : normalizedPath.includes('/')
+                            ? `/${encodeURI(normalizedPath)}`
+                            : `/uploads/contracts/${encodeURIComponent(normalizedPath)}`;
+
+            const bases = [];
+            const preferredBase = String(window.API_BASE_URL || localStorage.getItem('API_BASE_URL') || '').trim().replace(/\/$/, '');
+            if (preferredBase) bases.push(preferredBase);
+            if (window.location.protocol !== 'file:') bases.push(window.location.origin.replace(/\/$/, ''));
+            if (window.location.protocol === 'file:') bases.push('http://localhost:3000');
+
+            return [...new Set(bases.filter(Boolean).map((base) => `${base}${assetPath.startsWith('/') ? assetPath : `/${assetPath}`}`))];
+        }
+
+        async function getAttachmentCandidateUrls(contract) {
+            const syncCandidates = getAttachmentCandidateUrlsSync(contract);
+            if (syncCandidates.some((item) => /^data:/i.test(item))) return syncCandidates;
+
+            const config = await loadAttachmentRuntimeConfig();
+            const bases = [
+                String(config?.productionApiBase || '').trim().replace(/\/$/, ''),
+                ...((Array.isArray(config?.productionApiFallbacks) ? config.productionApiFallbacks : []).map((item) => String(item || '').trim().replace(/\/$/, '')))
+            ].filter(Boolean);
+
+            const attachmentValue = String(contract?.arquivoContrato || '').trim();
+            if (!attachmentValue) return syncCandidates;
+
+            const normalizedPath = attachmentValue.replace(/\\/g, '/').replace(/^\/+/, '');
+            const assetPath = /^uploads\//i.test(normalizedPath)
+                ? `/${encodeURI(normalizedPath)}`
+                : /^contracts\//i.test(normalizedPath)
+                    ? `/uploads/${encodeURI(normalizedPath)}`
+                    : attachmentValue.startsWith('/')
+                        ? encodeURI(attachmentValue)
+                        : normalizedPath.includes('/')
+                            ? `/${encodeURI(normalizedPath)}`
+                            : `/uploads/contracts/${encodeURIComponent(normalizedPath)}`;
+
+            const fallbackCandidates = bases.map((base) => `${base}${assetPath.startsWith('/') ? assetPath : `/${assetPath}`}`);
+            return [...new Set([...syncCandidates, ...fallbackCandidates])];
+        }
+
+        function getAttachmentUrl(contract) {
+            const candidates = getAttachmentCandidateUrlsSync(contract);
+            return candidates[0] || '';
         }
 
         function getContractsFromPersistentCache() {
@@ -2185,25 +2217,43 @@
             return phones.length ? phones.join(', ') : '-';
         }
 
-        function openPdfFromOverview(event, rawUrl) {
+        async function openPdfFromOverview(event, rawUrl, contractNumber = '') {
             if (event && typeof event.preventDefault === 'function') {
                 event.preventDefault();
             }
 
             const urlValue = String(rawUrl || '').trim();
-            if (!urlValue) {
+            const contract = contractNumber ? (DB_CONTRATOS[normalizeContractNumber(contractNumber)] || null) : null;
+            const candidates = contract ? await getAttachmentCandidateUrls(contract) : (urlValue ? [urlValue] : []);
+
+            if (!candidates.length) {
                 alert('Documento não encontrado para este contrato.');
                 return false;
             }
 
-            const finalUrl = /^https?:\/\//i.test(urlValue) || /^data:/i.test(urlValue)
-                ? urlValue
-                : apiUrl(urlValue.startsWith('/') ? urlValue : `/${urlValue}`);
+            let resolvedUrl = candidates[0];
+            for (const candidate of candidates) {
+                if (/^data:/i.test(candidate)) {
+                    resolvedUrl = candidate;
+                    break;
+                }
 
-            const opened = window.open(finalUrl, '_blank', 'noopener,noreferrer');
+                try {
+                    const response = await fetch(candidate, { method: 'HEAD', cache: 'no-store' });
+                    if (response.ok) {
+                        resolvedUrl = candidate;
+                        break;
+                    }
+                } catch (error) {
+                    resolvedUrl = candidate;
+                    break;
+                }
+            }
+
+            const opened = window.open(resolvedUrl, '_blank', 'noopener,noreferrer');
             if (!opened) {
                 const link = document.createElement('a');
-                link.href = finalUrl;
+                link.href = resolvedUrl;
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
                 document.body.appendChild(link);
@@ -2239,7 +2289,7 @@
                 return '<span style="color: var(--text-muted);">Nenhum PDF anexado.</span>';
             }
 
-            return `<div style="display:flex; flex-direction:column; gap:6px; margin-top: 0.2rem;">${links.map((item) => `<a href="#" onclick="return openPdfFromOverview(event, '${escapeJsString(item.url)}')" style="color: var(--sesp-light-blue); font-weight: 600;">${escapeHtml(item.label)}</a>`).join('')}</div>`;
+            return `<div style="display:flex; flex-direction:column; gap:6px; margin-top: 0.2rem;">${links.map((item) => `<a href="#" onclick="return openPdfFromOverview(event, '${escapeJsString(item.url)}', '${escapeJsString(contract?.numContrato || '')}')" style="color: var(--sesp-light-blue); font-weight: 600;">${escapeHtml(item.label)}</a>`).join('')}</div>`;
         }
 
         function renderContractDetailsHtml(contract, options = {}) {
@@ -2301,7 +2351,7 @@
                         <button type="button" class="btn btn-secondary" onclick="carregarContratoParaEdicao('${escapeJsString(contract.numContrato || '')}')">
                             <i data-lucide="edit-3" style="width:14px;"></i> Editar contrato
                         </button>
-                        ${mainAttachmentUrl ? `<a class="btn btn-primary" href="#" onclick="return openPdfFromOverview(event, '${escapeJsString(mainAttachmentUrl)}')" style="display:inline-flex; align-items:center; gap:6px;"><i data-lucide="eye" style="width:14px;"></i> Abrir PDF principal</a>` : ''}
+                        ${mainAttachmentUrl ? `<a class="btn btn-primary" href="#" onclick="return openPdfFromOverview(event, '${escapeJsString(mainAttachmentUrl)}', '${escapeJsString(contract.numContrato || '')}')" style="display:inline-flex; align-items:center; gap:6px;"><i data-lucide="eye" style="width:14px;"></i> Abrir PDF principal</a>` : ''}
                     </div>
                 ` : ''}
             `;
