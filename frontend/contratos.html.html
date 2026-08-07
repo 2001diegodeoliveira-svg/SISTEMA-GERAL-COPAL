@@ -1949,6 +1949,10 @@
             const attachmentValue = String(contract.arquivoContrato || '').trim();
             const contentValue = String(contract.conteudoArquivoBase64 || '').trim();
 
+            if (contentValue && /^data:/i.test(contentValue)) {
+                return contentValue;
+            }
+
             if (contentValue && window.location.protocol === 'file:') {
                 return `data:application/pdf;base64,${contentValue}`;
             }
@@ -2013,6 +2017,43 @@
                 console.error('Falha ao ler cache local de contratos:', error);
                 return [];
             }
+        }
+
+        function buildCurrentFormContractSnapshot() {
+            const numContrato = normalizeContractNumber(document.getElementById('numContrato')?.value || '');
+            if (!numContrato) return null;
+
+            const existingContract = DB_CONTRATOS[numContrato] || null;
+
+            return {
+                ...(existingContract || {}),
+                numContrato,
+                numProcesso: document.getElementById('numProcesso')?.value || existingContract?.numProcesso || '',
+                credor: document.getElementById('credor')?.value || existingContract?.credor || '',
+                cep: document.getElementById('cep')?.value || existingContract?.cep || '',
+                logradouro: document.getElementById('logradouro')?.value || existingContract?.logradouro || '',
+                numEndereco: document.getElementById('numEndereco')?.value || existingContract?.numEndereco || '',
+                bairro: document.getElementById('bairro')?.value || existingContract?.bairro || '',
+                cidade: document.getElementById('cidade')?.value || existingContract?.cidade || '',
+                uf: document.getElementById('uf')?.value || existingContract?.uf || '',
+                telefoneFixo: document.getElementById('telefoneFixo')?.value || existingContract?.telefoneFixo || '',
+                telefoneWhatsapp: document.getElementById('telefoneWhatsapp')?.value || existingContract?.telefoneWhatsapp || '',
+                emailEmpresa: document.getElementById('emailEmpresa')?.value || existingContract?.emailEmpresa || '',
+                valorGlobal: document.getElementById('valorGlobal')?.value || existingContract?.valorGlobal || '',
+                objeto: document.getElementById('objetoContrato')?.value || existingContract?.objeto || '',
+                dtInicial: document.getElementById('dtInicial')?.value || existingContract?.dtInicial || '',
+                dtFinal: document.getElementById('dtFinal')?.value || existingContract?.dtFinal || '',
+                prazoEntrega: document.getElementById('prazoEntrega')?.value || existingContract?.prazoEntrega || '',
+                formaContagem: document.getElementById('formaContagem')?.value || existingContract?.formaContagem || '',
+                tipoEntrega: document.getElementById('tipoEntrega')?.value || existingContract?.tipoEntrega || '',
+                arquivoContrato: existingContract?.arquivoContrato || '',
+                conteudoArquivoBase64: existingContract?.conteudoArquivoBase64 || '',
+                lotes: existingContract?.lotes || [],
+                unidades: existingContract?.unidades || [],
+                aditivos: existingContract?.aditivos || [],
+                empenhos: existingContract?.empenhos || [],
+                status: existingContract?.status || 'ativo'
+            };
         }
 
         function persistContractsCache() {
@@ -2489,6 +2530,11 @@
             if (!numContrato) {
                 alert('Informe o número do contrato para abrir na visão geral.');
                 return;
+            }
+
+            const currentSnapshot = buildCurrentFormContractSnapshot();
+            if (currentSnapshot) {
+                updateLocalContractCache(currentSnapshot);
             }
 
             await loadOverviewTab();
