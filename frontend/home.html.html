@@ -328,7 +328,7 @@
             <li><a href="unidade.html.html"><i data-lucide="building-2" style="width: 15px;"></i> Unidade</a></li>
             <li><a href="App mobile/copal-sesp-mobile.html"><i data-lucide="smartphone" style="width: 15px;"></i> App Mobile</a></li>
             <li id="usuarioNavTab"><a href="cadastrouser.html.html" onclick="openUserRegistration(event)"><i data-lucide="user-plus" style="width: 15px;"></i> Usuário</a></li>
-            <li id="painelNavTab"><a href="deshboarprin.html.html" onclick="openPainelPrincipal(event)"><i data-lucide="monitor" style="width: 15px;"></i> Painel</a></li>
+            <li id="painelNavTab"><a href="painel.html.html" onclick="openPainelPrincipal(event)"><i data-lucide="monitor" style="width: 15px;"></i> Painel</a></li>
             <li id="userNavTab" style="display:none;"><a href="#developerUsersPanel"><i data-lucide="users" style="width: 15px;"></i> Usuários</a></li>
         </ul>
     </nav>
@@ -430,7 +430,7 @@
 
         function openPainelPrincipal(event) {
             event.preventDefault();
-            window.location.href = resolveFrontendPath('deshboarprin.html.html');
+            window.location.href = resolveFrontendPath('painel.html.html');
         }
 
         async function loadUsers() {

@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel de Acompanhamento Integrado | COPAL SESP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-0: #040814;
+      --bg-1: #081227;
+      --glass: rgba(17, 28, 48, 0.52);
+      --glass-2: rgba(9, 17, 32, 0.72);
+      --line: rgba(97, 139, 185, 0.26);
+      --text: #dbeafe;
+      --muted: #94a3b8;
+      --cyan: #22d3ee;
+      --blue: #3b82f6;
+      --green: #22c55e;
+      --yellow: #facc15;
+      --red: #ef4444;
+      --orange: #fb923c;
+      --purple: #a855f7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Inter, sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px circle at 10% 10%, rgba(59,130,246,0.22), transparent 45%),
+                  radial-gradient(1000px circle at 90% 90%, rgba(34,211,238,0.15), transparent 52%),
+                  linear-gradient(160deg, var(--bg-0), var(--bg-1));
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    #scene3d {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.55;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      padding: 12px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .topbar {
+      background: linear-gradient(135deg, rgba(10,20,40,0.75), rgba(6,14,28,0.92));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.02), 0 0 30px rgba(34,211,238,0.12);
+      padding: 10px 14px;
+      display: grid;
+      grid-template-columns: 320px 1fr 470px;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .logo-dot {
+      width: 36px; height: 36px; border-radius: 11px;
+      background: linear-gradient(135deg, #173152, #0f3a79);
+      border: 1px solid rgba(147,197,253,0.45);
+      box-shadow: 0 0 18px rgba(59,130,246,0.35);
+      display: grid; place-items: center; font-weight: 800;
+    }
+    .brand h1 { font-size: 13px; font-weight: 700; color: #bfdbfe; letter-spacing: 0.08em; text-transform: uppercase; }
+    .brand p { font-size: 20px; font-weight: 800; }
+
+    .sync-strip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .pulse {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 14px var(--green);
+      animation: pulse 1.5s infinite;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.92); opacity: 0.8; }
+      70% { transform: scale(1.25); opacity: 1; }
+      100% { transform: scale(0.92); opacity: 0.8; }
+    }
+
+    .top-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      align-items: center;
+    }
+
+    .chip {
+      background: var(--glass);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-size: 12px;
+      display: grid;
+      gap: 3px;
+      min-height: 50px;
+    }
+
+    .chip b { color: #e2e8f0; font-size: 16px; }
+    .chip.alert b { color: #fecaca; }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 255px 1fr;
+      gap: 12px;
+    }
+
+    .side {
+      background: var(--glass-2);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      backdrop-filter: blur(12px);
+      display: grid;
+      gap: 8px;
+      align-content: start;
+      max-height: calc(100vh - 120px);
+      overflow: auto;
+    }
+
+    .side a {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 13px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: rgba(11, 21, 37, 0.5);
+      transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+    }
+
+    .side a:hover, .side a.active {
+      transform: translateX(4px);
+      border-color: rgba(34,211,238,0.55);
+      box-shadow: 0 0 18px rgba(34,211,238,0.18);
+      color: #ecfeff;
+    }
+
+    .main {
+      display: grid;
+      gap: 12px;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(130px, 1fr));
+      gap: 10px;
+    }
+
+    .kpi {
+      position: relative;
+      background: linear-gradient(155deg, rgba(13,24,44,.82), rgba(9,19,32,.93));
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      overflow: hidden;
+      min-height: 102px;
+      transform-style: preserve-3d;
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+
+    .kpi::after {
+      content: '';
+      position: absolute;
+      inset: -45% 40% auto -45%;
+      height: 140%;
+      background: linear-gradient(130deg, transparent, rgba(255,255,255,.15), transparent);
+      transform: rotate(12deg);
+      animation: shine 4.8s linear infinite;
+    }
+
+    .kpi:hover {
+      transform: translateY(-4px) rotateX(4deg);
+      box-shadow: 0 0 24px rgba(59,130,246,.24);
+    }
+
+    @keyframes shine {
+      0% { transform: translateX(-40%) rotate(12deg); }
+      100% { transform: translateX(220%) rotate(12deg); }
+    }
+
+    .kpi .t { font-size: 11px; color: #a5b4fc; text-transform: uppercase; letter-spacing: .06em; }
+    .kpi .v { font-size: 33px; font-weight: 800; margin-top: 4px; line-height: 1; }
+    .kpi .s { font-size: 11px; color: #86efac; margin-top: 6px; }
+
+    .kpi .bar {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 8px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(148,163,184,.2);
+      overflow: hidden;
+    }
+
+    .kpi .bar i {
+      display: block;
+      height: 100%;
+      width: var(--w, 55%);
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--blue), var(--cyan));
+      box-shadow: 0 0 14px rgba(34,211,238,.65);
+      animation: fillScan 2.8s ease-in-out infinite alternate;
+    }
+
+    @keyframes fillScan {
+      from { filter: brightness(1); }
+      to { filter: brightness(1.45); }
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--glass);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+      overflow: hidden;
+      min-height: 220px;
+    }
+
+    .card .hd {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(100,116,139,.25);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #93c5fd;
+      font-weight: 700;
+    }
+
+    .card .bd { padding: 10px; }
+
+    .table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .table th, .table td { border-bottom: 1px solid rgba(100,116,139,.18); padding: 8px 6px; text-align: left; }
+    .table th { color: #93c5fd; font-weight: 600; }
+
+    .avatar {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: inline-grid; place-items: center; font-size: 11px; font-weight: 700;
+      background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+      margin-right: 6px;
+    }
+
+    .status {
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .online { background: rgba(34,197,94,.2); color: #86efac; }
+    .busy { background: rgba(251,146,60,.2); color: #fdba74; }
+    .offline { background: rgba(239,68,68,.2); color: #fca5a5; }
+
+    .progress {
+      height: 6px;
+      background: rgba(148,163,184,.22);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress > i {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      box-shadow: 0 0 10px rgba(34,211,238,.6);
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      align-items: center;
+      padding: 8px 6px;
+    }
+
+    .step {
+      text-align: center;
+      font-size: 10px;
+      color: var(--muted);
+      position: relative;
+      padding-top: 16px;
+    }
+
+    .step::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #334155;
+      border: 1px solid #64748b;
+      box-shadow: 0 0 0 transparent;
+      transition: .3s ease;
+    }
+
+    .step.done::before {
+      background: var(--green);
+      border-color: var(--green);
+      box-shadow: 0 0 12px rgba(34,197,94,.85);
+    }
+
+    .step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 5px;
+      left: calc(50% + 8px);
+      width: calc(100% - 16px);
+      height: 2px;
+      background: #334155;
+    }
+
+    .step.done:not(:last-child)::after {
+      background: linear-gradient(90deg, rgba(34,197,94,.85), rgba(56,189,248,.85));
+      box-shadow: 0 0 10px rgba(56,189,248,.45);
+    }
+
+    .activities {
+      max-height: 260px;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+    }
+
+    .item {
+      border: 1px solid rgba(148,163,184,.2);
+      border-radius: 10px;
+      padding: 8px;
+      background: rgba(12,20,35,.58);
+      font-size: 12px;
+      display: grid;
+      gap: 4px;
+      animation: rise .45s ease;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .item .time { color: #94a3b8; font-size: 10px; }
+
+    .bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .canvas-wrap { height: 220px; }
+
+    .assistant {
+      display: grid;
+      gap: 8px;
+      grid-template-rows: auto 1fr auto;
+      min-height: 220px;
+    }
+
+    .assistant .messages {
+      border: 1px solid rgba(148,163,184,.2);
+      border-radius: 10px;
+      padding: 8px;
+      overflow: auto;
+      max-height: 120px;
+      font-size: 12px;
+      display: grid;
+      gap: 6px;
+      background: rgba(10,16,30,.65);
+    }
+
+    .assistant textarea {
+      width: 100%;
+      min-height: 55px;
+      border-radius: 10px;
+      border: 1px solid rgba(148,163,184,.32);
+      background: rgba(7,13,24,.72);
+      color: var(--text);
+      padding: 8px;
+      resize: vertical;
+      outline: none;
+      font-family: inherit;
+      font-size: 12px;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      color: #f8fafc;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 8px 12px;
+      cursor: pointer;
+      box-shadow: 0 0 16px rgba(59,130,246,.4);
+    }
+
+    .mini-map {
+      width: 100%;
+      height: 220px;
+      border: 0;
+      border-radius: 10px;
+      filter: saturate(1.1) contrast(1.05);
+    }
+
+    .toast-wrap {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 20;
+      display: grid;
+      gap: 8px;
+    }
+
+    .toast {
+      background: rgba(9, 17, 32, 0.92);
+      border: 1px solid rgba(100,116,139,.28);
+      color: #e2e8f0;
+      border-radius: 10px;
+      padding: 9px 11px;
+      min-width: 270px;
+      font-size: 12px;
+      box-shadow: 0 10px 30px rgba(2,6,23,.5);
+      animation: toastIn .35s ease;
+    }
+
+    @keyframes toastIn {
+      from { transform: translateX(14px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @media (max-width: 1450px) {
+      .topbar { grid-template-columns: 1fr; }
+      .top-actions { grid-template-columns: repeat(2, 1fr); }
+      .kpis { grid-template-columns: repeat(4, 1fr); }
+      .grid { grid-template-columns: 1fr; }
+      .bottom { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 980px) {
+      .shell { grid-template-columns: 1fr; }
+      .side { max-height: none; }
+      .kpis { grid-template-columns: repeat(2, 1fr); }
+      .bottom { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="scene3d"></canvas>
+
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo-dot">SE</div>
+        <div>
+          <h1>Painel de Acompanhamento Integrado</h1>
+          <p>Gestao de Contratos em Tempo Real</p>
+        </div>
+      </div>
+
+      <div class="sync-strip">
+        <span><i class="pulse"></i>Sincronizacao: <b style="color:#86efac">ATIVA</b></span>
+        <span>Ultima atualizacao: <b id="clock"></b></span>
+      </div>
+
+      <div class="top-actions">
+        <div class="chip"><span>Usuarios Online</span><b id="onlineUsers">42</b></div>
+        <div class="chip alert"><span>Alertas Criticos</span><b id="criticalAlerts">3</b></div>
+        <div class="chip"><span>Perfil</span><b>Diego Henrique</b></div>
+        <div class="chip"><span>Nivel</span><b>Administrador</b></div>
+      </div>
+    </header>
+
+    <div class="shell">
+      <aside class="side">
+        <a class="active" href="#">Dashboard</a>
+        <a href="#">Contratos</a>
+        <a href="#">Empresas</a>
+        <a href="#">Funcionarios</a>
+        <a href="#">Empenhos</a>
+        <a href="#">Notas</a>
+        <a href="#">Conformidade</a>
+        <a href="#">Financeiro</a>
+        <a href="#">Relatorios</a>
+        <a href="#">IA</a>
+        <a href="#">Configuracoes</a>
+      </aside>
+
+      <main class="main">
+        <section class="kpis" id="kpis"></section>
+
+        <section class="card">
+          <div class="hd">Fluxo de Contrato - Tempo Real</div>
+          <div class="bd">
+            <div class="pipeline" id="pipeline"></div>
+          </div>
+        </section>
+
+        <section class="grid">
+          <article class="card">
+            <div class="hd">Monitoramento de Funcionarios em Tempo Real</div>
+            <div class="bd">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Funcao</th>
+                    <th>Status</th>
+                    <th>Atividade</th>
+                    <th>Online</th>
+                  </tr>
+                </thead>
+                <tbody id="employeesTable"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="hd">Contrato Selecionado + Mapa da Empresa</div>
+            <div class="bd">
+              <div style="display:grid; gap:8px; grid-template-columns:1fr 1fr; margin-bottom:8px; font-size:12px;">
+                <div><b>Contrato:</b> CT-2025-089</div>
+                <div><b>Contratada:</b> Tech Solutions Ltda</div>
+                <div><b>Objeto:</b> Solucao em TI</div>
+                <div><b>Vigencia:</b> 01/01/2025 a 31/12/2025</div>
+                <div><b>Valor:</b> R$ 54.8M</div>
+                <div><b>Status:</b> Em Execucao</div>
+              </div>
+              <iframe class="mini-map" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=-47.96%2C-16.05%2C-47.86%2C-15.95&amp;layer=mapnik"></iframe>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="hd">Atividades Recentes</div>
+            <div class="bd activities" id="activities"></div>
+          </article>
+        </section>
+
+        <section class="bottom">
+          <article class="card">
+            <div class="hd">IA Assistente</div>
+            <div class="bd assistant">
+              <div id="lottieAi" style="height:86px"></div>
+              <div class="messages" id="aiMessages">
+                <div><b>Sistema:</b> Monitoramento ativo de contratos criticos.</div>
+              </div>
+              <div>
+                <textarea id="aiInput" placeholder="Pergunte para a IA sobre contratos, saldo, conformidade..."></textarea>
+                <button class="btn" id="aiSendBtn" type="button">Enviar Consulta</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="hd">Contratos por Status</div>
+            <div class="bd canvas-wrap"><canvas id="chartDonut"></canvas></div>
+          </article>
+
+          <article class="card">
+            <div class="hd">Valores por Mes (R$)</div>
+            <div class="bd canvas-wrap"><div id="chartArea" style="height:100%"></div></div>
+          </article>
+
+          <article class="card">
+            <div class="hd">Resumo Financeiro</div>
+            <div class="bd canvas-wrap"><svg id="d3Gauge" width="100%" height="220"></svg></div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+
+  <script>
+    const kpiData = [
+      { title: 'Contratos Ativos', value: 128, delta: '+8 este mes', width: 72 },
+      { title: 'Aditivos Ativos', value: 47, delta: '+5 este mes', width: 61 },
+      { title: 'Atualizacoes', value: 23, delta: '+12 hoje', width: 56 },
+      { title: 'Empenhos em Andamento', value: 89, delta: '+15 hoje', width: 68 },
+      { title: 'Conformidade', value: 96.7, suffix: '%', delta: 'Excelente', width: 96 },
+      { title: 'Notas de Pagamento', value: 134, delta: '+22 este mes', width: 66 },
+      { title: 'Valor Total Contratos', value: 54.8, prefix: 'R$ ', suffix: 'M', delta: '+12.6% este mes', width: 82 }
+    ];
+
+    const employees = [
+      { name: 'Ana Paula', role: 'Analista', status: 'Online', task: 'Analise CT-2025-089', online: 82 },
+      { name: 'Carlos Silva', role: 'Analista', status: 'Online', task: 'Monitoria CT-2025-095', online: 76 },
+      { name: 'Caio Silva', role: 'Assistente', status: 'Ausente', task: 'Fiscal CT-2025-056', online: 12 },
+      { name: 'Diego Rocha', role: 'Gestor', status: 'Ocupado', task: 'Reuniao de conformidade', online: 54 },
+      { name: 'Mariana N.', role: 'Analista', status: 'Online', task: 'Empenhos CT-2025-091', online: 88 }
+    ];
+
+    const pipeline = ['Contrato', 'Aditivos', 'Atualizacoes', 'Empenho', 'Conformidade', 'Nota', 'Liquidacao', 'Encerramento'];
+
+    function formatKpi(value, prefix = '', suffix = '') {
+      return `${prefix}${typeof value === 'number' ? value.toLocaleString('pt-BR') : value}${suffix}`;
+    }
+
+    function renderKpis() {
+      const host = document.getElementById('kpis');
+      host.innerHTML = kpiData.map((kpi, idx) => `
+        <article class="kpi" data-kpi-index="${idx}">
+          <div class="t">${kpi.title}</div>
+          <div class="v" data-count-target="${kpi.value}">${kpi.prefix || ''}0${kpi.suffix || ''}</div>
+          <div class="s">${kpi.delta}</div>
+          <div class="bar"><i style="--w:${kpi.width}%"></i></div>
+        </article>
+      `).join('');
+
+      host.querySelectorAll('.kpi .v').forEach((el, idx) => {
+        const kpi = kpiData[idx];
+        const obj = { val: 0 };
+        gsap.to(obj, {
+          val: Number(kpi.value),
+          duration: 1.4,
+          ease: 'power2.out',
+          onUpdate: () => {
+            const value = kpi.suffix === '%' ? obj.val.toFixed(1) : Math.floor(obj.val * 10) / 10;
+            el.textContent = formatKpi(value, kpi.prefix, kpi.suffix || '');
+          }
+        });
+      });
+    }
+
+    function renderEmployees() {
+      const host = document.getElementById('employeesTable');
+      host.innerHTML = employees.map((e) => {
+        const stClass = e.status === 'Online' ? 'online' : (e.status === 'Ocupado' ? 'busy' : 'offline');
+        const initials = e.name.split(' ').map(p => p[0]).slice(0, 2).join('');
+        return `
+          <tr>
+            <td><span class="avatar">${initials}</span>${e.name}</td>
+            <td>${e.role}</td>
+            <td><span class="status ${stClass}">${e.status}</span></td>
+            <td>${e.task}</td>
+            <td>
+              <div class="progress"><i style="width:${e.online}%"></i></div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderPipeline(stepDone = 5) {
+      const host = document.getElementById('pipeline');
+      host.innerHTML = pipeline.map((step, idx) => `<div class="step ${idx <= stepDone ? 'done' : ''}">${step}</div>`).join('');
+    }
+
+    function renderActivities() {
+      const host = document.getElementById('activities');
+      const samples = [
+        { type: 'Nota de Pagamento emitida', detail: 'CT-2025-089', time: '14:23' },
+        { type: 'Empenho emitido', detail: 'R$ 823 mil', time: '14:20' },
+        { type: 'Aditivo assinado digitalmente', detail: 'CT-2025-077', time: '14:16' },
+        { type: 'Conformidade verificada', detail: 'Indice 96.7%', time: '14:12' },
+        { type: 'Nova demanda de unidade', detail: 'CBM/MT', time: '14:09' }
+      ];
+      host.innerHTML = samples.map((item) => `
+        <div class="item">
+          <div><b>${item.type}</b></div>
+          <div>${item.detail}</div>
+          <div class="time">${item.time}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderCharts() {
+      const donut = new Chart(document.getElementById('chartDonut'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Em Execucao', 'Finalizados', 'Suspensos', 'Cancelados'],
+          datasets: [{
+            data: [58, 26, 10, 6],
+            backgroundColor: ['#22d3ee', '#22c55e', '#facc15', '#ef4444'],
+            borderColor: '#0b1120',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { color: '#bfdbfe', boxWidth: 10 } } }
+        }
+      });
+
+      const area = new ApexCharts(document.querySelector('#chartArea'), {
+        chart: { type: 'area', height: 200, toolbar: { show: false }, animations: { enabled: true } },
+        theme: { mode: 'dark' },
+        series: [{ name: 'Valores', data: [72, 95, 88, 120, 98, 136, 162, 148] }],
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: 3, colors: ['#22d3ee'] },
+        fill: { type: 'gradient', gradient: { opacityFrom: 0.5, opacityTo: 0.08 } },
+        xaxis: { categories: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'], labels: { style: { colors: '#9fb3c8' } } },
+        yaxis: { labels: { style: { colors: '#9fb3c8' } } },
+        grid: { borderColor: '#33415555' },
+        tooltip: { theme: 'dark' }
+      });
+      area.render();
+
+      const svg = d3.select('#d3Gauge');
+      const width = svg.node().clientWidth || 300;
+      const height = 220;
+      const r = Math.min(width, height) / 2 - 18;
+      const g = svg.append('g').attr('transform', `translate(${width / 2}, ${height / 2})`);
+      const arc = d3.arc().innerRadius(r - 20).outerRadius(r).startAngle(-Math.PI * 0.75).endAngle(Math.PI * 0.75);
+      g.append('path').attr('d', arc()).attr('fill', '#1f2937');
+      const valueArc = d3.arc().innerRadius(r - 20).outerRadius(r).startAngle(-Math.PI * 0.75);
+      const percent = 0.64;
+      g.append('path')
+        .datum({ endAngle: -Math.PI * 0.75 })
+        .attr('fill', '#22d3ee')
+        .attr('d', valueArc)
+        .transition().duration(1400)
+        .attrTween('d', function () {
+          const i = d3.interpolate(this._current?.endAngle || -Math.PI * 0.75, -Math.PI * 0.75 + (Math.PI * 1.5 * percent));
+          this._current = { endAngle: i(1) };
+          return (t) => valueArc({ endAngle: i(t) });
+        });
+
+      g.append('text').attr('text-anchor', 'middle').attr('y', 6).attr('fill', '#e2e8f0').style('font-size', '28px').style('font-weight', 800).text('R$ 54,8M');
+      g.append('text').attr('text-anchor', 'middle').attr('y', 26).attr('fill', '#94a3b8').style('font-size', '12px').text('Total');
+
+      return { donut, area };
+    }
+
+    function pushToast(message, kind = 'info') {
+      const host = document.getElementById('toastWrap');
+      const el = document.createElement('div');
+      el.className = 'toast';
+      const color = kind === 'critical' ? '#fca5a5' : (kind === 'success' ? '#86efac' : '#bfdbfe');
+      el.innerHTML = `<div style="color:${color}; font-weight:700; margin-bottom:3px">${kind.toUpperCase()}</div><div>${message}</div>`;
+      host.appendChild(el);
+      setTimeout(() => { el.remove(); }, 5200);
+    }
+
+    function initAiPanel() {
+      const send = document.getElementById('aiSendBtn');
+      const input = document.getElementById('aiInput');
+      const msgs = document.getElementById('aiMessages');
+
+      send.addEventListener('click', () => {
+        const text = input.value.trim();
+        if (!text) return;
+        msgs.insertAdjacentHTML('beforeend', `<div><b>Voce:</b> ${text}</div>`);
+        input.value = '';
+        setTimeout(() => {
+          msgs.insertAdjacentHTML('beforeend', `<div><b>IA:</b> Risco moderado identificado no contrato CT-2025-089. Recomendo revisar os ultimos 2 aditivos e prazo de pagamento.</div>`);
+          msgs.scrollTop = msgs.scrollHeight;
+        }, 600);
+      });
+
+      if (window.lottie) {
+        window.lottie.loadAnimation({
+          container: document.getElementById('lottieAi'),
+          renderer: 'svg',
+          loop: true,
+          autoplay: true,
+          path: 'https://assets3.lottiefiles.com/packages/lf20_j1adxtyb.json'
+        });
+      }
+    }
+
+    function initRealtime() {
+      const clock = document.getElementById('clock');
+      const onlineUsers = document.getElementById('onlineUsers');
+      const criticalAlerts = document.getElementById('criticalAlerts');
+
+      setInterval(() => {
+        clock.textContent = new Date().toLocaleString('pt-BR');
+      }, 1000);
+
+      setInterval(() => {
+        const users = 40 + Math.floor(Math.random() * 7);
+        const alerts = 2 + Math.floor(Math.random() * 3);
+        onlineUsers.textContent = String(users);
+        criticalAlerts.textContent = String(alerts);
+
+        if (Math.random() > 0.65) {
+          pushToast('Atualizacao recebida: novo registro de empenho processado.', 'success');
+        }
+        if (Math.random() > 0.88) {
+          pushToast('Alerta critico: contrato com risco de prazo excedido.', 'critical');
+        }
+      }, 6500);
+
+      try {
+        const wsBase = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host;
+        const ws = new WebSocket(`${wsBase}/ws/metrics`);
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data || '{}');
+          if (typeof data.onlineUsers === 'number') onlineUsers.textContent = String(data.onlineUsers);
+          if (typeof data.criticalAlerts === 'number') criticalAlerts.textContent = String(data.criticalAlerts);
+        };
+      } catch (error) {
+        // Fallback silencioso para modo mock.
+      }
+    }
+
+    function initThreeScene() {
+      const canvas = document.getElementById('scene3d');
+      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 0, 10);
+
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      const ambient = new THREE.AmbientLight(0x3b82f6, 0.6);
+      scene.add(ambient);
+
+      const pointA = new THREE.PointLight(0x22d3ee, 1.5, 40, 2);
+      pointA.position.set(3, 2, 4);
+      scene.add(pointA);
+
+      const pointsGeo = new THREE.BufferGeometry();
+      const pointsCount = 800;
+      const arr = new Float32Array(pointsCount * 3);
+      for (let i = 0; i < pointsCount * 3; i += 3) {
+        arr[i] = (Math.random() - 0.5) * 28;
+        arr[i + 1] = (Math.random() - 0.5) * 18;
+        arr[i + 2] = (Math.random() - 0.5) * 18;
+      }
+      pointsGeo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+
+      const pointsMat = new THREE.PointsMaterial({ color: 0x3b82f6, size: 0.05, transparent: true, opacity: 0.85 });
+      const cloud = new THREE.Points(pointsGeo, pointsMat);
+      scene.add(cloud);
+
+      const torus = new THREE.Mesh(
+        new THREE.TorusGeometry(1.8, 0.06, 24, 120),
+        new THREE.MeshStandardMaterial({ color: 0x22d3ee, emissive: 0x0ea5e9, emissiveIntensity: 0.4, roughness: 0.28, metalness: 0.8 })
+      );
+      torus.position.set(-4.5, 1.8, -2.2);
+      scene.add(torus);
+
+      const cube = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshStandardMaterial({ color: 0x1d4ed8, emissive: 0x1e40af, emissiveIntensity: 0.3, roughness: 0.24, metalness: 0.88 })
+      );
+      cube.position.set(4.3, -2.0, -2.6);
+      scene.add(cube);
+
+      const mouse = { x: 0, y: 0 };
+      window.addEventListener('mousemove', (e) => {
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = (e.clientY / window.innerHeight) * 2 - 1;
+      });
+
+      function tick() {
+        cloud.rotation.y += 0.0009;
+        torus.rotation.x += 0.009;
+        torus.rotation.y += 0.006;
+        cube.rotation.x += 0.006;
+        cube.rotation.y += 0.01;
+
+        camera.position.x += ((mouse.x * 0.35) - camera.position.x) * 0.02;
+        camera.position.y += ((-mouse.y * 0.25) - camera.position.y) * 0.02;
+
+        renderer.render(scene, camera);
+        requestAnimationFrame(tick);
+      }
+      tick();
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    }
+
+    function boot() {
+      renderKpis();
+      renderEmployees();
+      renderPipeline(5);
+      renderActivities();
+      renderCharts();
+      initAiPanel();
+      initRealtime();
+      initThreeScene();
+      document.getElementById('clock').textContent = new Date().toLocaleString('pt-BR');
+      pushToast('Painel enterprise inicializado com sucesso.', 'success');
+    }
+
+    boot();
+  </script>
+</body>
+</html>
