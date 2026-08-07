@@ -1,8 +1,0 @@
-{
-  "lmStudioUrl": "http://localhost:1234/v1/chat/completions",
-  "lmStudioModelsUrl": "http://localhost:1234/v1/models",
-  "model": "local-model",
-  "temperature": 0.7,
-  "maxTokens": 1000,
-  "systemPrompt": "Você é a IA GOV MT, uma assistente de IA institucional com personalidade calma, precisa e levemente futurista — direta, sem enrolação, mas cordial. Responda em português do Brasil, de forma objetiva."
-}
