@@ -3,927 +3,1407 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Painel de Acompanhamento Integrado | COPAL SESP</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>Painel Inteligente Premium | COPAL SESP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <style>
     :root {
-      --bg-0: #040814;
-      --bg-1: #081227;
-      --glass: rgba(17, 28, 48, 0.52);
-      --glass-2: rgba(9, 17, 32, 0.72);
-      --line: rgba(97, 139, 185, 0.26);
-      --text: #dbeafe;
-      --muted: #94a3b8;
-      --cyan: #22d3ee;
-      --blue: #3b82f6;
-      --green: #22c55e;
-      --yellow: #facc15;
-      --red: #ef4444;
-      --orange: #fb923c;
-      --purple: #a855f7;
+      --bg-0: #050b17;
+      --bg-1: #071120;
+      --bg-2: #0a1933;
+      --neon-cyan: #35f0ff;
+      --neon-blue: #4fa3ff;
+      --neon-purple: #9b5cff;
+      --neon-green: #36f1a7;
+      --white-soft: #dff4ff;
+      --slate: #9ab0c8;
+      --glass: rgba(14, 26, 47, 0.54);
+      --glass-2: rgba(9, 17, 33, 0.66);
+      --line: rgba(111, 161, 220, 0.24);
+      --line-strong: rgba(84, 167, 255, 0.45);
+      --shadow-neon: 0 0 30px rgba(53, 240, 255, 0.18);
+      --radius: 18px;
+      --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: Inter, sans-serif;
-      color: var(--text);
-      background: radial-gradient(1200px circle at 10% 10%, rgba(59,130,246,0.22), transparent 45%),
-                  radial-gradient(1000px circle at 90% 90%, rgba(34,211,238,0.15), transparent 52%),
-                  linear-gradient(160deg, var(--bg-0), var(--bg-1));
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--white-soft);
       min-height: 100vh;
       overflow-x: hidden;
+      background:
+        radial-gradient(1000px 600px at 8% 10%, rgba(53, 240, 255, 0.12), transparent 56%),
+        radial-gradient(900px 540px at 92% 88%, rgba(155, 92, 255, 0.12), transparent 60%),
+        linear-gradient(145deg, var(--bg-0), var(--bg-1) 45%, var(--bg-2));
     }
 
-    #scene3d {
+    #fxGrid,
+    #fxParticles,
+    #fxThree {
       position: fixed;
       inset: 0;
-      z-index: 0;
       pointer-events: none;
-      opacity: 0.55;
     }
 
-    .app {
+    #fxGrid {
+      z-index: 0;
+      opacity: 0.34;
+      background:
+        linear-gradient(rgba(53, 240, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(53, 240, 255, 0.06) 1px, transparent 1px);
+      background-size: 48px 48px, 48px 48px;
+      transform: perspective(1000px) rotateX(67deg) translateY(240px) scale(1.32);
+      transform-origin: center;
+      animation: driftGrid 22s linear infinite;
+    }
+
+    @keyframes driftGrid {
+      0% { background-position: 0 0, 0 0; }
+      100% { background-position: 0 320px, 320px 0; }
+    }
+
+    #fxParticles { z-index: 1; opacity: 0.55; }
+    #fxThree { z-index: 2; opacity: 0.72; }
+
+    .hud {
       position: relative;
-      z-index: 1;
-      padding: 12px;
+      z-index: 3;
+      min-height: 100vh;
+      padding: 14px;
       display: grid;
-      gap: 12px;
+      gap: 14px;
     }
 
-    .topbar {
-      background: linear-gradient(135deg, rgba(10,20,40,0.75), rgba(6,14,28,0.92));
+    .glass {
       border: 1px solid var(--line);
-      border-radius: 14px;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.02), 0 0 30px rgba(34,211,238,0.12);
-      padding: 10px 14px;
+      background: linear-gradient(140deg, rgba(16, 33, 60, 0.67), rgba(8, 17, 31, 0.75));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(255, 255, 255, 0.03), var(--shadow-neon);
+      backdrop-filter: blur(13px) saturate(120%);
+      -webkit-backdrop-filter: blur(13px) saturate(120%);
+      border-radius: var(--radius);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass::before {
+      content: "";
+      position: absolute;
+      inset: -40% auto auto -55%;
+      width: 62%;
+      height: 220%;
+      background: linear-gradient(110deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+      transform: rotate(9deg);
+      animation: lightSweep 9.5s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes lightSweep {
+      0% { transform: translateX(-80%) rotate(9deg); }
+      100% { transform: translateX(360%) rotate(9deg); }
+    }
+
+    .top {
       display: grid;
-      grid-template-columns: 320px 1fr 470px;
+      grid-template-columns: 360px 1fr 560px;
       gap: 14px;
+      padding: 12px;
+    }
+
+    .brand {
+      display: flex;
+      gap: 12px;
       align-items: center;
     }
 
-    .brand { display: flex; align-items: center; gap: 10px; }
-    .logo-dot {
-      width: 36px; height: 36px; border-radius: 11px;
-      background: linear-gradient(135deg, #173152, #0f3a79);
-      border: 1px solid rgba(147,197,253,0.45);
-      box-shadow: 0 0 18px rgba(59,130,246,0.35);
-      display: grid; place-items: center; font-weight: 800;
+    .brand-core {
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(157, 218, 255, 0.42);
+      background: linear-gradient(135deg, rgba(56, 149, 255, 0.36), rgba(155, 92, 255, 0.33));
+      box-shadow: 0 0 28px rgba(79, 163, 255, 0.34), inset 0 0 18px rgba(255, 255, 255, 0.13);
+      font-family: "Orbitron", sans-serif;
+      font-weight: 800;
+      letter-spacing: 0.08em;
     }
-    .brand h1 { font-size: 13px; font-weight: 700; color: #bfdbfe; letter-spacing: 0.08em; text-transform: uppercase; }
-    .brand p { font-size: 20px; font-weight: 800; }
 
-    .sync-strip {
+    .brand h1 {
+      font: 700 11px/1 "Orbitron", sans-serif;
+      letter-spacing: 0.2em;
+      color: #9fd7ff;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .brand p {
+      font: 700 21px/1.1 "Space Grotesk", sans-serif;
+      color: #f5fbff;
+    }
+
+    .sync {
       display: flex;
+      gap: 18px;
       align-items: center;
       justify-content: center;
-      gap: 18px;
-      font-size: 13px;
-      color: var(--muted);
+      color: var(--slate);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
-    .pulse {
+    .live-dot {
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 14px var(--green);
-      animation: pulse 1.5s infinite;
       display: inline-block;
       margin-right: 8px;
+      background: var(--neon-green);
+      box-shadow: 0 0 12px var(--neon-green), 0 0 24px rgba(54, 241, 167, 0.56);
+      animation: pulseLive 1.6s infinite;
     }
 
-    @keyframes pulse {
-      0% { transform: scale(0.92); opacity: 0.8; }
-      70% { transform: scale(1.25); opacity: 1; }
-      100% { transform: scale(0.92); opacity: 0.8; }
+    @keyframes pulseLive {
+      0%, 100% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.25); opacity: 1; }
     }
 
-    .top-actions {
+    .top-stats {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      align-items: center;
+      gap: 10px;
     }
 
-    .chip {
-      background: var(--glass);
-      border: 1px solid var(--line);
+    .micro {
+      border: 1px solid rgba(122, 169, 226, 0.28);
       border-radius: 12px;
+      background: rgba(7, 14, 27, 0.58);
+      min-height: 58px;
       padding: 8px 10px;
-      font-size: 12px;
       display: grid;
       gap: 3px;
-      min-height: 50px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .chip b { color: #e2e8f0; font-size: 16px; }
-    .chip.alert b { color: #fecaca; }
-
-    .shell {
-      display: grid;
-      grid-template-columns: 255px 1fr;
-      gap: 12px;
+    .micro::after {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: 6px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+      opacity: 0.7;
+      animation: breathe 2.8s ease-in-out infinite;
     }
 
-    .side {
-      background: var(--glass-2);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 10px;
-      backdrop-filter: blur(12px);
+    .micro span { font-size: 11px; color: #8fb3d8; text-transform: uppercase; }
+    .micro b { font-size: 16px; }
+
+    @keyframes breathe {
+      0%, 100% { opacity: 0.35; filter: brightness(1); }
+      50% { opacity: 1; filter: brightness(1.45); }
+    }
+
+    .layout {
       display: grid;
-      gap: 8px;
+      grid-template-columns: 270px 1fr;
+      gap: 14px;
+      min-height: calc(100vh - 126px);
+    }
+
+    .menu {
+      padding: 12px;
+      display: grid;
       align-content: start;
-      max-height: calc(100vh - 120px);
-      overflow: auto;
+      gap: 10px;
+      max-height: calc(100vh - 144px);
+      overflow-y: auto;
     }
 
-    .side a {
-      color: #cbd5e1;
+    .menu-item {
+      border: 1px solid rgba(109, 164, 230, 0.2);
+      border-radius: 13px;
+      color: #cbe7ff;
       text-decoration: none;
-      font-size: 13px;
       padding: 10px;
-      border-radius: 10px;
-      border: 1px solid transparent;
-      background: rgba(11, 21, 37, 0.5);
-      transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
-    }
-
-    .side a:hover, .side a.active {
-      transform: translateX(4px);
-      border-color: rgba(34,211,238,0.55);
-      box-shadow: 0 0 18px rgba(34,211,238,0.18);
-      color: #ecfeff;
-    }
-
-    .main {
       display: grid;
-      gap: 12px;
+      grid-template-columns: 30px 1fr 10px;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(130deg, rgba(7, 15, 28, 0.8), rgba(10, 20, 38, 0.6));
+      transition: transform 0.32s var(--ease), box-shadow 0.32s var(--ease), border-color 0.32s var(--ease);
+      font-size: 13px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .menu-item i {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(126, 190, 255, 0.3);
+      background: linear-gradient(145deg, rgba(51, 143, 255, 0.22), rgba(115, 73, 255, 0.2));
+      box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.08), 0 0 15px rgba(53, 240, 255, 0.16);
+      transform: translateZ(0);
+    }
+
+    .menu-item::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 8px;
+      bottom: 8px;
+      width: 3px;
+      border-radius: 3px;
+      background: linear-gradient(180deg, var(--neon-cyan), var(--neon-purple));
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .menu-item:hover,
+    .menu-item.active {
+      transform: translateX(4px);
+      border-color: var(--line-strong);
+      box-shadow: 0 0 18px rgba(79, 163, 255, 0.24), inset 0 0 22px rgba(53, 240, 255, 0.06);
+    }
+
+    .menu-item:hover::before,
+    .menu-item.active::before { opacity: 1; }
+
+    .menu-item small {
+      color: #7fa2c8;
+      font-size: 11px;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .content {
+      display: grid;
+      gap: 14px;
+      align-content: start;
     }
 
     .kpis {
       display: grid;
-      grid-template-columns: repeat(7, minmax(130px, 1fr));
+      grid-template-columns: repeat(7, minmax(140px, 1fr));
       gap: 10px;
     }
 
     .kpi {
-      position: relative;
-      background: linear-gradient(155deg, rgba(13,24,44,.82), rgba(9,19,32,.93));
-      border: 1px solid var(--line);
-      border-radius: 12px;
+      min-height: 122px;
+      border-radius: 14px;
+      border: 1px solid rgba(117, 181, 238, 0.26);
+      background: linear-gradient(150deg, rgba(11, 23, 44, 0.86), rgba(8, 16, 30, 0.86));
       padding: 10px;
+      position: relative;
       overflow: hidden;
-      min-height: 102px;
       transform-style: preserve-3d;
-      transition: transform .25s ease, box-shadow .25s ease;
-    }
-
-    .kpi::after {
-      content: '';
-      position: absolute;
-      inset: -45% 40% auto -45%;
-      height: 140%;
-      background: linear-gradient(130deg, transparent, rgba(255,255,255,.15), transparent);
-      transform: rotate(12deg);
-      animation: shine 4.8s linear infinite;
+      transition: transform 0.28s var(--ease), box-shadow 0.28s var(--ease), border-color 0.28s var(--ease);
     }
 
     .kpi:hover {
-      transform: translateY(-4px) rotateX(4deg);
-      box-shadow: 0 0 24px rgba(59,130,246,.24);
+      transform: translateY(-6px) rotateX(5deg) rotateY(-4deg);
+      border-color: rgba(89, 213, 255, 0.65);
+      box-shadow: 0 0 28px rgba(53, 240, 255, 0.25), 0 18px 30px rgba(2, 8, 19, 0.55);
     }
 
-    @keyframes shine {
-      0% { transform: translateX(-40%) rotate(12deg); }
-      100% { transform: translateX(220%) rotate(12deg); }
+    .kpi .icon3d {
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, rgba(74, 146, 255, 0.34), rgba(151, 95, 255, 0.25));
+      border: 1px solid rgba(141, 205, 255, 0.45);
+      box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.12), 0 0 18px rgba(53, 240, 255, 0.2);
+      font-size: 15px;
     }
 
-    .kpi .t { font-size: 11px; color: #a5b4fc; text-transform: uppercase; letter-spacing: .06em; }
-    .kpi .v { font-size: 33px; font-weight: 800; margin-top: 4px; line-height: 1; }
-    .kpi .s { font-size: 11px; color: #86efac; margin-top: 6px; }
+    .kpi .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
 
-    .kpi .bar {
-      position: absolute;
-      left: 10px;
-      right: 10px;
-      bottom: 8px;
+    .kpi .label {
+      color: #9bc4ee;
+      font: 600 10px/1.2 "Orbitron", sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .kpi .value {
+      font-family: "Orbitron", sans-serif;
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .kpi .delta {
+      font-size: 11px;
+      color: #8cd6b5;
+      margin-bottom: 8px;
+    }
+
+    .kpi .beam {
       height: 4px;
       border-radius: 999px;
-      background: rgba(148,163,184,.2);
       overflow: hidden;
+      background: rgba(132, 166, 201, 0.24);
     }
 
-    .kpi .bar i {
+    .kpi .beam i {
       display: block;
+      width: var(--w, 50%);
       height: 100%;
-      width: var(--w, 55%);
       border-radius: inherit;
-      background: linear-gradient(90deg, var(--blue), var(--cyan));
-      box-shadow: 0 0 14px rgba(34,211,238,.65);
-      animation: fillScan 2.8s ease-in-out infinite alternate;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-cyan), var(--neon-green));
+      box-shadow: 0 0 12px rgba(53, 240, 255, 0.68);
+      animation: shimmer 2.8s ease-in-out infinite alternate;
     }
 
-    @keyframes fillScan {
+    @keyframes shimmer {
       from { filter: brightness(1); }
       to { filter: brightness(1.45); }
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr 1fr;
-      gap: 12px;
+    .panel {
+      padding: 12px;
+      min-height: 230px;
     }
 
-    .card {
-      background: var(--glass);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
-      overflow: hidden;
-      min-height: 220px;
+    .panel .hd {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(118, 165, 212, 0.22);
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      gap: 10px;
     }
 
-    .card .hd {
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(100,116,139,.25);
-      font-size: 12px;
+    .panel .hd h3 {
+      font: 700 12px/1 "Orbitron", sans-serif;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      letter-spacing: .08em;
-      color: #93c5fd;
-      font-weight: 700;
+      color: #9fd7ff;
     }
 
-    .card .bd { padding: 10px; }
-
-    .table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .table th, .table td { border-bottom: 1px solid rgba(100,116,139,.18); padding: 8px 6px; text-align: left; }
-    .table th { color: #93c5fd; font-weight: 600; }
-
-    .avatar {
-      width: 22px; height: 22px; border-radius: 50%;
-      display: inline-grid; place-items: center; font-size: 11px; font-weight: 700;
-      background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
-      margin-right: 6px;
-    }
-
-    .status {
-      padding: 2px 6px;
+    .panel .hd .tag {
+      font-size: 11px;
+      border: 1px solid rgba(131, 176, 228, 0.26);
       border-radius: 999px;
-      font-size: 10px;
-      font-weight: 700;
-    }
-
-    .online { background: rgba(34,197,94,.2); color: #86efac; }
-    .busy { background: rgba(251,146,60,.2); color: #fdba74; }
-    .offline { background: rgba(239,68,68,.2); color: #fca5a5; }
-
-    .progress {
-      height: 6px;
-      background: rgba(148,163,184,.22);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .progress > i {
-      display: block;
-      height: 100%;
-      background: linear-gradient(90deg, var(--cyan), var(--green));
-      box-shadow: 0 0 10px rgba(34,211,238,.6);
+      padding: 4px 8px;
+      color: #8eb4d9;
+      background: rgba(8, 17, 32, 0.66);
     }
 
     .pipeline {
       display: grid;
       grid-template-columns: repeat(8, 1fr);
-      gap: 8px;
+      gap: 10px;
       align-items: center;
-      padding: 8px 6px;
+      margin-top: 8px;
     }
 
     .step {
       text-align: center;
       font-size: 10px;
-      color: var(--muted);
+      color: #8caecf;
       position: relative;
-      padding-top: 16px;
+      padding-top: 18px;
+      letter-spacing: 0.03em;
     }
 
     .step::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
+      content: "";
       width: 12px;
       height: 12px;
       border-radius: 50%;
-      background: #334155;
-      border: 1px solid #64748b;
-      box-shadow: 0 0 0 transparent;
-      transition: .3s ease;
+      position: absolute;
+      left: 50%;
+      top: 0;
+      transform: translateX(-50%);
+      border: 1px solid #4f6b8d;
+      background: #24384f;
+      transition: 0.28s;
     }
 
     .step.done::before {
-      background: var(--green);
-      border-color: var(--green);
-      box-shadow: 0 0 12px rgba(34,197,94,.85);
+      background: var(--neon-green);
+      border-color: var(--neon-green);
+      box-shadow: 0 0 13px rgba(54, 241, 167, 0.8), 0 0 26px rgba(54, 241, 167, 0.45);
     }
 
     .step:not(:last-child)::after {
-      content: '';
+      content: "";
       position: absolute;
       top: 5px;
       left: calc(50% + 8px);
       width: calc(100% - 16px);
       height: 2px;
-      background: #334155;
+      background: #2b3f58;
     }
 
     .step.done:not(:last-child)::after {
-      background: linear-gradient(90deg, rgba(34,197,94,.85), rgba(56,189,248,.85));
-      box-shadow: 0 0 10px rgba(56,189,248,.45);
+      background: linear-gradient(90deg, var(--neon-green), var(--neon-cyan));
+      box-shadow: 0 0 12px rgba(53, 240, 255, 0.45);
     }
 
-    .activities {
-      max-height: 260px;
+    .grid {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr 1fr;
+      gap: 14px;
+    }
+
+    .table-wrap {
+      max-height: 314px;
       overflow: auto;
-      display: grid;
-      gap: 8px;
+      border: 1px solid rgba(118, 165, 212, 0.2);
+      border-radius: 12px;
     }
 
-    .item {
-      border: 1px solid rgba(148,163,184,.2);
-      border-radius: 10px;
-      padding: 8px;
-      background: rgba(12,20,35,.58);
-      font-size: 12px;
-      display: grid;
-      gap: 4px;
-      animation: rise .45s ease;
+    .table-wrap::-webkit-scrollbar,
+    .activity-feed::-webkit-scrollbar,
+    .chat-log::-webkit-scrollbar,
+    .menu::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
     }
 
-    @keyframes rise {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+    .table-wrap::-webkit-scrollbar-thumb,
+    .activity-feed::-webkit-scrollbar-thumb,
+    .chat-log::-webkit-scrollbar-thumb,
+    .menu::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(73, 179, 255, 0.7), rgba(53, 240, 255, 0.45));
+      border-radius: 999px;
     }
 
-    .item .time { color: #94a3b8; font-size: 10px; }
-
-    .bottom {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr;
-      gap: 12px;
-    }
-
-    .canvas-wrap { height: 220px; }
-
-    .assistant {
-      display: grid;
-      gap: 8px;
-      grid-template-rows: auto 1fr auto;
-      min-height: 220px;
-    }
-
-    .assistant .messages {
-      border: 1px solid rgba(148,163,184,.2);
-      border-radius: 10px;
-      padding: 8px;
-      overflow: auto;
-      max-height: 120px;
-      font-size: 12px;
-      display: grid;
-      gap: 6px;
-      background: rgba(10,16,30,.65);
-    }
-
-    .assistant textarea {
+    table {
       width: 100%;
-      min-height: 55px;
-      border-radius: 10px;
-      border: 1px solid rgba(148,163,184,.32);
-      background: rgba(7,13,24,.72);
-      color: var(--text);
-      padding: 8px;
-      resize: vertical;
-      outline: none;
-      font-family: inherit;
+      border-collapse: collapse;
       font-size: 12px;
     }
 
-    .btn {
-      background: linear-gradient(135deg, #0ea5e9, #2563eb);
-      color: #f8fafc;
-      border: none;
-      border-radius: 10px;
+    th,
+    td {
+      padding: 8px 9px;
+      border-bottom: 1px solid rgba(107, 158, 211, 0.2);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: rgba(12, 23, 41, 0.96);
+      color: #9fcfff;
+      font: 600 10px/1 "Orbitron", sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    tbody tr {
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+
+    tbody tr:hover {
+      background: rgba(53, 240, 255, 0.09);
+      transform: scale(1.003);
+    }
+
+    .avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-grid;
+      place-items: center;
+      margin-right: 6px;
+      font-size: 10px;
       font-weight: 700;
+      color: #eef9ff;
+      border: 1px solid rgba(143, 203, 255, 0.4);
+      background: linear-gradient(135deg, rgba(79, 163, 255, 0.8), rgba(155, 92, 255, 0.7));
+      box-shadow: 0 0 12px rgba(79, 163, 255, 0.38);
+    }
+
+    .status {
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .status.online { color: #92ffd0; background: rgba(54, 241, 167, 0.18); }
+    .status.busy { color: #ffd08f; background: rgba(255, 154, 68, 0.2); }
+    .status.offline { color: #ffacac; background: rgba(239, 68, 68, 0.22); }
+
+    .bar {
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(111, 150, 191, 0.22);
+      overflow: hidden;
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+      box-shadow: 0 0 12px rgba(53, 240, 255, 0.62);
+    }
+
+    .contract {
+      display: grid;
+      gap: 10px;
+    }
+
+    .contract-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
       font-size: 12px;
-      padding: 8px 12px;
-      cursor: pointer;
-      box-shadow: 0 0 16px rgba(59,130,246,.4);
+    }
+
+    .pill {
+      border: 1px solid rgba(118, 165, 212, 0.24);
+      border-radius: 10px;
+      background: rgba(8, 15, 28, 0.64);
+      padding: 8px;
+      line-height: 1.4;
+    }
+
+    .mini-map-wrap {
+      position: relative;
+      height: 236px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(114, 165, 220, 0.28);
+      box-shadow: inset 0 0 26px rgba(53, 240, 255, 0.08);
     }
 
     .mini-map {
       width: 100%;
-      height: 220px;
+      height: 100%;
       border: 0;
-      border-radius: 10px;
-      filter: saturate(1.1) contrast(1.05);
+      filter: saturate(1.15) contrast(1.05) hue-rotate(186deg) brightness(0.78);
     }
+
+    .map-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .map-overlay svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .route {
+      fill: none;
+      stroke: rgba(53, 240, 255, 0.9);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-dasharray: 7 10;
+      animation: routeMove 5s linear infinite;
+      filter: drop-shadow(0 0 8px rgba(53, 240, 255, 0.8));
+    }
+
+    .pulse-pin {
+      fill: rgba(155, 92, 255, 0.95);
+      animation: pinPulse 1.9s ease-in-out infinite;
+      filter: drop-shadow(0 0 8px rgba(155, 92, 255, 0.8));
+    }
+
+    @keyframes routeMove {
+      from { stroke-dashoffset: 0; }
+      to { stroke-dashoffset: -100; }
+    }
+
+    @keyframes pinPulse {
+      0%, 100% { transform: scale(1); opacity: 0.84; }
+      50% { transform: scale(1.32); opacity: 1; }
+    }
+
+    .activity-feed {
+      max-height: 338px;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+      padding-right: 2px;
+    }
+
+    .activity {
+      border: 1px solid rgba(109, 164, 230, 0.22);
+      border-radius: 12px;
+      padding: 9px;
+      background: linear-gradient(140deg, rgba(9, 18, 34, 0.74), rgba(9, 18, 34, 0.54));
+      animation: rise 0.46s var(--ease);
+      transform-origin: bottom;
+    }
+
+    .activity b { color: #d7f1ff; }
+    .activity small { color: #8fb3d8; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px) scale(0.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 14px;
+    }
+
+    .canvas-wrap { height: 230px; }
+
+    .assistant {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 8px;
+      min-height: 230px;
+    }
+
+    .chat-log {
+      border: 1px solid rgba(118, 165, 212, 0.24);
+      border-radius: 12px;
+      padding: 8px;
+      max-height: 120px;
+      overflow: auto;
+      background: rgba(7, 14, 25, 0.68);
+      font-size: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .ask {
+      width: 100%;
+      min-height: 58px;
+      border: 1px solid rgba(118, 165, 212, 0.3);
+      border-radius: 12px;
+      background: rgba(8, 17, 32, 0.68);
+      color: var(--white-soft);
+      padding: 9px;
+      font: 500 12px/1.45 "Space Grotesk", sans-serif;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .ask:focus {
+      border-color: rgba(83, 202, 255, 0.72);
+      box-shadow: 0 0 14px rgba(53, 240, 255, 0.2);
+    }
+
+    .btn {
+      margin-top: 7px;
+      border: 1px solid rgba(125, 195, 255, 0.4);
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(53, 240, 255, 0.5), rgba(79, 163, 255, 0.45), rgba(155, 92, 255, 0.38));
+      color: #f8fdff;
+      font: 700 12px/1 "Orbitron", sans-serif;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 9px 12px;
+      cursor: pointer;
+      box-shadow: 0 0 18px rgba(79, 163, 255, 0.35);
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
 
     .toast-wrap {
       position: fixed;
-      right: 16px;
-      bottom: 16px;
-      z-index: 20;
+      right: 14px;
+      bottom: 14px;
+      z-index: 40;
       display: grid;
       gap: 8px;
     }
 
     .toast {
-      background: rgba(9, 17, 32, 0.92);
-      border: 1px solid rgba(100,116,139,.28);
-      color: #e2e8f0;
-      border-radius: 10px;
+      min-width: 280px;
+      max-width: 360px;
+      border-radius: 12px;
+      border: 1px solid rgba(122, 169, 226, 0.32);
+      background: rgba(8, 16, 30, 0.86);
       padding: 9px 11px;
-      min-width: 270px;
       font-size: 12px;
-      box-shadow: 0 10px 30px rgba(2,6,23,.5);
-      animation: toastIn .35s ease;
+      box-shadow: 0 14px 26px rgba(2, 8, 19, 0.58), 0 0 18px rgba(53, 240, 255, 0.18);
+      animation: toastIn 0.3s ease;
     }
 
     @keyframes toastIn {
-      from { transform: translateX(14px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
     }
 
-    @media (max-width: 1450px) {
-      .topbar { grid-template-columns: 1fr; }
-      .top-actions { grid-template-columns: repeat(2, 1fr); }
-      .kpis { grid-template-columns: repeat(4, 1fr); }
+    .reveal {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+    }
+
+    .reveal.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1820px) {
+      .top { grid-template-columns: 1fr; }
+      .top-stats { grid-template-columns: repeat(2, 1fr); }
+      .kpis { grid-template-columns: repeat(4, minmax(130px, 1fr)); }
+      .grid { grid-template-columns: 1fr 1fr; }
+      .bottom { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 1180px) {
+      .layout { grid-template-columns: 1fr; }
+      .menu { max-height: none; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .grid { grid-template-columns: 1fr; }
-      .bottom { grid-template-columns: 1fr 1fr; }
+      .pipeline { grid-template-columns: repeat(4, 1fr); row-gap: 16px; }
+      .step:not(:last-child)::after { display: none; }
     }
 
-    @media (max-width: 980px) {
-      .shell { grid-template-columns: 1fr; }
-      .side { max-height: none; }
-      .kpis { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 760px) {
+      .hud { padding: 8px; gap: 10px; }
+      .top-stats { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .bottom { grid-template-columns: 1fr; }
+      .menu { grid-template-columns: 1fr; }
+      .contract-meta { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <canvas id="scene3d"></canvas>
-
-  <div class="app">
-    <header class="topbar">
-      <div class="brand">
-        <div class="logo-dot">SE</div>
-        <div>
-          <h1>Painel de Acompanhamento Integrado</h1>
-          <p>Gestao de Contratos em Tempo Real</p>
-        </div>
-      </div>
-
-      <div class="sync-strip">
-        <span><i class="pulse"></i>Sincronizacao: <b style="color:#86efac">ATIVA</b></span>
-        <span>Ultima atualizacao: <b id="clock"></b></span>
-      </div>
-
-      <div class="top-actions">
-        <div class="chip"><span>Usuarios Online</span><b id="onlineUsers">42</b></div>
-        <div class="chip alert"><span>Alertas Criticos</span><b id="criticalAlerts">3</b></div>
-        <div class="chip"><span>Perfil</span><b>Diego Henrique</b></div>
-        <div class="chip"><span>Nivel</span><b>Administrador</b></div>
-      </div>
-    </header>
-
-    <div class="shell">
-      <aside class="side">
-        <a class="active" href="#">Dashboard</a>
-        <a href="#">Contratos</a>
-        <a href="#">Empresas</a>
-        <a href="#">Funcionarios</a>
-        <a href="#">Empenhos</a>
-        <a href="#">Notas</a>
-        <a href="#">Conformidade</a>
-        <a href="#">Financeiro</a>
-        <a href="#">Relatorios</a>
-        <a href="#">IA</a>
-        <a href="#">Configuracoes</a>
-      </aside>
-
-      <main class="main">
-        <section class="kpis" id="kpis"></section>
-
-        <section class="card">
-          <div class="hd">Fluxo de Contrato - Tempo Real</div>
-          <div class="bd">
-            <div class="pipeline" id="pipeline"></div>
-          </div>
-        </section>
-
-        <section class="grid">
-          <article class="card">
-            <div class="hd">Monitoramento de Funcionarios em Tempo Real</div>
-            <div class="bd">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Nome</th>
-                    <th>Funcao</th>
-                    <th>Status</th>
-                    <th>Atividade</th>
-                    <th>Online</th>
-                  </tr>
-                </thead>
-                <tbody id="employeesTable"></tbody>
-              </table>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="hd">Contrato Selecionado + Mapa da Empresa</div>
-            <div class="bd">
-              <div style="display:grid; gap:8px; grid-template-columns:1fr 1fr; margin-bottom:8px; font-size:12px;">
-                <div><b>Contrato:</b> CT-2025-089</div>
-                <div><b>Contratada:</b> Tech Solutions Ltda</div>
-                <div><b>Objeto:</b> Solucao em TI</div>
-                <div><b>Vigencia:</b> 01/01/2025 a 31/12/2025</div>
-                <div><b>Valor:</b> R$ 54.8M</div>
-                <div><b>Status:</b> Em Execucao</div>
-              </div>
-              <iframe class="mini-map" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=-47.96%2C-16.05%2C-47.86%2C-15.95&amp;layer=mapnik"></iframe>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="hd">Atividades Recentes</div>
-            <div class="bd activities" id="activities"></div>
-          </article>
-        </section>
-
-        <section class="bottom">
-          <article class="card">
-            <div class="hd">IA Assistente</div>
-            <div class="bd assistant">
-              <div id="lottieAi" style="height:86px"></div>
-              <div class="messages" id="aiMessages">
-                <div><b>Sistema:</b> Monitoramento ativo de contratos criticos.</div>
-              </div>
-              <div>
-                <textarea id="aiInput" placeholder="Pergunte para a IA sobre contratos, saldo, conformidade..."></textarea>
-                <button class="btn" id="aiSendBtn" type="button">Enviar Consulta</button>
-              </div>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="hd">Contratos por Status</div>
-            <div class="bd canvas-wrap"><canvas id="chartDonut"></canvas></div>
-          </article>
-
-          <article class="card">
-            <div class="hd">Valores por Mes (R$)</div>
-            <div class="bd canvas-wrap"><div id="chartArea" style="height:100%"></div></div>
-          </article>
-
-          <article class="card">
-            <div class="hd">Resumo Financeiro</div>
-            <div class="bd canvas-wrap"><svg id="d3Gauge" width="100%" height="220"></svg></div>
-          </article>
-        </section>
-      </main>
-    </div>
-  </div>
-
-  <div class="toast-wrap" id="toastWrap"></div>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
-
-  <script>
-    const kpiData = [
-      { title: 'Contratos Ativos', value: 128, delta: '+8 este mes', width: 72 },
-      { title: 'Aditivos Ativos', value: 47, delta: '+5 este mes', width: 61 },
-      { title: 'Atualizacoes', value: 23, delta: '+12 hoje', width: 56 },
-      { title: 'Empenhos em Andamento', value: 89, delta: '+15 hoje', width: 68 },
-      { title: 'Conformidade', value: 96.7, suffix: '%', delta: 'Excelente', width: 96 },
-      { title: 'Notas de Pagamento', value: 134, delta: '+22 este mes', width: 66 },
-      { title: 'Valor Total Contratos', value: 54.8, prefix: 'R$ ', suffix: 'M', delta: '+12.6% este mes', width: 82 }
-    ];
-
-    const employees = [
-      { name: 'Ana Paula', role: 'Analista', status: 'Online', task: 'Analise CT-2025-089', online: 82 },
-      { name: 'Carlos Silva', role: 'Analista', status: 'Online', task: 'Monitoria CT-2025-095', online: 76 },
-      { name: 'Caio Silva', role: 'Assistente', status: 'Ausente', task: 'Fiscal CT-2025-056', online: 12 },
-      { name: 'Diego Rocha', role: 'Gestor', status: 'Ocupado', task: 'Reuniao de conformidade', online: 54 },
-      { name: 'Mariana N.', role: 'Analista', status: 'Online', task: 'Empenhos CT-2025-091', online: 88 }
-    ];
-
-    const pipeline = ['Contrato', 'Aditivos', 'Atualizacoes', 'Empenho', 'Conformidade', 'Nota', 'Liquidacao', 'Encerramento'];
-
-    function formatKpi(value, prefix = '', suffix = '') {
-      return `${prefix}${typeof value === 'number' ? value.toLocaleString('pt-BR') : value}${suffix}`;
-    }
-
-    function renderKpis() {
-      const host = document.getElementById('kpis');
-      host.innerHTML = kpiData.map((kpi, idx) => `
-        <article class="kpi" data-kpi-index="${idx}">
-          <div class="t">${kpi.title}</div>
-          <div class="v" data-count-target="${kpi.value}">${kpi.prefix || ''}0${kpi.suffix || ''}</div>
-          <div class="s">${kpi.delta}</div>
-          <div class="bar"><i style="--w:${kpi.width}%"></i></div>
-        </article>
-      `).join('');
-
-      host.querySelectorAll('.kpi .v').forEach((el, idx) => {
-        const kpi = kpiData[idx];
-        const obj = { val: 0 };
-        gsap.to(obj, {
-          val: Number(kpi.value),
-          duration: 1.4,
-          ease: 'power2.out',
-          onUpdate: () => {
-            const value = kpi.suffix === '%' ? obj.val.toFixed(1) : Math.floor(obj.val * 10) / 10;
-            el.textContent = formatKpi(value, kpi.prefix, kpi.suffix || '');
-          }
-        });
-      });
-    }
-
-    function renderEmployees() {
-      const host = document.getElementById('employeesTable');
-      host.innerHTML = employees.map((e) => {
-        const stClass = e.status === 'Online' ? 'online' : (e.status === 'Ocupado' ? 'busy' : 'offline');
-        const initials = e.name.split(' ').map(p => p[0]).slice(0, 2).join('');
-        return `
-          <tr>
-            <td><span class="avatar">${initials}</span>${e.name}</td>
-            <td>${e.role}</td>
-            <td><span class="status ${stClass}">${e.status}</span></td>
-            <td>${e.task}</td>
-            <td>
-              <div class="progress"><i style="width:${e.online}%"></i></div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function renderPipeline(stepDone = 5) {
-      const host = document.getElementById('pipeline');
-      host.innerHTML = pipeline.map((step, idx) => `<div class="step ${idx <= stepDone ? 'done' : ''}">${step}</div>`).join('');
-    }
-
-    function renderActivities() {
-      const host = document.getElementById('activities');
-      const samples = [
-        { type: 'Nota de Pagamento emitida', detail: 'CT-2025-089', time: '14:23' },
-        { type: 'Empenho emitido', detail: 'R$ 823 mil', time: '14:20' },
-        { type: 'Aditivo assinado digitalmente', detail: 'CT-2025-077', time: '14:16' },
-        { type: 'Conformidade verificada', detail: 'Indice 96.7%', time: '14:12' },
-        { type: 'Nova demanda de unidade', detail: 'CBM/MT', time: '14:09' }
-      ];
-      host.innerHTML = samples.map((item) => `
-        <div class="item">
-          <div><b>${item.type}</b></div>
-          <div>${item.detail}</div>
-          <div class="time">${item.time}</div>
-        </div>
-      `).join('');
-    }
-
-    function renderCharts() {
-      const donut = new Chart(document.getElementById('chartDonut'), {
-        type: 'doughnut',
-        data: {
-          labels: ['Em Execucao', 'Finalizados', 'Suspensos', 'Cancelados'],
-          datasets: [{
-            data: [58, 26, 10, 6],
-            backgroundColor: ['#22d3ee', '#22c55e', '#facc15', '#ef4444'],
-            borderColor: '#0b1120',
-            borderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { color: '#bfdbfe', boxWidth: 10 } } }
-        }
-      });
-
-      const area = new ApexCharts(document.querySelector('#chartArea'), {
-        chart: { type: 'area', height: 200, toolbar: { show: false }, animations: { enabled: true } },
-        theme: { mode: 'dark' },
-        series: [{ name: 'Valores', data: [72, 95, 88, 120, 98, 136, 162, 148] }],
-        dataLabels: { enabled: false },
-        stroke: { curve: 'smooth', width: 3, colors: ['#22d3ee'] },
-        fill: { type: 'gradient', gradient: { opacityFrom: 0.5, opacityTo: 0.08 } },
-        xaxis: { categories: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'], labels: { style: { colors: '#9fb3c8' } } },
-        yaxis: { labels: { style: { colors: '#9fb3c8' } } },
-        grid: { borderColor: '#33415555' },
-        tooltip: { theme: 'dark' }
-      });
-      area.render();
-
-      const svg = d3.select('#d3Gauge');
-      const width = svg.node().clientWidth || 300;
-      const height = 220;
-      const r = Math.min(width, height) / 2 - 18;
-      const g = svg.append('g').attr('transform', `translate(${width / 2}, ${height / 2})`);
-      const arc = d3.arc().innerRadius(r - 20).outerRadius(r).startAngle(-Math.PI * 0.75).endAngle(Math.PI * 0.75);
-      g.append('path').attr('d', arc()).attr('fill', '#1f2937');
-      const valueArc = d3.arc().innerRadius(r - 20).outerRadius(r).startAngle(-Math.PI * 0.75);
-      const percent = 0.64;
-      g.append('path')
-        .datum({ endAngle: -Math.PI * 0.75 })
-        .attr('fill', '#22d3ee')
-        .attr('d', valueArc)
-        .transition().duration(1400)
-        .attrTween('d', function () {
-          const i = d3.interpolate(this._current?.endAngle || -Math.PI * 0.75, -Math.PI * 0.75 + (Math.PI * 1.5 * percent));
-          this._current = { endAngle: i(1) };
-          return (t) => valueArc({ endAngle: i(t) });
-        });
-
-      g.append('text').attr('text-anchor', 'middle').attr('y', 6).attr('fill', '#e2e8f0').style('font-size', '28px').style('font-weight', 800).text('R$ 54,8M');
-      g.append('text').attr('text-anchor', 'middle').attr('y', 26).attr('fill', '#94a3b8').style('font-size', '12px').text('Total');
-
-      return { donut, area };
-    }
-
-    function pushToast(message, kind = 'info') {
-      const host = document.getElementById('toastWrap');
-      const el = document.createElement('div');
-      el.className = 'toast';
-      const color = kind === 'critical' ? '#fca5a5' : (kind === 'success' ? '#86efac' : '#bfdbfe');
-      el.innerHTML = `<div style="color:${color}; font-weight:700; margin-bottom:3px">${kind.toUpperCase()}</div><div>${message}</div>`;
-      host.appendChild(el);
-      setTimeout(() => { el.remove(); }, 5200);
-    }
-
-    function initAiPanel() {
-      const send = document.getElementById('aiSendBtn');
-      const input = document.getElementById('aiInput');
-      const msgs = document.getElementById('aiMessages');
-
-      send.addEventListener('click', () => {
-        const text = input.value.trim();
-        if (!text) return;
-        msgs.insertAdjacentHTML('beforeend', `<div><b>Voce:</b> ${text}</div>`);
-        input.value = '';
-        setTimeout(() => {
-          msgs.insertAdjacentHTML('beforeend', `<div><b>IA:</b> Risco moderado identificado no contrato CT-2025-089. Recomendo revisar os ultimos 2 aditivos e prazo de pagamento.</div>`);
-          msgs.scrollTop = msgs.scrollHeight;
-        }, 600);
-      });
-
-      if (window.lottie) {
-        window.lottie.loadAnimation({
-          container: document.getElementById('lottieAi'),
-          renderer: 'svg',
-          loop: true,
-          autoplay: true,
-          path: 'https://assets3.lottiefiles.com/packages/lf20_j1adxtyb.json'
-        });
-      }
-    }
-
-    function initRealtime() {
-      const clock = document.getElementById('clock');
-      const onlineUsers = document.getElementById('onlineUsers');
-      const criticalAlerts = document.getElementById('criticalAlerts');
-
-      setInterval(() => {
-        clock.textContent = new Date().toLocaleString('pt-BR');
-      }, 1000);
-
-      setInterval(() => {
-        const users = 40 + Math.floor(Math.random() * 7);
-        const alerts = 2 + Math.floor(Math.random() * 3);
-        onlineUsers.textContent = String(users);
-        criticalAlerts.textContent = String(alerts);
-
-        if (Math.random() > 0.65) {
-          pushToast('Atualizacao recebida: novo registro de empenho processado.', 'success');
-        }
-        if (Math.random() > 0.88) {
-          pushToast('Alerta critico: contrato com risco de prazo excedido.', 'critical');
-        }
-      }, 6500);
-
-      try {
-        const wsBase = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host;
-        const ws = new WebSocket(`${wsBase}/ws/metrics`);
-        ws.onmessage = (event) => {
-          const data = JSON.parse(event.data || '{}');
-          if (typeof data.onlineUsers === 'number') onlineUsers.textContent = String(data.onlineUsers);
-          if (typeof data.criticalAlerts === 'number') criticalAlerts.textContent = String(data.criticalAlerts);
-        };
-      } catch (error) {
-        // Fallback silencioso para modo mock.
-      }
-    }
-
-    function initThreeScene() {
-      const canvas = document.getElementById('scene3d');
-      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 0, 10);
-
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setSize(window.innerWidth, window.innerHeight);
-
-      const ambient = new THREE.AmbientLight(0x3b82f6, 0.6);
-      scene.add(ambient);
-
-      const pointA = new THREE.PointLight(0x22d3ee, 1.5, 40, 2);
-      pointA.position.set(3, 2, 4);
-      scene.add(pointA);
-
-      const pointsGeo = new THREE.BufferGeometry();
-      const pointsCount = 800;
-      const arr = new Float32Array(pointsCount * 3);
-      for (let i = 0; i < pointsCount * 3; i += 3) {
-        arr[i] = (Math.random() - 0.5) * 28;
-        arr[i + 1] = (Math.random() - 0.5) * 18;
-        arr[i + 2] = (Math.random() - 0.5) * 18;
-      }
-      pointsGeo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
-
-      const pointsMat = new THREE.PointsMaterial({ color: 0x3b82f6, size: 0.05, transparent: true, opacity: 0.85 });
-      const cloud = new THREE.Points(pointsGeo, pointsMat);
-      scene.add(cloud);
-
-      const torus = new THREE.Mesh(
-        new THREE.TorusGeometry(1.8, 0.06, 24, 120),
-        new THREE.MeshStandardMaterial({ color: 0x22d3ee, emissive: 0x0ea5e9, emissiveIntensity: 0.4, roughness: 0.28, metalness: 0.8 })
-      );
-      torus.position.set(-4.5, 1.8, -2.2);
-      scene.add(torus);
-
-      const cube = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 1, 1),
-        new THREE.MeshStandardMaterial({ color: 0x1d4ed8, emissive: 0x1e40af, emissiveIntensity: 0.3, roughness: 0.24, metalness: 0.88 })
-      );
-      cube.position.set(4.3, -2.0, -2.6);
-      scene.add(cube);
-
-      const mouse = { x: 0, y: 0 };
-      window.addEventListener('mousemove', (e) => {
-        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = (e.clientY / window.innerHeight) * 2 - 1;
-      });
-
-      function tick() {
-        cloud.rotation.y += 0.0009;
-        torus.rotation.x += 0.009;
-        torus.rotation.y += 0.006;
-        cube.rotation.x += 0.006;
-        cube.rotation.y += 0.01;
-
-        camera.position.x += ((mouse.x * 0.35) - camera.position.x) * 0.02;
-        camera.position.y += ((-mouse.y * 0.25) - camera.position.y) * 0.02;
-
-        renderer.render(scene, camera);
-        requestAnimationFrame(tick);
-      }
-      tick();
-
-      window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-    }
-
-    function boot() {
-      renderKpis();
-      renderEmployees();
-      renderPipeline(5);
-      renderActivities();
-      renderCharts();
-      initAiPanel();
-      initRealtime();
-      initThreeScene();
-      document.getElementById('clock').textContent = new Date().toLocaleString('pt-BR');
-      pushToast('Painel enterprise inicializado com sucesso.', 'success');
-    }
-
-    boot();
-  </script>
++  <div id="fxGrid"></div>
++  <canvas id="fxParticles"></canvas>
++  <canvas id="fxThree"></canvas>
++
++  <div class="hud">
++    <header class="top glass reveal">
++      <div class="brand">
++        <div class="brand-core">SE</div>
++        <div>
++          <h1>PAINEL INTEGRADO DE OPERACOES</h1>
++          <p>COPAL SESP - Intelligent Contract Center</p>
++        </div>
++      </div>
++
++      <div class="sync">
++        <span><i class="live-dot"></i>sync: <b style="color:#93ffd1">ativo</b></span>
++        <span>ultima atualizacao: <b id="clock">--:--:--</b></span>
++        <span>latencia: <b id="latency" style="color:#b7e5ff">19ms</b></span>
++      </div>
++
++      <div class="top-stats">
++        <div class="micro"><span>usuarios online</span><b id="onlineUsers">42</b></div>
++        <div class="micro"><span>alertas criticos</span><b id="criticalAlerts">3</b></div>
++        <div class="micro"><span>perfil</span><b>Diego Henrique</b></div>
++        <div class="micro"><span>seguranca</span><b style="color:#94ffd2">compliant</b></div>
++      </div>
++    </header>
++
++    <div class="layout">
++      <aside class="menu glass reveal" id="menuRoot">
++        <a class="menu-item active" href="#"><i class="fa-solid fa-chart-line"></i><div>Dashboard<small>overview operacional</small></div><span></span></a>
++        <a class="menu-item" href="#"><i class="fa-solid fa-file-contract"></i><div>Contratos<small>lifecycle completo</small></div><span></span></a>
++        <a class="menu-item" href="#"><i class="fa-solid fa-folder-tree"></i><div>Documentos<small>anexos e trilhas</small></div><span></span></a>
++        <a class="menu-item" href="#"><i class="fa-solid fa-shield-halved"></i><div>Conformidade<small>auditoria continua</small></div><span></span></a>
++        <a class="menu-item" href="#"><i class="fa-solid fa-money-bill-trend-up"></i><div>Financeiro<small>pagamentos e saldo</small></div><span></span></a>
++        <a class="menu-item" href="#"><i class="fa-solid fa-satellite-dish"></i><div>Monitoramento<small>telemetria ativa</small></div><span></span></a>
++        <a class="menu-item" href="#"><i class="fa-solid fa-building"></i><div>Empresas<small>base integrada</small></div><span></span></a>
++        <a class="menu-item" href="#"><i class="fa-solid fa-users-gear"></i><div>Equipe<small>atividade por usuario</small></div><span></span></a>
++        <a class="menu-item" href="#"><i class="fa-solid fa-brain"></i><div>IA Analitica<small>insights autonomos</small></div><span></span></a>
++        <a class="menu-item" href="#"><i class="fa-solid fa-cloud"></i><div>Cloud Stack<small>infraestrutura</small></div><span></span></a>
++      </aside>
++
++      <main class="content">
++        <section class="kpis reveal" id="kpis"></section>
++
++        <section class="panel glass reveal">
++          <div class="hd">
++            <h3>Fluxo de Contrato - Tempo Real</h3>
++            <span class="tag">update stream</span>
++          </div>
++          <div class="pipeline" id="pipeline"></div>
++        </section>
++
++        <section class="grid">
++          <article class="panel glass reveal tilt">
++            <div class="hd">
++              <h3>Monitoramento de Funcionarios em Tempo Real</h3>
++              <span class="tag">live status</span>
++            </div>
++            <div class="table-wrap">
++              <table>
++                <thead>
++                  <tr>
++                    <th>Nome</th>
++                    <th>Funcao</th>
++                    <th>Status</th>
++                    <th>Atividade</th>
++                    <th>Online</th>
++                  </tr>
++                </thead>
++                <tbody id="employeesTable"></tbody>
++              </table>
++            </div>
++          </article>
++
++          <article class="panel glass reveal tilt">
++            <div class="hd">
++              <h3>Contrato Selecionado + Mapa Holografico</h3>
++              <span class="tag">geo intelligence</span>
++            </div>
++            <div class="contract">
++              <div class="contract-meta">
++                <div class="pill"><b>Contrato:</b> CT-2025-089</div>
++                <div class="pill"><b>Contratada:</b> Tech Solutions Ltda</div>
++                <div class="pill"><b>Objeto:</b> Solucao em TI</div>
++                <div class="pill"><b>Vigencia:</b> 01/01/2025 a 31/12/2025</div>
++                <div class="pill"><b>Valor:</b> R$ 54.8M</div>
++                <div class="pill"><b>Status:</b> Em Execucao</div>
++              </div>
++              <div class="mini-map-wrap">
++                <iframe class="mini-map" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=-47.96%2C-16.05%2C-47.86%2C-15.95&amp;layer=mapnik"></iframe>
++                <div class="map-overlay">
++                  <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
++                    <path class="route" d="M14,74 C28,60 42,58 53,50 C66,40 77,39 89,28"></path>
++                    <circle class="pulse-pin" cx="14" cy="74" r="1.9"></circle>
++                    <circle class="pulse-pin" cx="53" cy="50" r="2.2"></circle>
++                    <circle class="pulse-pin" cx="89" cy="28" r="2.5"></circle>
++                  </svg>
++                </div>
++              </div>
++            </div>
++          </article>
++
++          <article class="panel glass reveal tilt">
++            <div class="hd">
++              <h3>Atividades Recentes</h3>
++              <span class="tag">realtime feed</span>
++            </div>
++            <div class="activity-feed" id="activities"></div>
++          </article>
++        </section>
++
++        <section class="bottom">
++          <article class="panel glass reveal tilt">
++            <div class="hd">
++              <h3>IA Assistente</h3>
++              <span class="tag">copal ai core</span>
++            </div>
++            <div class="assistant">
++              <div id="lottieAi" style="height:86px"></div>
++              <div class="chat-log" id="aiMessages">
++                <div><b>Sistema:</b> Monitoramento ativo de contratos criticos.</div>
++              </div>
++              <div>
++                <textarea class="ask" id="aiInput" placeholder="Pergunte para a IA sobre contratos, saldo, conformidade..."></textarea>
++                <button class="btn" id="aiSendBtn" type="button">Enviar Consulta</button>
++              </div>
++            </div>
++          </article>
++
++          <article class="panel glass reveal tilt">
++            <div class="hd">
++              <h3>Contratos por Status</h3>
++              <span class="tag">smart chart</span>
++            </div>
++            <div class="canvas-wrap"><canvas id="chartDonut"></canvas></div>
++          </article>
++
++          <article class="panel glass reveal tilt">
++            <div class="hd">
++              <h3>Valores por Mes (R$)</h3>
++              <span class="tag">trend line</span>
++            </div>
++            <div class="canvas-wrap"><div id="chartArea" style="height:100%"></div></div>
++          </article>
++
++          <article class="panel glass reveal tilt">
++            <div class="hd">
++              <h3>Resumo Financeiro</h3>
++              <span class="tag">d3 gauge</span>
++            </div>
++            <div class="canvas-wrap"><svg id="d3Gauge" width="100%" height="220"></svg></div>
++          </article>
++        </section>
++      </main>
++    </div>
++  </div>
++
++  <div class="toast-wrap" id="toastWrap"></div>
++
++  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
++  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
++  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
++  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
++  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
++  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
++
++  <script>
++    const kpiData = [
++      { title: "Contratos Ativos", value: 128, delta: "+8 este mes", width: 72, icon: "fa-file-contract" },
++      { title: "Aditivos Ativos", value: 47, delta: "+5 este mes", width: 61, icon: "fa-folder-open" },
++      { title: "Atualizacoes", value: 23, delta: "+12 hoje", width: 56, icon: "fa-satellite" },
++      { title: "Empenhos", value: 89, delta: "+15 hoje", width: 68, icon: "fa-receipt" },
++      { title: "Conformidade", value: 96.7, delta: "Excelente", width: 96, icon: "fa-shield-halved", suffix: "%" },
++      { title: "Pagamentos", value: 134, delta: "+22 este mes", width: 66, icon: "fa-money-bill-trend-up" },
++      { title: "Valor Total", value: 54.8, delta: "+12.6% este mes", width: 82, icon: "fa-database", prefix: "R$ ", suffix: "M" }
++    ];
++
++    const employees = [
++      { name: "Ana Paula", role: "Analista", status: "Online", task: "Analise CT-2025-089", online: 82 },
++      { name: "Carlos Silva", role: "Analista", status: "Online", task: "Monitoria CT-2025-095", online: 76 },
++      { name: "Caio Silva", role: "Assistente", status: "Ausente", task: "Fiscal CT-2025-056", online: 12 },
++      { name: "Diego Rocha", role: "Gestor", status: "Ocupado", task: "Reuniao de conformidade", online: 54 },
++      { name: "Mariana N", role: "Analista", status: "Online", task: "Empenhos CT-2025-091", online: 88 }
++    ];
++
++    const pipeline = ["Contrato", "Aditivos", "Atualizacoes", "Empenho", "Conformidade", "Nota", "Liquidacao", "Encerramento"];
++
++    function formatKpi(value, prefix = "", suffix = "") {
++      return `${prefix}${typeof value === "number" ? value.toLocaleString("pt-BR") : value}${suffix}`;
++    }
++
++    function renderKpis() {
++      const host = document.getElementById("kpis");
++      host.innerHTML = kpiData.map((kpi, idx) => `
++        <article class="kpi tilt reveal" data-kpi-index="${idx}">
++          <div class="head">
++            <div class="label">${kpi.title}</div>
++            <div class="icon3d"><i class="fa-solid ${kpi.icon}"></i></div>
++          </div>
++          <div class="value" data-count-target="${kpi.value}" data-prefix="${kpi.prefix || ""}" data-suffix="${kpi.suffix || ""}">${kpi.prefix || ""}0${kpi.suffix || ""}</div>
++          <div class="delta">${kpi.delta}</div>
++          <div class="beam"><i style="--w:${kpi.width}%"></i></div>
++        </article>
++      `).join("");
++
++      host.querySelectorAll(".value").forEach((el, idx) => {
++        const kpi = kpiData[idx];
++        const obj = { val: 0 };
++        gsap.to(obj, {
++          val: Number(kpi.value),
++          duration: 1.5,
++          ease: "power2.out",
++          onUpdate: () => {
++            const value = kpi.suffix === "%" ? obj.val.toFixed(1) : Math.floor(obj.val * 10) / 10;
++            el.textContent = formatKpi(value, kpi.prefix || "", kpi.suffix || "");
++          }
++        });
++      });
++    }
++
++    function renderEmployees() {
++      const host = document.getElementById("employeesTable");
++      host.innerHTML = employees.map((e) => {
++        const stClass = e.status === "Online" ? "online" : (e.status === "Ocupado" ? "busy" : "offline");
++        const initials = e.name.split(" ").map((p) => p[0]).slice(0, 2).join("");
++        return `
++          <tr>
++            <td><span class="avatar">${initials}</span>${e.name}</td>
++            <td>${e.role}</td>
++            <td><span class="status ${stClass}">${e.status}</span></td>
++            <td>${e.task}</td>
++            <td><div class="bar"><i style="width:${e.online}%"></i></div></td>
++          </tr>
++        `;
++      }).join("");
++    }
++
++    function renderPipeline(stepDone = 5) {
++      const host = document.getElementById("pipeline");
++      host.innerHTML = pipeline.map((step, idx) => `<div class="step ${idx <= stepDone ? "done" : ""}">${step}</div>`).join("");
++    }
++
++    function renderActivities() {
++      const host = document.getElementById("activities");
++      const samples = [
++        { type: "Nota de pagamento emitida", detail: "CT-2025-089", time: "14:23" },
++        { type: "Empenho emitido", detail: "R$ 823 mil", time: "14:20" },
++        { type: "Aditivo assinado digitalmente", detail: "CT-2025-077", time: "14:16" },
++        { type: "Conformidade verificada", detail: "Indice 96.7%", time: "14:12" },
++        { type: "Nova demanda de unidade", detail: "CBM/MT", time: "14:09" },
++        { type: "Anexo protocolado", detail: "CT-2025-046", time: "14:05" }
++      ];
++
++      host.innerHTML = samples.map((item) => `
++        <div class="activity">
++          <div><b>${item.type}</b></div>
++          <div>${item.detail}</div>
++          <small>${item.time}</small>
++        </div>
++      `).join("");
++    }
++
++    function renderCharts() {
++      const donut = new Chart(document.getElementById("chartDonut"), {
++        type: "doughnut",
++        data: {
++          labels: ["Em Execucao", "Finalizados", "Suspensos", "Cancelados"],
++          datasets: [{
++            data: [58, 26, 10, 6],
++            backgroundColor: ["#35f0ff", "#36f1a7", "#ffd57a", "#ff7e88"],
++            borderColor: "#071120",
++            borderWidth: 2,
++            hoverOffset: 8
++          }]
++        },
++        options: {
++          responsive: true,
++          maintainAspectRatio: false,
++          plugins: {
++            legend: {
++              position: "bottom",
++              labels: {
++                color: "#bde0ff",
++                boxWidth: 10,
++                font: { family: "Space Grotesk", size: 11 }
++              }
++            }
++          }
++        }
++      });
++
++      const area = new ApexCharts(document.querySelector("#chartArea"), {
++        chart: {
++          type: "area",
++          height: 210,
++          toolbar: { show: false },
++          animations: { enabled: true, easing: "easeinout", speed: 700 }
++        },
++        theme: { mode: "dark" },
++        series: [{ name: "Valores", data: [72, 95, 88, 120, 98, 136, 162, 148] }],
++        dataLabels: { enabled: false },
++        stroke: { curve: "smooth", width: 3, colors: ["#35f0ff"] },
++        fill: {
++          type: "gradient",
++          gradient: { opacityFrom: 0.55, opacityTo: 0.06, shadeIntensity: 0.8 }
++        },
++        xaxis: {
++          categories: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago"],
++          labels: { style: { colors: "#91b4d6" } }
++        },
++        yaxis: { labels: { style: { colors: "#91b4d6" } } },
++        grid: { borderColor: "#2a3d55" },
++        tooltip: { theme: "dark" }
++      });
++      area.render();
++
++      const svg = d3.select("#d3Gauge");
++      const width = svg.node().clientWidth || 300;
++      const height = 220;
++      const r = Math.min(width, height) / 2 - 18;
++      const g = svg.append("g").attr("transform", `translate(${width / 2}, ${height / 2})`);
++
++      const defs = svg.append("defs");
++      const lg = defs.append("linearGradient").attr("id", "gaugeGrad").attr("x1", "0%").attr("x2", "100%").attr("y1", "0%").attr("y2", "0%");
++      lg.append("stop").attr("offset", "0%").attr("stop-color", "#35f0ff");
++      lg.append("stop").attr("offset", "100%").attr("stop-color", "#36f1a7");
++
++      const arc = d3.arc().innerRadius(r - 22).outerRadius(r).startAngle(-Math.PI * 0.75).endAngle(Math.PI * 0.75);
++      g.append("path").attr("d", arc()).attr("fill", "#1c2d42");
++
++      const valueArc = d3.arc().innerRadius(r - 22).outerRadius(r).startAngle(-Math.PI * 0.75);
++      const percent = 0.64;
++      g.append("path")
++        .datum({ endAngle: -Math.PI * 0.75 })
++        .attr("fill", "url(#gaugeGrad)")
++        .attr("d", valueArc)
++        .transition().duration(1400)
++        .attrTween("d", function () {
++          const i = d3.interpolate(this._current ? this._current.endAngle : -Math.PI * 0.75, -Math.PI * 0.75 + (Math.PI * 1.5 * percent));
++          this._current = { endAngle: i(1) };
++          return (t) => valueArc({ endAngle: i(t) });
++        });
++
++      g.append("text").attr("text-anchor", "middle").attr("y", 6).attr("fill", "#e7f7ff").style("font-family", "Orbitron").style("font-size", "30px").style("font-weight", 800).text("R$ 54,8M");
++      g.append("text").attr("text-anchor", "middle").attr("y", 28).attr("fill", "#8fb3d8").style("font-size", "12px").text("total de contratos");
++
++      return { donut, area };
++    }
++
++    function pushToast(message, kind = "info") {
++      const host = document.getElementById("toastWrap");
++      const el = document.createElement("div");
++      el.className = "toast";
++      const color = kind === "critical" ? "#ffafb7" : (kind === "success" ? "#9cffcf" : "#bfdeff");
++      el.innerHTML = `<div style="color:${color};font-weight:700;margin-bottom:3px">${kind.toUpperCase()}</div><div>${message}</div>`;
++      host.appendChild(el);
++      setTimeout(() => { el.remove(); }, 5200);
++    }
++
++    function initAiPanel() {
++      const send = document.getElementById("aiSendBtn");
++      const input = document.getElementById("aiInput");
++      const msgs = document.getElementById("aiMessages");
++
++      send.addEventListener("click", () => {
++        const text = input.value.trim();
++        if (!text) return;
++        msgs.insertAdjacentHTML("beforeend", `<div><b>Voce:</b> ${text}</div>`);
++        input.value = "";
++        setTimeout(() => {
++          msgs.insertAdjacentHTML("beforeend", `<div><b>IA:</b> Risco moderado identificado no contrato CT-2025-089. Recomendo revisar os ultimos 2 aditivos e prazo de pagamento.</div>`);
++          msgs.scrollTop = msgs.scrollHeight;
++        }, 550);
++      });
++
++      if (window.lottie) {
++        window.lottie.loadAnimation({
++          container: document.getElementById("lottieAi"),
++          renderer: "svg",
++          loop: true,
++          autoplay: true,
++          path: "https://assets3.lottiefiles.com/packages/lf20_j1adxtyb.json"
++        });
++      }
++    }
++
++    function initRealtime() {
++      const clock = document.getElementById("clock");
++      const onlineUsers = document.getElementById("onlineUsers");
++      const criticalAlerts = document.getElementById("criticalAlerts");
++      const latency = document.getElementById("latency");
++
++      setInterval(() => {
++        clock.textContent = new Date().toLocaleString("pt-BR");
++      }, 1000);
++
++      setInterval(() => {
++        const users = 40 + Math.floor(Math.random() * 9);
++        const alerts = 2 + Math.floor(Math.random() * 3);
++        const ping = 14 + Math.floor(Math.random() * 20);
++        onlineUsers.textContent = String(users);
++        criticalAlerts.textContent = String(alerts);
++        latency.textContent = `${ping}ms`;
++
++        if (Math.random() > 0.65) {
++          pushToast("Atualizacao recebida: novo registro de empenho processado.", "success");
++        }
++        if (Math.random() > 0.88) {
++          pushToast("Alerta critico: contrato com risco de prazo excedido.", "critical");
++        }
++      }, 6500);
++
++      try {
++        const wsBase = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host;
++        const ws = new WebSocket(`${wsBase}/ws/metrics`);
++        ws.onmessage = (event) => {
++          const data = JSON.parse(event.data || "{}");
++          if (typeof data.onlineUsers === "number") onlineUsers.textContent = String(data.onlineUsers);
++          if (typeof data.criticalAlerts === "number") criticalAlerts.textContent = String(data.criticalAlerts);
++        };
++      } catch (error) {
++        // Fallback silencioso para modo mock.
++      }
++    }
++
++    function initParticles() {
++      const canvas = document.getElementById("fxParticles");
++      const ctx = canvas.getContext("2d");
++      let w = 0;
++      let h = 0;
++      let particles = [];
++
++      function resize() {
++        w = canvas.width = window.innerWidth;
++        h = canvas.height = window.innerHeight;
++        particles = Array.from({ length: Math.min(140, Math.floor((w * h) / 12000)) }, () => ({
++          x: Math.random() * w,
++          y: Math.random() * h,
++          vx: (Math.random() - 0.5) * 0.25,
++          vy: (Math.random() - 0.5) * 0.25,
++          r: Math.random() * 1.8 + 0.4,
++          a: Math.random() * 0.65 + 0.2
++        }));
++      }
++
++      function draw() {
++        ctx.clearRect(0, 0, w, h);
++        ctx.fillStyle = "rgba(53,240,255,0.55)";
++
++        for (let i = 0; i < particles.length; i += 1) {
++          const p = particles[i];
++          p.x += p.vx;
++          p.y += p.vy;
++          if (p.x < -10) p.x = w + 10;
++          if (p.x > w + 10) p.x = -10;
++          if (p.y < -10) p.y = h + 10;
++          if (p.y > h + 10) p.y = -10;
++
++          ctx.beginPath();
++          ctx.globalAlpha = p.a;
++          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
++          ctx.fill();
++
++          for (let j = i + 1; j < particles.length; j += 1) {
++            const q = particles[j];
++            const dx = p.x - q.x;
++            const dy = p.y - q.y;
++            const d = Math.hypot(dx, dy);
++            if (d < 110) {
++              ctx.globalAlpha = (1 - d / 110) * 0.18;
++              ctx.strokeStyle = "#35f0ff";
++              ctx.lineWidth = 1;
++              ctx.beginPath();
++              ctx.moveTo(p.x, p.y);
++              ctx.lineTo(q.x, q.y);
++              ctx.stroke();
++            }
++          }
++        }
++
++        ctx.globalAlpha = 1;
++        requestAnimationFrame(draw);
++      }
++
++      resize();
++      draw();
++      window.addEventListener("resize", resize);
++    }
++
++    function initThreeScene() {
++      const canvas = document.getElementById("fxThree");
++      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
++      const scene = new THREE.Scene();
++      const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 1000);
++      camera.position.set(0, 0, 10);
++
++      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
++      renderer.setSize(window.innerWidth, window.innerHeight);
++
++      const ambient = new THREE.AmbientLight(0x4fa3ff, 0.75);
++      scene.add(ambient);
++
++      const pointA = new THREE.PointLight(0x35f0ff, 1.3, 50, 2);
++      pointA.position.set(3, 2, 4);
++      scene.add(pointA);
++
++      const pointB = new THREE.PointLight(0x9b5cff, 1.25, 40, 2);
++      pointB.position.set(-3, -1.4, 3);
++      scene.add(pointB);
++
++      const nodesGeo = new THREE.BufferGeometry();
++      const nodesCount = 700;
++      const arr = new Float32Array(nodesCount * 3);
++      for (let i = 0; i < nodesCount * 3; i += 3) {
++        arr[i] = (Math.random() - 0.5) * 28;
++        arr[i + 1] = (Math.random() - 0.5) * 16;
++        arr[i + 2] = (Math.random() - 0.5) * 18;
++      }
++      nodesGeo.setAttribute("position", new THREE.BufferAttribute(arr, 3));
++
++      const nodesMat = new THREE.PointsMaterial({ color: 0x4fa3ff, size: 0.05, transparent: true, opacity: 0.84 });
++      const cloud = new THREE.Points(nodesGeo, nodesMat);
++      scene.add(cloud);
++
++      const torus = new THREE.Mesh(
++        new THREE.TorusKnotGeometry(1.35, 0.07, 120, 20),
++        new THREE.MeshStandardMaterial({ color: 0x35f0ff, emissive: 0x1786c7, emissiveIntensity: 0.55, roughness: 0.22, metalness: 0.85 })
++      );
++      torus.position.set(-4.4, 1.6, -2.5);
++      scene.add(torus);
++
++      const sphere = new THREE.Mesh(
++        new THREE.IcosahedronGeometry(0.95, 1),
++        new THREE.MeshStandardMaterial({ color: 0x6f6bff, emissive: 0x4939b2, emissiveIntensity: 0.38, roughness: 0.28, metalness: 0.92 })
++      );
++      sphere.position.set(4.2, -1.8, -2.8);
++      scene.add(sphere);
++
++      const mouse = { x: 0, y: 0 };
++      window.addEventListener("mousemove", (e) => {
++        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
++        mouse.y = (e.clientY / window.innerHeight) * 2 - 1;
++      });
++
++      function tick() {
++        cloud.rotation.y += 0.0008;
++        torus.rotation.x += 0.008;
++        torus.rotation.y += 0.006;
++        sphere.rotation.x += 0.006;
++        sphere.rotation.y += 0.009;
++
++        camera.position.x += ((mouse.x * 0.36) - camera.position.x) * 0.02;
++        camera.position.y += ((-mouse.y * 0.24) - camera.position.y) * 0.02;
++
++        renderer.render(scene, camera);
++        requestAnimationFrame(tick);
++      }
++      tick();
++
++      window.addEventListener("resize", () => {
++        camera.aspect = window.innerWidth / window.innerHeight;
++        camera.updateProjectionMatrix();
++        renderer.setSize(window.innerWidth, window.innerHeight);
++      });
++    }
++
++    function initTilt() {
++      document.querySelectorAll(".tilt").forEach((el) => {
++        el.addEventListener("mousemove", (event) => {
++          const rect = el.getBoundingClientRect();
++          const cx = rect.left + rect.width / 2;
++          const cy = rect.top + rect.height / 2;
++          const dx = (event.clientX - cx) / rect.width;
++          const dy = (event.clientY - cy) / rect.height;
++          const rx = -(dy * 6.5);
++          const ry = dx * 7.5;
++          el.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-3px)`;
++        });
++
++        el.addEventListener("mouseleave", () => {
++          el.style.transform = "";
++        });
++      });
++    }
++
++    function initReveal() {
++      const observer = new IntersectionObserver((entries) => {
++        entries.forEach((entry) => {
++          if (entry.isIntersecting) entry.target.classList.add("show");
++        });
++      }, { threshold: 0.1 });
++
++      document.querySelectorAll(".reveal").forEach((item) => observer.observe(item));
++    }
++
++    function boot() {
++      renderKpis();
++      renderEmployees();
++      renderPipeline(5);
++      renderActivities();
++      renderCharts();
++      initAiPanel();
++      initRealtime();
++      initParticles();
++      initThreeScene();
++      initTilt();
++      initReveal();
++
++      document.getElementById("clock").textContent = new Date().toLocaleString("pt-BR");
++      pushToast("Painel futurista premium inicializado com sucesso.", "success");
++    }
++
++    boot();
++  </script>
 </body>
 </html>
