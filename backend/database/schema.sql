@@ -156,10 +156,22 @@ CREATE TABLE IF NOT EXISTS contracts (
   numContrato VARCHAR(100) NOT NULL UNIQUE,
   numProcesso VARCHAR(100),
   credor VARCHAR(255),
+  cep VARCHAR(20),
+  logradouro TEXT,
+  numEndereco VARCHAR(30),
+  bairro VARCHAR(120),
+  cidade VARCHAR(120),
+  uf VARCHAR(10),
+  telefoneFixo VARCHAR(30),
+  telefoneWhatsapp VARCHAR(30),
+  emailEmpresa VARCHAR(255),
   valorGlobal VARCHAR(50),
   objeto TEXT,
   dtInicial TEXT,
   dtFinal TEXT,
+  prazoEntrega VARCHAR(20),
+  formaContagem VARCHAR(20),
+  tipoEntrega VARCHAR(30),
   arquivoContrato TEXT,
   conteudoArquivoBase64 TEXT,
   lotes JSONB NOT NULL DEFAULT '[]'::jsonb,
@@ -177,6 +189,19 @@ CREATE INDEX IF NOT EXISTS idx_contracts_num_contrato ON contracts (numContrato)
 CREATE INDEX IF NOT EXISTS idx_contracts_credor ON contracts (credor);
 CREATE INDEX IF NOT EXISTS idx_contracts_status ON contracts (status);
 CREATE INDEX IF NOT EXISTS idx_contracts_dt_inicial ON contracts (dtInicial);
+
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS cep VARCHAR(20);
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS logradouro TEXT;
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS numEndereco VARCHAR(30);
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS bairro VARCHAR(120);
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS cidade VARCHAR(120);
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS uf VARCHAR(10);
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS telefoneFixo VARCHAR(30);
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS telefoneWhatsapp VARCHAR(30);
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS emailEmpresa VARCHAR(255);
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS prazoEntrega VARCHAR(20);
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS formaContagem VARCHAR(20);
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS tipoEntrega VARCHAR(30);
 
 CREATE TABLE IF NOT EXISTS contract_addendums (
   id BIGSERIAL PRIMARY KEY,

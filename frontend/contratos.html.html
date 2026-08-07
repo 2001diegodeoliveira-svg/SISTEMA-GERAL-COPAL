@@ -1958,23 +1958,38 @@
 
                 const normalizedPath = attachmentValue.replace(/\\/g, '/').replace(/^\/+/, '');
 
+                const resolveAssetUrl = (assetPath) => {
+                    const normalizedAssetPath = String(assetPath || '');
+                    const preferredBase = String(window.API_BASE_URL || localStorage.getItem('API_BASE_URL') || '').trim().replace(/\/$/, '');
+
+                    if (preferredBase) {
+                        return `${preferredBase}${normalizedAssetPath.startsWith('/') ? normalizedAssetPath : `/${normalizedAssetPath}`}`;
+                    }
+
+                    if (window.location.protocol === 'file:') {
+                        return `http://localhost:3000${normalizedAssetPath.startsWith('/') ? normalizedAssetPath : `/${normalizedAssetPath}`}`;
+                    }
+
+                    return apiUrl(normalizedAssetPath.startsWith('/') ? normalizedAssetPath : `/${normalizedAssetPath}`);
+                };
+
                 if (/^uploads\//i.test(normalizedPath)) {
-                    return apiUrl(`/${encodeURI(normalizedPath)}`);
+                    return resolveAssetUrl(`/${encodeURI(normalizedPath)}`);
                 }
 
                 if (/^contracts\//i.test(normalizedPath)) {
-                    return apiUrl(`/uploads/${encodeURI(normalizedPath)}`);
+                    return resolveAssetUrl(`/uploads/${encodeURI(normalizedPath)}`);
                 }
 
                 if (attachmentValue.startsWith('/')) {
-                    return apiUrl(encodeURI(attachmentValue));
+                    return resolveAssetUrl(encodeURI(attachmentValue));
                 }
 
                 if (normalizedPath.includes('/')) {
-                    return apiUrl(`/${encodeURI(normalizedPath)}`);
+                    return resolveAssetUrl(`/${encodeURI(normalizedPath)}`);
                 }
 
-                return apiUrl(`/uploads/contracts/${encodeURIComponent(normalizedPath)}`);
+                return resolveAssetUrl(`/uploads/contracts/${encodeURIComponent(normalizedPath)}`);
             }
 
             if (contentValue) {
@@ -3487,10 +3502,16 @@
                     bairro: document.getElementById('bairro').value,
                     cidade: document.getElementById('cidade').value,
                     uf: document.getElementById('uf').value,
+                    telefoneFixo: document.getElementById('telefoneFixo').value,
+                    telefoneWhatsapp: document.getElementById('telefoneWhatsapp').value,
+                    emailEmpresa: document.getElementById('emailEmpresa').value,
                     valorGlobal: document.getElementById('valorGlobal').value,
                     objeto: document.getElementById('objetoContrato').value,
                     dtInicial: document.getElementById('dtInicial').value,
                     dtFinal: document.getElementById('dtFinal').value,
+                    prazoEntrega: document.getElementById('prazoEntrega').value,
+                    formaContagem: document.getElementById('formaContagem').value,
+                    tipoEntrega: document.getElementById('tipoEntrega').value,
                     arquivoContrato: arquivoContrato || nomeAnexo || '',
                     conteudoArquivoBase64: conteudoArquivoBase64,
                     lotes: lotesContratoData,

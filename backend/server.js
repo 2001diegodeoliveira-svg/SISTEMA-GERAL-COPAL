@@ -1350,6 +1350,18 @@ function mapContractRow(row) {
   const dtFinal = row.dtFinal || row.dtfinal || '';
   const arquivoContrato = row.arquivoContrato || row.arquivocontrato || '';
   const conteudoArquivoBase64 = row.conteudoArquivoBase64 || row.conteudoarquivobase64 || '';
+  const cep = row.cep || '';
+  const logradouro = row.logradouro || '';
+  const numEndereco = row.numEndereco || row.numendereco || '';
+  const bairro = row.bairro || '';
+  const cidade = row.cidade || '';
+  const uf = row.uf || '';
+  const telefoneFixo = row.telefoneFixo || row.telefonefixo || '';
+  const telefoneWhatsapp = row.telefoneWhatsapp || row.telefonewhatsapp || '';
+  const emailEmpresa = row.emailEmpresa || row.emailempresa || '';
+  const prazoEntrega = row.prazoEntrega || row.prazoentrega || '';
+  const formaContagem = row.formaContagem || row.formacontagem || '';
+  const tipoEntrega = row.tipoEntrega || row.tipoentrega || '';
 
   return {
     ...row,
@@ -1360,6 +1372,18 @@ function mapContractRow(row) {
     dtFinal,
     arquivoContrato,
     conteudoArquivoBase64,
+    cep,
+    logradouro,
+    numEndereco,
+    bairro,
+    cidade,
+    uf,
+    telefoneFixo,
+    telefoneWhatsapp,
+    emailEmpresa,
+    prazoEntrega,
+    formaContagem,
+    tipoEntrega,
     lotes: safeJsonParse(row.lotes, []),
     unidades: safeJsonParse(row.unidades, []),
     aditivos: safeJsonParse(row.aditivos, []),
@@ -1401,10 +1425,22 @@ app.post('/api/contracts', async (req, res) => {
     numContrato,
     numProcesso,
     credor,
+    cep,
+    logradouro,
+    numEndereco,
+    bairro,
+    cidade,
+    uf,
+    telefoneFixo,
+    telefoneWhatsapp,
+    emailEmpresa,
     valorGlobal,
     objeto,
     dtInicial,
     dtFinal,
+    prazoEntrega,
+    formaContagem,
+    tipoEntrega,
     arquivoContrato,
     conteudoArquivoBase64,
     lotes,
@@ -1424,25 +1460,49 @@ app.post('/api/contracts', async (req, res) => {
         numContrato,
         numProcesso,
         credor,
+        cep,
+        logradouro,
+        numEndereco,
+        bairro,
+        cidade,
+        uf,
+        telefoneFixo,
+        telefoneWhatsapp,
+        emailEmpresa,
         valorGlobal,
         objeto,
         dtInicial,
         dtFinal,
+        prazoEntrega,
+        formaContagem,
+        tipoEntrega,
         arquivoContrato,
         conteudoArquivoBase64,
         lotes,
         unidades,
         aditivos,
         empenhos
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?::jsonb)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?::jsonb)
       ON CONFLICT (numContrato)
       DO UPDATE SET
         numProcesso = EXCLUDED.numProcesso,
         credor = EXCLUDED.credor,
+        cep = EXCLUDED.cep,
+        logradouro = EXCLUDED.logradouro,
+        numEndereco = EXCLUDED.numEndereco,
+        bairro = EXCLUDED.bairro,
+        cidade = EXCLUDED.cidade,
+        uf = EXCLUDED.uf,
+        telefoneFixo = EXCLUDED.telefoneFixo,
+        telefoneWhatsapp = EXCLUDED.telefoneWhatsapp,
+        emailEmpresa = EXCLUDED.emailEmpresa,
         valorGlobal = EXCLUDED.valorGlobal,
         objeto = EXCLUDED.objeto,
         dtInicial = EXCLUDED.dtInicial,
         dtFinal = EXCLUDED.dtFinal,
+        prazoEntrega = EXCLUDED.prazoEntrega,
+        formaContagem = EXCLUDED.formaContagem,
+        tipoEntrega = EXCLUDED.tipoEntrega,
         arquivoContrato = EXCLUDED.arquivoContrato,
         conteudoArquivoBase64 = EXCLUDED.conteudoArquivoBase64,
         lotes = EXCLUDED.lotes,
@@ -1454,10 +1514,22 @@ app.post('/api/contracts', async (req, res) => {
       normalizedNumContrato,
       numProcesso || '',
       credor || '',
+      cep || '',
+      logradouro || '',
+      numEndereco || '',
+      bairro || '',
+      cidade || '',
+      uf || '',
+      telefoneFixo || '',
+      telefoneWhatsapp || '',
+      emailEmpresa || '',
       valorGlobal || '',
       objeto || '',
       dtInicial || '',
       dtFinal || '',
+      prazoEntrega || '',
+      formaContagem || '',
+      tipoEntrega || '',
       arquivoContrato || '',
       conteudoArquivoBase64 || '',
       JSON.stringify(lotes || []),
