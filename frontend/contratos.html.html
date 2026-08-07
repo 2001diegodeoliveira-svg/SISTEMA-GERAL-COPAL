@@ -1867,6 +1867,7 @@
         let DB_CONTRATOS = {};
         let contractsAuthToken = '';
         let contractsCurrentUser = null;
+        const CONTRACTS_CACHE_KEY = 'sgc_contracts_cache_v2';
         const RATEIO_DEFAULT_UNITS = ['PM-MT', 'CBM-MT', 'CIOPAER', 'PJC-MT', 'POLITEC', 'SESP', 'COPAL'];
 
         const CONTRACT_TABS_MAP = {
@@ -1948,6 +1949,10 @@
             const attachmentValue = String(contract.arquivoContrato || '').trim();
             const contentValue = String(contract.conteudoArquivoBase64 || '').trim();
 
+            if (contentValue && window.location.protocol === 'file:') {
+                return `data:application/pdf;base64,${contentValue}`;
+            }
+
             if (attachmentValue) {
                 if (/^https?:\/\//i.test(attachmentValue)) {
                     return attachmentValue;
@@ -1997,6 +2002,52 @@
             }
 
             return '';
+        }
+
+        function getContractsFromPersistentCache() {
+            try {
+                const raw = localStorage.getItem(CONTRACTS_CACHE_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (error) {
+                console.error('Falha ao ler cache local de contratos:', error);
+                return [];
+            }
+        }
+
+        function persistContractsCache() {
+            try {
+                localStorage.setItem(CONTRACTS_CACHE_KEY, JSON.stringify(Object.values(DB_CONTRATOS)));
+            } catch (error) {
+                console.error('Falha ao persistir cache local de contratos:', error);
+            }
+        }
+
+        function hydrateContractsCache() {
+            const cachedContracts = getContractsFromPersistentCache();
+            cachedContracts.forEach((contract) => {
+                const normalizedNumber = normalizeContractNumber(contract?.numContrato);
+                if (!normalizedNumber) return;
+                DB_CONTRATOS[normalizedNumber] = contract;
+            });
+        }
+
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) {
+                    resolve('');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const result = String(reader.result || '');
+                    const commaIndex = result.indexOf(',');
+                    resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : '');
+                };
+                reader.onerror = () => reject(new Error('Não foi possível ler o arquivo selecionado.'));
+                reader.readAsDataURL(file);
+            });
         }
 
         function getAttachmentLabel(contract) {
@@ -2689,24 +2740,31 @@
         async function fetchContract(numContrato) {
             const normalizedNumber = normalizeContractNumber(numContrato);
             if (!normalizedNumber) return null;
+
+            if (DB_CONTRATOS[normalizedNumber]) {
+                return DB_CONTRATOS[normalizedNumber];
+            }
+
             try {
                 const data = await apiFetchJson(`/api/contracts?numContrato=${encodeURIComponent(normalizedNumber)}`);
                 if (data && data.numContrato) {
                     DB_CONTRATOS[normalizeContractNumber(data.numContrato)] = data;
+                    persistContractsCache();
                 }
                 return data;
             } catch (error) {
                 console.error('Erro ao buscar contrato:', error);
-                return null;
+                return DB_CONTRATOS[normalizedNumber] || null;
             }
         }
 
         async function saveContract(contractObj) {
+            const normalizedContract = {
+                ...contractObj,
+                numContrato: normalizeContractNumber(contractObj.numContrato),
+            };
+
             try {
-                const normalizedContract = {
-                    ...contractObj,
-                    numContrato: normalizeContractNumber(contractObj.numContrato),
-                };
 
                 const data = await apiFetchJson('/api/contracts', {
                     method: 'POST',
@@ -2715,18 +2773,24 @@
                 });
 
                 if (normalizedContract.numContrato) {
-                    DB_CONTRATOS[normalizedContract.numContrato] = normalizedContract;
+                    DB_CONTRATOS[normalizedContract.numContrato] = { ...normalizedContract, ...(data || {}) };
+                    persistContractsCache();
                 }
                 return data;
             } catch (error) {
                 console.error(error);
-                throw error;
+                if (normalizedContract.numContrato) {
+                    DB_CONTRATOS[normalizedContract.numContrato] = normalizedContract;
+                    persistContractsCache();
+                }
+                return { localOnly: true, contract: normalizedContract };
             }
         }
 
         function updateLocalContractCache(contract) {
             if (contract && contract.numContrato) {
                 DB_CONTRATOS[normalizeContractNumber(contract.numContrato)] = contract;
+                persistContractsCache();
             }
         }
 
@@ -3485,9 +3549,13 @@
             const processarESalvar = async () => {
                 const existingContract = DB_CONTRATOS[num] || await fetchContract(num);
                 let arquivoContrato = existingContract?.arquivoContrato || '';
-                const conteudoArquivoBase64 = existingContract?.conteudoArquivoBase64 || '';
+                let conteudoArquivoBase64 = existingContract?.conteudoArquivoBase64 || '';
 
                 if (fileInput.files.length > 0) {
+                    const selectedFile = fileInput.files[0];
+                    if (/pdf$/i.test(selectedFile?.name || '') || /pdf/i.test(selectedFile?.type || '')) {
+                        conteudoArquivoBase64 = await readFileAsBase64(selectedFile);
+                    }
                     const uploadResult = await uploadContractAttachment(num, fileInput.files[0]);
                     arquivoContrato = uploadResult?.arquivoContrato || arquivoContrato;
                 }
@@ -3522,13 +3590,14 @@
                 };
 
                 try {
-                    await saveContract(contractObject);
-                    alert(`Contrato ${num} cadastrado com sucesso no banco de dados SESP!`);
+                    const saveResult = await saveContract(contractObject);
+                    const localOnly = !!saveResult?.localOnly;
+                    alert(localOnly ? `Contrato ${num} salvo no cache local. Reinicie/atualize o backend para sincronizar com o banco.` : `Contrato ${num} cadastrado com sucesso no banco de dados SESP!`);
                     updateLocalContractCache(contractObject);
                     const statusBox = document.getElementById('cadastroContratoStatus');
                     if (statusBox) {
                         statusBox.style.display = 'block';
-                        statusBox.innerHTML = `Contrato ${escapeHtml(num)} salvo com sucesso. ${contractObject.arquivoContrato ? renderAttachmentLinks(contractObject) : ''}`;
+                        statusBox.innerHTML = `Contrato ${escapeHtml(num)} salvo com sucesso. ${localOnly ? '<br><span style="color: var(--warning);">Modo local ativo: os dados estão no navegador até o backend ser sincronizado.</span>' : ''} ${contractObject.arquivoContrato || contractObject.conteudoArquivoBase64 ? renderAttachmentLinks(contractObject) : ''}`;
                     }
                     switchTab(null, 'tab-atualizacoes');
                     document.getElementById('buscaNumContrato').value = num;
@@ -3828,13 +3897,16 @@
 
         // ABA UNIDADES
         async function fetchAllContracts() {
+            hydrateContractsCache();
             try {
                 const data = await apiFetchJson('/api/contracts');
                 if (Array.isArray(data.contracts)) {
-                    DB_CONTRATOS = {};
+                    const mergedContracts = { ...DB_CONTRATOS };
                     data.contracts.forEach(contract => {
-                        DB_CONTRATOS[normalizeContractNumber(contract.numContrato)] = contract;
+                        mergedContracts[normalizeContractNumber(contract.numContrato)] = contract;
                     });
+                    DB_CONTRATOS = mergedContracts;
+                    persistContractsCache();
                 }
             } catch (error) {
                 console.error('Erro ao carregar contratos:', error);
@@ -4125,6 +4197,7 @@
                 tbodyEmpenhos.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Nenhum empenho lançado para esta unidade.</td></tr>`;
             }
         }
+        hydrateContractsCache();
     </script>
 </body>
 </html>
