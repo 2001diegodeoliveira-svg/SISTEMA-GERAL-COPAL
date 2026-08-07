@@ -2078,6 +2078,35 @@
             return phones.length ? phones.join(', ') : '-';
         }
 
+        function openPdfFromOverview(event, rawUrl) {
+            if (event && typeof event.preventDefault === 'function') {
+                event.preventDefault();
+            }
+
+            const urlValue = String(rawUrl || '').trim();
+            if (!urlValue) {
+                alert('Documento não encontrado para este contrato.');
+                return false;
+            }
+
+            const finalUrl = /^https?:\/\//i.test(urlValue) || /^data:/i.test(urlValue)
+                ? urlValue
+                : apiUrl(urlValue.startsWith('/') ? urlValue : `/${urlValue}`);
+
+            const opened = window.open(finalUrl, '_blank', 'noopener,noreferrer');
+            if (!opened) {
+                const link = document.createElement('a');
+                link.href = finalUrl;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            }
+
+            return false;
+        }
+
         function renderContractPdfLinks(contract) {
             const links = [];
             const mainUrl = getAttachmentUrl(contract);
@@ -2103,7 +2132,7 @@
                 return '<span style="color: var(--text-muted);">Nenhum PDF anexado.</span>';
             }
 
-            return `<div style="display:flex; flex-direction:column; gap:6px; margin-top: 0.2rem;">${links.map((item) => `<a href="${item.url}" target="_blank" rel="noopener noreferrer" style="color: var(--sesp-light-blue); font-weight: 600;">${escapeHtml(item.label)}</a>`).join('')}</div>`;
+            return `<div style="display:flex; flex-direction:column; gap:6px; margin-top: 0.2rem;">${links.map((item) => `<a href="#" onclick="return openPdfFromOverview(event, '${escapeJsString(item.url)}')" style="color: var(--sesp-light-blue); font-weight: 600;">${escapeHtml(item.label)}</a>`).join('')}</div>`;
         }
 
         function renderContractDetailsHtml(contract, options = {}) {
@@ -2165,7 +2194,7 @@
                         <button type="button" class="btn btn-secondary" onclick="carregarContratoParaEdicao('${escapeJsString(contract.numContrato || '')}')">
                             <i data-lucide="edit-3" style="width:14px;"></i> Editar contrato
                         </button>
-                        ${mainAttachmentUrl ? `<a class="btn btn-primary" href="${mainAttachmentUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:6px;"><i data-lucide="eye" style="width:14px;"></i> Abrir PDF principal</a>` : ''}
+                        ${mainAttachmentUrl ? `<a class="btn btn-primary" href="#" onclick="return openPdfFromOverview(event, '${escapeJsString(mainAttachmentUrl)}')" style="display:inline-flex; align-items:center; gap:6px;"><i data-lucide="eye" style="width:14px;"></i> Abrir PDF principal</a>` : ''}
                     </div>
                 ` : ''}
             `;
