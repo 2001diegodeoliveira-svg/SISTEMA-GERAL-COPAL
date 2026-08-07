@@ -371,6 +371,13 @@
             padding: 10px 12px;
             font-size: 12px;
             line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .details-scroll {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-right: 4px;
         }
 
         .contract-details-title {
@@ -757,6 +764,14 @@
                 if (!email && !phone) return '-';
                 if (email && phone) return `${email} | ${phone}`;
                 return email || phone;
+            },
+            getEmailText(contract) {
+                return String(contract?.emailEmpresa || '').trim() || '-';
+            },
+            getPhoneText(contract) {
+                const foneA = String(contract?.telefoneFixo || '').trim();
+                const foneB = String(contract?.telefoneWhatsapp || '').trim();
+                return [foneA, foneB].filter(Boolean).join(' / ') || '-';
             }
         };
 
@@ -841,7 +856,8 @@
                     <div class="contract-details-block"><strong>Credor:</strong> ${utils.escapeHtml(String(contract?.credor || '-'))}</div>
                     <div class="contract-details-block"><strong>Nome da Contratada:</strong> ${utils.escapeHtml(utils.getCompanyName(contract))}</div>
                     <div class="contract-details-block"><strong>Endereço:</strong> ${utils.escapeHtml(utils.getAddressText(contract))}</div>
-                    <div class="contract-details-block"><strong>Contato:</strong> ${utils.escapeHtml(utils.getContactText(contract))}</div>
+                    <div class="contract-details-block"><strong>Endereço Eletrônico:</strong> ${utils.escapeHtml(utils.getEmailText(contract))}</div>
+                    <div class="contract-details-block"><strong>Telefone:</strong> ${utils.escapeHtml(utils.getPhoneText(contract))}</div>
                     <div class="contract-details-block"><strong>Vigência:</strong> ${utils.escapeHtml(utils.getContractDurationMonths(contract))}</div>
                     <div class="contract-details-block"><strong>Prazo de vigência:</strong> ${utils.escapeHtml(utils.formatDate(utils.getStartDate(contract)))} até ${utils.escapeHtml(utils.formatDate(utils.getEndDate(contract)))}</div>
                     <div class="contract-details-block"><strong>Tipo de entrega:</strong> ${utils.escapeHtml(String(contract?.tipoEntrega || '-'))}</div>
@@ -1014,7 +1030,7 @@
                                         <tr>
                                             <td style="width: 40px; text-align: center; color: var(--warning);"><i class="fa-solid fa-circle-exclamation"></i></td>
                                             <td><strong>Contrato ${utils.escapeHtml(utils.getContractNumber(contract))}</strong> - ${dias < 0 ? 'vigência encerrada' : `vence em ${dias} dias`}. Empresa: ${utils.escapeHtml(utils.getCompanyName(contract))}</td>
-                                            <td style="text-align: right;"><button class="btn btn-primary" type="button" style="padding: 6px 12px; font-size: 11px;" onclick="openContractPdf('${utils.escapeHtml(utils.getContractNumber(contract))}')">Abrir Contrato</button></td>
+                                            <td style="text-align: right;"><button class="btn btn-primary" type="button" style="padding: 6px 12px; font-size: 11px;" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'contratos')">Detalhamento</button></td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -1136,7 +1152,7 @@
                                                     <div class="progress-container"><div class="progress-bar" style="width: ${Math.min(percent, 100)}%; background-color: ${percent > 80 ? 'var(--warning)' : 'var(--brand-blue)'}"></div></div>
                                                 </td>
                                                 <td style="font-weight: 600; color: var(--success);">${utils.formatMoney(Math.max(allocated - used, 0))}</td>
-                                                <td><button class="btn btn-secondary" type="button" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'contratos')">Abrir</button></td>
+                                                <td><button class="btn btn-secondary" type="button" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'contratos')">Detalhamento</button></td>
                                             </tr>
                                         `;
                                     }).join('')}
@@ -1194,7 +1210,7 @@
                                             </td>
                                             <td style="font-size:12px;">${units.length} vinculadas<br><span style="color:var(--text-muted)">${utils.escapeHtml(units.join(', ') || 'Sem unidade')}</span></td>
                                             <td><span class="badge ${utils.getBadgeClass(status)}">${status}</span></td>
-                                            <td><button class="btn btn-secondary" type="button" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'contratos')"><i class="fa-solid fa-eye"></i> Abrir</button></td>
+                                            <td><button class="btn btn-secondary" type="button" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'contratos')"><i class="fa-solid fa-eye"></i> Detalhamento</button></td>
                                         </tr>
                                     `;
                                 }).join('')}
@@ -1207,7 +1223,7 @@
                             <div class="card-title">Detalhes do Contrato</div>
                             <button class="btn btn-secondary" type="button" onclick="document.getElementById('contratosDetailsPanel').style.display='none'">Fechar</button>
                         </div>
-                        <div id="contratosDetailsContent"></div>
+                        <div id="contratosDetailsContent" class="details-scroll"></div>
                     </div>
                 `;
             },
@@ -1228,7 +1244,7 @@
                             <div class="card-title">Detalhes do Contrato</div>
                             <button class="btn btn-secondary" type="button" onclick="document.getElementById('searchDetailsPanel').style.display='none'">Fechar</button>
                         </div>
-                        <div id="searchDetailsContent"></div>
+                        <div id="searchDetailsContent" class="details-scroll"></div>
                     </div>
                 `;
                 const input = document.getElementById('searchInput');
@@ -1276,7 +1292,7 @@
                                             <td>${utils.escapeHtml(utils.getContractObject(contract))}</td>
                                             <td>${utils.escapeHtml(units || '-')}</td>
                                             <td><span class="badge ${utils.getBadgeClass(status)}">${status}</span></td>
-                                            <td><button class="btn btn-secondary" type="button" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'busca')">Abrir</button></td>
+                                            <td><button class="btn btn-secondary" type="button" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'busca')">Detalhamento</button></td>
                                         </tr>
                                     `;
                                 }).join('')}
