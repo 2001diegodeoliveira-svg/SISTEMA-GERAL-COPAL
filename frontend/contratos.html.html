@@ -2231,7 +2231,10 @@
                 return false;
             }
 
-            let resolvedUrl = candidates[0];
+            let resolvedUrl = '';
+            let hasNotFoundError = false;
+            let hasReachabilityError = false;
+
             for (const candidate of candidates) {
                 if (/^data:/i.test(candidate)) {
                     resolvedUrl = candidate;
@@ -2244,10 +2247,25 @@
                         resolvedUrl = candidate;
                         break;
                     }
+
+                    if (response.status === 404) {
+                        hasNotFoundError = true;
+                    }
                 } catch (error) {
-                    resolvedUrl = candidate;
-                    break;
+                    hasReachabilityError = true;
                 }
+            }
+
+            if (!resolvedUrl && !hasNotFoundError && hasReachabilityError) {
+                resolvedUrl = candidates[0];
+            }
+
+            if (!resolvedUrl) {
+                const fileName = String(urlValue || candidates[0] || '').split('/').pop() || 'arquivo.pdf';
+                const contractText = String(contractNumber || '').trim();
+                const contractLabel = contractText ? ` do contrato ${contractText}` : '';
+                alert(`Arquivo PDF não encontrado no servidor para ${fileName}${contractLabel}. Verifique se o anexo foi enviado novamente.`);
+                return false;
             }
 
             const opened = window.open(resolvedUrl, '_blank', 'noopener,noreferrer');

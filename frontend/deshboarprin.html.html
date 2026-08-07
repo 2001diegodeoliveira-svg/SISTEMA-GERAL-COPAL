@@ -520,12 +520,24 @@
             return '';
         }
 
-        function openContractPdf(numContrato) {
+        async function openContractPdf(numContrato) {
             const contract = dashboardState.contratos.find((item) => utils.getContractNumber(item) === String(numContrato || '').trim());
             const attachmentUrl = getContractAttachmentUrl(contract);
             if (!attachmentUrl) {
                 alert('Este contrato não possui PDF/anexo cadastrado.');
                 return;
+            }
+
+            if (!/^data:/i.test(attachmentUrl)) {
+                try {
+                    const response = await fetch(attachmentUrl, { method: 'HEAD', cache: 'no-store' });
+                    if (!response.ok) {
+                        alert('O PDF deste contrato não foi encontrado no servidor. Faça novo envio do anexo.');
+                        return;
+                    }
+                } catch (error) {
+                    // In network/CORS uncertainty, keep legacy behavior and try to open the document.
+                }
             }
 
             window.open(attachmentUrl, '_blank', 'noopener,noreferrer');
@@ -1231,15 +1243,21 @@
                 const input = document.getElementById('searchInput');
                 const term = String(input?.value || '').trim().toLowerCase();
                 const resultsContainer = document.getElementById('searchResults');
+                const detailsPanel = document.getElementById('searchDetailsPanel');
+                const detailsContent = document.getElementById('searchDetailsContent');
                 if (!resultsContainer) return;
                 if (!term) {
                     resultsContainer.innerHTML = '<div class="empty-state">Informe um termo para pesquisar.</div>';
+                    if (detailsPanel) detailsPanel.style.display = 'none';
+                    if (detailsContent) detailsContent.innerHTML = '';
                     return;
                 }
 
                 const resultados = dashboardState.contratos.filter((contract) => JSON.stringify(contract).toLowerCase().includes(term));
                 if (!resultados.length) {
                     resultsContainer.innerHTML = '<div class="empty-state">Nenhum contrato corresponde ao termo pesquisado.</div>';
+                    if (detailsPanel) detailsPanel.style.display = 'none';
+                    if (detailsContent) detailsContent.innerHTML = '';
                     return;
                 }
 
