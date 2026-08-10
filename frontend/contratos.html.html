@@ -2234,6 +2234,7 @@
             let resolvedUrl = '';
             let hasNotFoundError = false;
             let hasReachabilityError = false;
+            let reachabilityFallback = '';
 
             for (const candidate of candidates) {
                 if (/^data:/i.test(candidate)) {
@@ -2252,12 +2253,16 @@
                         hasNotFoundError = true;
                     }
                 } catch (error) {
+                    // Network/CORS errors on HEAD don't mean the file is absent — try opening anyway
                     hasReachabilityError = true;
+                    reachabilityFallback = candidate;
                 }
             }
 
-            if (!resolvedUrl && !hasNotFoundError && hasReachabilityError) {
-                resolvedUrl = candidates[0];
+            // Prefer a reachability-error candidate (e.g. Render sleeping, CORS on HEAD)
+            // over showing an error — window.open bypasses the fetch CORS restriction
+            if (!resolvedUrl && hasReachabilityError && reachabilityFallback) {
+                resolvedUrl = reachabilityFallback;
             }
 
             if (!resolvedUrl) {
