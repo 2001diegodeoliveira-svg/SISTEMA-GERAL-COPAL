@@ -1552,7 +1552,7 @@ app.get('/api/contracts/:numContrato', async (req, res) => {
   });
 });
 
-app.post('/api/contracts', async (req, res) => {
+app.post('/api/contracts', authenticateToken, async (req, res) => {
   const {
     numContrato,
     numProcesso,
