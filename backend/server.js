@@ -1562,6 +1562,21 @@ app.get('/api/contracts/:numContrato', async (req, res) => {
   });
 });
 
+// ADMIN-ONLY: Delete all contracts (temporary cleanup endpoint)
+app.delete('/api/contracts/admin/purge-all', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'admin' && req.user.role !== 'developer') {
+    return res.status(403).json({ message: 'Acesso negado.' });
+  }
+  const confirmToken = String(req.query.confirm || '').trim();
+  if (confirmToken !== 'PURGE_ALL_CONTRACTS_2026') {
+    return res.status(400).json({ message: 'Token de confirmação inválido. Use: ?confirm=PURGE_ALL_CONTRACTS_2026' });
+  }
+  contractsDb.run('DELETE FROM contracts', [], (err) => {
+    if (err) return res.status(500).json({ message: 'Erro ao limpar contratos.' });
+    res.json({ message: 'Todos os contratos foram deletados permanentemente.', timestamp: new Date().toISOString() });
+  });
+});
+
 app.post('/api/contracts', authenticateToken, async (req, res) => {
   const {
     numContrato,
