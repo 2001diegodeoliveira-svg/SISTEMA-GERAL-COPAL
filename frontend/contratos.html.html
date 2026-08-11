@@ -2062,7 +2062,8 @@
             const attachmentValue = String(contract.arquivoContrato || '').trim();
             const contentValue = String(contract.conteudoArquivoBase64 || '').trim();
 
-            if (contentValue) {
+            // '__HAS_PDF__' is a sentinel from the list endpoint — fetch the full contract to get the real base64
+            if (contentValue && contentValue !== '__HAS_PDF__') {
                 if (/^data:/i.test(contentValue)) {
                     return [contentValue];
                 }
@@ -2123,6 +2124,12 @@
         }
 
         function getAttachmentUrl(contract) {
+            // If only the sentinel is set, still show a link — real base64 is fetched on click
+            if (!contract) return '';
+            const b64 = String(contract?.conteudoArquivoBase64 || '');
+            if (b64 === '__HAS_PDF__' && !contract?.arquivoContrato) {
+                return `__HAS_PDF__:${contract?.numContrato || ''}`;
+            }
             const candidates = getAttachmentCandidateUrlsSync(contract);
             return candidates[0] || '';
         }
@@ -2213,7 +2220,9 @@
         function getAttachmentLabel(contract) {
             const label = String(contract?.arquivoContrato || '').trim();
             if (label) return label.split('/').pop();
-            return contract?.conteudoArquivoBase64 ? 'Documento em base64' : 'Sem anexo';
+            const b64 = String(contract?.conteudoArquivoBase64 || '');
+            // '__HAS_PDF__' is the sentinel indicating base64 is in the DB but not loaded yet
+            return (b64 && b64 !== '__HAS_PDF__') ? 'Documento em base64' : (b64 === '__HAS_PDF__' ? 'PDF salvo' : 'Sem anexo');
         }
 
         function renderAttachmentLinks(contract) {
@@ -2309,8 +2318,25 @@
                 event.preventDefault();
             }
 
-            const urlValue = String(rawUrl || '').trim();
-            const contract = contractNumber ? (DB_CONTRATOS[normalizeContractNumber(contractNumber)] || null) : null;
+            // Resolve contract number from sentinel URL if needed
+            let resolvedContractNumber = contractNumber;
+            let urlValue = String(rawUrl || '').trim();
+            if (urlValue.startsWith('__HAS_PDF__:')) {
+                resolvedContractNumber = resolvedContractNumber || urlValue.replace('__HAS_PDF__:', '');
+                urlValue = '';
+            }
+
+            let contract = resolvedContractNumber ? (DB_CONTRATOS[normalizeContractNumber(resolvedContractNumber)] || null) : null;
+
+            // If contract was loaded from the list (sentinel base64), fetch the full version with real base64
+            if (contract && String(contract.conteudoArquivoBase64 || '') === '__HAS_PDF__') {
+                const full = await fetchContract(resolvedContractNumber);
+                if (full) {
+                    contract = full;
+                    DB_CONTRATOS[normalizeContractNumber(resolvedContractNumber)] = full;
+                }
+            }
+
             const candidates = contract ? await getAttachmentCandidateUrls(contract) : (urlValue ? [urlValue] : []);
 
             if (!candidates.length) {
@@ -2360,10 +2386,24 @@
                 return false;
             }
 
-            const opened = window.open(resolvedUrl, '_blank', 'noopener,noreferrer');
+            // data: URLs are blocked by browsers in window.open — convert to blob: URL first
+            let urlToOpen = resolvedUrl;
+            if (/^data:/i.test(resolvedUrl)) {
+                try {
+                    const [header, b64] = resolvedUrl.split(',');
+                    const mime = (header.match(/:(.*?);/) || [])[1] || 'application/pdf';
+                    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+                    const blob = new Blob([bytes], { type: mime });
+                    urlToOpen = URL.createObjectURL(blob);
+                } catch (e) {
+                    console.warn('Falha ao converter data URL para blob:', e);
+                }
+            }
+
+            const opened = window.open(urlToOpen, '_blank', 'noopener,noreferrer');
             if (!opened) {
                 const link = document.createElement('a');
-                link.href = resolvedUrl;
+                link.href = urlToOpen;
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
                 document.body.appendChild(link);
@@ -2377,10 +2417,12 @@
         function renderContractPdfLinks(contract) {
             const links = [];
             const mainUrl = getAttachmentUrl(contract);
-            if (mainUrl) {
+            // A URL starting with __HAS_PDF__: means the list-endpoint sentinel — show link anyway
+            const hasPdfSentinel = String(contract?.conteudoArquivoBase64 || '') === '__HAS_PDF__';
+            if (mainUrl || hasPdfSentinel) {
                 links.push({
                     label: `Visualizar PDF ${getAttachmentLabel(contract)}`,
-                    url: mainUrl
+                    url: mainUrl || `__HAS_PDF__:${contract?.numContrato || ''}`
                 });
             }
 

@@ -1535,11 +1535,21 @@ app.get('/api/contracts', async (req, res) => {
     return;
   }
 
-  contractsDb.all('SELECT * FROM contracts ORDER BY id DESC', [], (err, rows) => {
-    if (err) return res.status(500).json({ message: 'Erro ao buscar contratos.' });
-    const contracts = rows.map(mapContractRow);
-    res.json({ contracts });
-  });
+  // Omit conteudoArquivoBase64 from list to avoid 60MB+ responses; fetch it per-contract
+  contractsDb.all(
+    `SELECT id, numContrato, numProcesso, credor, cep, logradouro, numEndereco, bairro, cidade, uf,
+            telefoneFixo, telefoneWhatsapp, emailEmpresa, valorGlobal, objeto, dtInicial, dtFinal,
+            prazoEntrega, formaContagem, tipoEntrega, arquivoContrato,
+            CASE WHEN conteudoArquivoBase64 IS NOT NULL AND conteudoArquivoBase64 != '' THEN '__HAS_PDF__' ELSE '' END AS conteudoArquivoBase64,
+            lotes, unidades, aditivos, empenhos, status, created_by, updated_by, created_at, updated_at
+     FROM contracts ORDER BY id DESC`,
+    [],
+    (err, rows) => {
+      if (err) return res.status(500).json({ message: 'Erro ao buscar contratos.' });
+      const contracts = rows.map(mapContractRow);
+      res.json({ contracts });
+    }
+  );
 });
 
 app.get('/api/contracts/:numContrato', async (req, res) => {
