@@ -330,6 +330,11 @@
             <li id="usuarioNavTab"><a href="cadastrouser.html.html" onclick="openUserRegistration(event)"><i data-lucide="user-plus" style="width: 15px;"></i> Usuário</a></li>
             <li id="painelNavTab"><a href="painel.html.html" onclick="openPainelPrincipal(event)"><i data-lucide="monitor" style="width: 15px;"></i> Painel</a></li>
             <li id="userNavTab" style="display:none;"><a href="#developerUsersPanel"><i data-lucide="users" style="width: 15px;"></i> Usuários</a></li>
+            <li id="cadastroRapidoNavTab" style="display:none;">
+                <a href="#" onclick="abrirCadastroRapido(event)">
+                    <i data-lucide="zap" style="width: 15px;"></i> Cadastro Rápido
+                </a>
+            </li>
         </ul>
     </nav>
 
@@ -372,6 +377,76 @@
             </div>
         </section>
 
+        <!-- PAINEL CADASTRO RÁPIDO: só admin/developer -->
+        <section id="cadastroRapidoPanel" class="system-dashboard-panel" style="display:none; grid-column: 1 / -1;">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i data-lucide="zap" style="width: 18px;"></i>
+                    Cadastro Rápido de Documentos
+                </div>
+                <span style="font-size: 0.75rem; color: #93c5fd;">Acesso restrito — somente administrador</span>
+            </div>
+            <div class="panel-body">
+                <!-- DROP ZONE -->
+                <div id="crDropZone"
+                     style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 2rem; text-align: center;
+                            cursor: pointer; transition: background 0.2s; background: #f8fafc;"
+                     ondragover="crDragOver(event)" ondragleave="crDragLeave(event)" ondrop="crDrop(event)"
+                     onclick="document.getElementById('crFileInput').click()">
+                    <i data-lucide="upload-cloud" style="width:40px;height:40px;color:#94a3b8;margin-bottom:0.5rem;"></i>
+                    <p style="font-weight:700;color:#334155;">Arraste os PDFs aqui ou clique para selecionar</p>
+                    <p style="font-size:0.78rem;color:#64748b;margin-top:4px;">
+                        Aceita múltiplos arquivos. O sistema identifica o contrato pelo nome do arquivo.
+                    </p>
+                    <input type="file" id="crFileInput" accept=".pdf,.doc,.docx" multiple style="display:none;"
+                           onchange="crAnalisarArquivos(this.files)">
+                </div>
+
+                <!-- BADGES DE RESUMO -->
+                <div id="crResumo" style="display:none;">
+                    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;">
+                        <span id="crBadgeTotal"    style="background:#1e40af;color:#fff;padding:3px 12px;border-radius:20px;font-size:0.78rem;">0 arquivos</span>
+                        <span id="crBadgeOk"       style="background:#10b981;color:#fff;padding:3px 12px;border-radius:20px;font-size:0.78rem;">0 já vinculados</span>
+                        <span id="crBadgeVincular" style="background:#f59e0b;color:#fff;padding:3px 12px;border-radius:20px;font-size:0.78rem;">0 para vincular</span>
+                        <span id="crBadgePendente" style="background:#ef4444;color:#fff;padding:3px 12px;border-radius:20px;font-size:0.78rem;">0 aguardando cadastro</span>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+                        <button id="crBtnVincularTodos"
+                                style="display:none;background:var(--sesp-blue);color:#fff;border:none;padding:6px 16px;
+                                       border-radius:6px;font-weight:700;cursor:pointer;font-size:0.82rem;"
+                                onclick="crVincularTodos()">
+                            <i data-lucide="link" style="width:13px;vertical-align:middle;"></i> Vincular todos os pendentes
+                        </button>
+                        <button onclick="crLimpar()"
+                                style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;padding:6px 14px;
+                                       border-radius:6px;font-size:0.82rem;cursor:pointer;">
+                            Limpar
+                        </button>
+                    </div>
+                    <div id="crProgress" style="display:none;margin-bottom:1rem;">
+                        <div style="background:#e2e8f0;border-radius:8px;height:8px;overflow:hidden;">
+                            <div id="crProgressFill" style="height:100%;background:#10b981;width:0%;transition:width 0.3s;"></div>
+                        </div>
+                        <small id="crProgressLabel" style="color:#64748b;">Processando...</small>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+                            <thead>
+                                <tr style="background:#1e3a5f;color:#fff;">
+                                    <th style="padding:8px 12px;text-align:left;">Arquivo</th>
+                                    <th style="padding:8px 12px;">Nº Detectado</th>
+                                    <th style="padding:8px 12px;">Credor / Objeto</th>
+                                    <th style="padding:8px 12px;text-align:center;">Status</th>
+                                    <th style="padding:8px 12px;text-align:center;">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="crTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section id="developerUsersPanel" class="system-dashboard-panel" style="display:none;">
             <div class="panel-header">
                 <div class="panel-title">
@@ -408,21 +483,29 @@
 
     <script src="api-client.js"></script>
 
-    <!-- Scripts de Ícones -->
     <script>
         lucide.createIcons();
+
         function resolveFrontendPath(relativePath) {
             if ((window.location.hostname || '').toLowerCase().includes('vercel.app')) {
                 return `/frontend/${String(relativePath || '').replace(/^\.?\/?/, '')}`;
             }
-
             return String(relativePath || '');
         }
 
-    const userNavTab = document.getElementById('userNavTab');
-    if (userNavTab) {
-        userNavTab.style.display = 'none';
-    }
+        // --- Controle de visibilidade de abas por role ---
+        const userNavTab = document.getElementById('userNavTab');
+        if (userNavTab) userNavTab.style.display = 'none';
+
+        (function aplicarAcessoPorRole() {
+            const role = (localStorage.getItem('userRole') || '').toLowerCase();
+            const isAdmin = role === 'admin' || role === 'developer';
+            if (isAdmin) {
+                const tabEl = document.getElementById('cadastroRapidoNavTab');
+                if (tabEl) tabEl.style.display = 'block';
+            }
+        })();
+
         function openUserRegistration(event) {
             event.preventDefault();
             window.location.href = resolveFrontendPath('cadastrouser.html.html');
@@ -433,20 +516,326 @@
             window.location.href = resolveFrontendPath('painel.html.html');
         }
 
+        function abrirCadastroRapido(event) {
+            event.preventDefault();
+            const painel = document.getElementById('cadastroRapidoPanel');
+            if (!painel) return;
+            const visivel = painel.style.display !== 'none';
+            painel.style.display = visivel ? 'none' : 'block';
+            if (!visivel) painel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            lucide.createIcons();
+        }
+
+        // =====================================================================
+        // CADASTRO RÁPIDO — lógica principal
+        // =====================================================================
+
+        const CR_API_BASE = (() => {
+            const stored = localStorage.getItem('API_BASE_URL') || '';
+            if (stored) return stored.replace(/\/$/, '');
+            const host = window.location.hostname || '';
+            if (host.includes('vercel.app')) return 'https://sistema-geral-copal-4.onrender.com';
+            return 'http://localhost:3000';
+        })();
+
+        let crArquivos = [];
+        let crContratosCache = {};
+
+        function crExtrairNumContrato(nomeArquivo) {
+            const nome = String(nomeArquivo || '').replace(/\.[^.]+$/, '');
+            const patterns = [
+                /[Nn][\u00ba.°\s]*(\d{2,3})[-\/](\d{4})[-\/]?(SESP|MTI)/i,
+                /\b(\d{2,3})[-\/](\d{4})[-\/]?(SESP|MTI)\b/i,
+                /contrato[^\d]*(\d{2,3})[-\/](\d{4})[-\/]?(SESP|MTI)/i,
+            ];
+            for (const p of patterns) {
+                const m = nome.match(p);
+                if (m) {
+                    const num = m[1].padStart(3, '0');
+                    return `${num}/${m[2]}/${(m[3] || 'SESP').toUpperCase()}`;
+                }
+            }
+            return null;
+        }
+
+        async function crBuscarContrato(numContrato) {
+            if (crContratosCache[numContrato] !== undefined) return crContratosCache[numContrato];
+            try {
+                const token = localStorage.getItem('accessToken') || '';
+                const resp = await fetch(
+                    `${CR_API_BASE}/api/contracts?numContrato=${encodeURIComponent(numContrato)}`,
+                    { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+                );
+                if (!resp.ok) { crContratosCache[numContrato] = null; return null; }
+                const data = await resp.json();
+                const contrato = data?.numContrato ? data : (data?.contracts?.[0] || null);
+                crContratosCache[numContrato] = contrato;
+                return contrato;
+            } catch { crContratosCache[numContrato] = null; return null; }
+        }
+
+        async function crAnalisarArquivos(files) {
+            if (!files || !files.length) return;
+            crArquivos = Array.from(files);
+
+            const token = localStorage.getItem('accessToken') || '';
+            const linhas = [];
+
+            for (let i = 0; i < crArquivos.length; i++) {
+                const file = crArquivos[i];
+                const numDetectado = crExtrairNumContrato(file.name);
+                const contrato = numDetectado ? await crBuscarContrato(numDetectado) : null;
+
+                linhas.push({ i, file, numDetectado, contrato });
+            }
+
+            // Contadores
+            const total = linhas.length;
+            const jaVinculados = linhas.filter(l => l.contrato && (l.contrato.conteudoArquivoBase64?.length > 20 || l.contrato.arquivoContrato)).length;
+            const paraVincular = linhas.filter(l => l.contrato && !(l.contrato.conteudoArquivoBase64?.length > 20 || l.contrato.arquivoContrato)).length;
+            const aguardando = linhas.filter(l => !l.contrato).length;
+
+            document.getElementById('crBadgeTotal').textContent = `${total} arquivo${total !== 1 ? 's' : ''}`;
+            document.getElementById('crBadgeOk').textContent = `${jaVinculados} já vinculados`;
+            document.getElementById('crBadgeVincular').textContent = `${paraVincular} para vincular`;
+            document.getElementById('crBadgePendente').textContent = `${aguardando} aguardando cadastro`;
+
+            const btnVT = document.getElementById('crBtnVincularTodos');
+            btnVT.style.display = paraVincular > 0 ? 'inline-flex' : 'none';
+
+            // Monta tabela
+            document.getElementById('crTbody').innerHTML = linhas.map(({ i, file, numDetectado, contrato }) => {
+                const temBase64 = contrato && contrato.conteudoArquivoBase64?.length > 20;
+                const temArquivo = contrato && !!contrato.arquivoContrato;
+
+                let statusHtml, acaoHtml, credorObj;
+
+                if (!numDetectado) {
+                    statusHtml = `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:0.75rem;white-space:nowrap;">⚠️ Número não detectado</span>`;
+                    acaoHtml = `
+                        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+                            <input id="crManual_${i}" type="text" placeholder="Ex: 057/2026/SESP"
+                                   style="border:1px solid #cbd5e1;border-radius:4px;padding:3px 6px;font-size:0.78rem;width:130px;"
+                                   oninput="crMascaraNumContrato(this)"
+                                   onblur="crBuscarManual(${i})">
+                            <button onclick="crBuscarManual(${i})"
+                                    style="background:var(--sesp-blue);color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:0.78rem;">
+                                Buscar
+                            </button>
+                        </div>`;
+                    credorObj = '-';
+                } else if (!contrato) {
+                    statusHtml = `<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:12px;font-size:0.75rem;white-space:nowrap;">❌ Não cadastrado</span>`;
+                    acaoHtml = `
+                        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+                            <span id="crInfo_${i}" style="color:#64748b;font-size:0.75rem;">Informe o nº ou cadastre</span>
+                            <input id="crManual_${i}" type="text" placeholder="${numDetectado}"
+                                   style="border:1px solid #cbd5e1;border-radius:4px;padding:3px 6px;font-size:0.78rem;width:130px;"
+                                   oninput="crMascaraNumContrato(this)"
+                                   onblur="crBuscarManual(${i})">
+                            <button onclick="crBuscarManual(${i})"
+                                    style="background:var(--sesp-blue);color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:0.78rem;">
+                                Buscar
+                            </button>
+                        </div>`;
+                    credorObj = '-';
+                } else if (temBase64) {
+                    statusHtml = `<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:12px;font-size:0.75rem;white-space:nowrap;">✅ Já vinculado</span>`;
+                    acaoHtml = `<button onclick="crVincular(${i}, '${(numDetectado || '').replace(/'/g,"\\'")}', this)"
+                                         style="background:#e2e8f0;color:#334155;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.78rem;">
+                                    Substituir
+                                </button>`;
+                    credorObj = contrato.credor || '-';
+                } else {
+                    statusHtml = `<span style="background:#fef9c3;color:#78350f;padding:2px 8px;border-radius:12px;font-size:0.75rem;white-space:nowrap;">🔗 Pronto para vincular</span>`;
+                    acaoHtml = `<button id="crBtnLinha_${i}" onclick="crVincular(${i}, '${(numDetectado || '').replace(/'/g,"\\'")}', this)"
+                                         style="background:var(--sesp-blue);color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.78rem;font-weight:700;">
+                                    Vincular PDF
+                                </button>`;
+                    credorObj = contrato.credor || '-';
+                }
+
+                return `
+                    <tr style="border-bottom:1px solid #f1f5f9;" id="crLinha_${i}">
+                        <td style="padding:8px 12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                            title="${file.name.replace(/"/g,'&quot;')}">
+                            📄 ${file.name}
+                        </td>
+                        <td style="padding:8px 12px;font-family:monospace;font-size:0.8rem;" id="crNumCell_${i}">
+                            ${numDetectado || '<span style="color:#94a3b8;">—</span>'}
+                        </td>
+                        <td style="padding:8px 12px;font-size:0.78rem;color:#475569;" id="crCredorCell_${i}">
+                            ${credorObj}
+                        </td>
+                        <td style="padding:8px 12px;text-align:center;" id="crStatusCell_${i}">${statusHtml}</td>
+                        <td style="padding:8px 12px;text-align:center;" id="crAcaoCell_${i}">${acaoHtml}</td>
+                    </tr>`;
+            }).join('');
+
+            document.getElementById('crResumo').style.display = 'block';
+            lucide.createIcons();
+        }
+
+        function crMascaraNumContrato(input) {
+            // Formata enquanto digita: 057/2026/SESP
+            const raw = input.value.replace(/[^0-9A-Za-z]/g, '');
+            const digits = raw.replace(/[^0-9]/g, '');
+            const suffix = raw.replace(/[0-9]/g, '').toUpperCase();
+            if (digits.length <= 3) { input.value = digits; return; }
+            if (digits.length <= 7) { input.value = `${digits.slice(0,3)}/${digits.slice(3)}`; return; }
+            input.value = `${digits.slice(0,3)}/${digits.slice(3,7)}/SESP`;
+        }
+
+        async function crBuscarManual(i) {
+            const inputEl = document.getElementById(`crManual_${i}`);
+            if (!inputEl) return;
+            const num = inputEl.value.trim().toUpperCase();
+            if (!num) return;
+
+            const infoEl = document.getElementById(`crInfo_${i}`);
+            if (infoEl) infoEl.textContent = 'Buscando...';
+
+            const contrato = await crBuscarContrato(num);
+            const numCell = document.getElementById(`crNumCell_${i}`);
+            const credorCell = document.getElementById(`crCredorCell_${i}`);
+            const statusCell = document.getElementById(`crStatusCell_${i}`);
+            const acaoCell = document.getElementById(`crAcaoCell_${i}`);
+
+            if (!contrato) {
+                if (infoEl) infoEl.textContent = 'Não encontrado. Faça o cadastro primeiro.';
+                if (statusCell) statusCell.innerHTML = `<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:12px;font-size:0.75rem;">❌ Não cadastrado</span>`;
+                return;
+            }
+
+            // Contrato encontrado — atualizar linha
+            const numNorm = num;
+            if (numCell) numCell.textContent = numNorm;
+            if (credorCell) credorCell.textContent = contrato.credor || '-';
+            if (statusCell) statusCell.innerHTML = `<span style="background:#fef9c3;color:#78350f;padding:2px 8px;border-radius:12px;font-size:0.75rem;">🔗 Pronto para vincular</span>`;
+            if (acaoCell) acaoCell.innerHTML = `<button id="crBtnLinha_${i}" onclick="crVincular(${i}, '${numNorm.replace(/'/g,"\\'")}', this)"
+                    style="background:var(--sesp-blue);color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.78rem;font-weight:700;">
+                    Vincular PDF
+                </button>`;
+
+            // Atualiza cache local
+            crContratosCache[numNorm] = contrato;
+            document.getElementById('crBtnVincularTodos').style.display = 'inline-flex';
+        }
+
+        async function crVincular(fileIndex, numContrato, btnEl) {
+            const file = crArquivos[fileIndex];
+            const contrato = crContratosCache[numContrato] || await crBuscarContrato(numContrato);
+            if (!file || !contrato) { alert('Arquivo ou contrato não encontrado.'); return; }
+
+            if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Salvando...'; }
+
+            try {
+                const token = localStorage.getItem('accessToken') || '';
+
+                // Upload do arquivo
+                const formData = new FormData();
+                formData.append('numContrato', numContrato);
+                formData.append('file', file);
+                let arquivoContrato = contrato.arquivoContrato || '';
+                try {
+                    const upResp = await fetch(`${CR_API_BASE}/api/contracts/upload-attachment`, {
+                        method: 'POST',
+                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                        body: formData,
+                    });
+                    if (upResp.ok) {
+                        const upData = await upResp.json();
+                        if (upData?.arquivoContrato) arquivoContrato = upData.arquivoContrato;
+                    }
+                } catch { /* falha no upload de disco — continua com base64 */ }
+
+                // Lê base64 para backup permanente no banco
+                let conteudoArquivoBase64 = '';
+                if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') {
+                    conteudoArquivoBase64 = await new Promise((res, rej) => {
+                        const r = new FileReader();
+                        r.onload = () => { const s = String(r.result || ''); const ci = s.indexOf(','); res(ci >= 0 ? s.slice(ci + 1) : ''); };
+                        r.onerror = rej;
+                        r.readAsDataURL(file);
+                    });
+                }
+
+                // Salva contrato atualizado
+                const payload = { ...contrato, arquivoContrato, conteudoArquivoBase64 };
+                const saveResp = await fetch(`${CR_API_BASE}/api/contracts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                    body: JSON.stringify(payload),
+                });
+                if (!saveResp.ok) throw new Error((await saveResp.json())?.message || 'Erro ao salvar contrato.');
+
+                crContratosCache[numContrato] = payload;
+
+                const statusCell = document.getElementById(`crStatusCell_${fileIndex}`);
+                const acaoCell = document.getElementById(`crAcaoCell_${fileIndex}`);
+                if (statusCell) statusCell.innerHTML = `<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:12px;font-size:0.75rem;">✅ Vinculado com sucesso</span>`;
+                if (acaoCell) acaoCell.innerHTML = '—';
+
+            } catch (err) {
+                if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Vincular PDF'; }
+                alert(`Erro: ${err.message}`);
+            }
+        }
+
+        async function crVincularTodos() {
+            const btn = document.getElementById('crBtnVincularTodos');
+            const progress = document.getElementById('crProgress');
+            const fill = document.getElementById('crProgressFill');
+            const label = document.getElementById('crProgressLabel');
+
+            const botoes = Array.from(document.querySelectorAll('[id^="crBtnLinha_"]')).filter(b => !b.disabled);
+            if (!botoes.length) return;
+
+            btn.disabled = true;
+            progress.style.display = 'block';
+
+            for (let i = 0; i < botoes.length; i++) {
+                const b = botoes[i];
+                const idx = parseInt(b.id.replace('crBtnLinha_', ''), 10);
+                // Pega o número da célula correspondente
+                const numCell = document.getElementById(`crNumCell_${idx}`);
+                const numContrato = numCell ? numCell.textContent.trim() : '';
+                if (!numContrato) continue;
+
+                label.textContent = `Vinculando ${i + 1} de ${botoes.length}: ${numContrato}`;
+                fill.style.width = `${Math.round((i / botoes.length) * 100)}%`;
+                await crVincular(idx, numContrato, b);
+            }
+
+            fill.style.width = '100%';
+            label.textContent = `✅ Todos vinculados!`;
+            btn.style.display = 'none';
+        }
+
+        function crLimpar() {
+            crArquivos = [];
+            crContratosCache = {};
+            document.getElementById('crFileInput').value = '';
+            document.getElementById('crResumo').style.display = 'none';
+            document.getElementById('crProgress').style.display = 'none';
+        }
+
+        function crDragOver(e) { e.preventDefault(); document.getElementById('crDropZone').style.background = '#eff6ff'; }
+        function crDragLeave() { document.getElementById('crDropZone').style.background = '#f8fafc'; }
+        function crDrop(e) { e.preventDefault(); crDragLeave(); if (e.dataTransfer.files.length) crAnalisarArquivos(e.dataTransfer.files); }
+
+        // =====================================================================
+
         async function loadUsers() {
             const usersPanel = document.getElementById('developerUsersPanel');
             usersPanel.style.display = 'block';
-
             try {
-                const res = await fetch('/auth/users', {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
+                const token = localStorage.getItem('accessToken') || '';
+                const res = await fetch(`${CR_API_BASE}/auth/users`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
-                if (!res.ok) {
-                    console.error(data.message || 'Erro ao carregar usuários.');
-                    return;
-                }
-
+                if (!res.ok) { console.error(data.message || 'Erro ao carregar usuários.'); return; }
                 const tbody = document.getElementById('usersTableBody');
                 tbody.innerHTML = data.users.map(user => `
                     <tr>
@@ -456,9 +845,7 @@
                         <td>${user.verified ? 'Sim' : 'Não'}</td>
                     </tr>
                 `).join('');
-            } catch (err) {
-                console.error('Erro ao carregar usuários:', err);
-            }
+            } catch (err) { console.error('Erro ao carregar usuários:', err); }
         }
     </script>
 </body>
