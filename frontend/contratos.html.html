@@ -925,6 +925,11 @@
                     <i data-lucide="receipt" style="width: 15px;"></i> ABA 05: EXECUÇÃO & PAGAMENTO
                 </button>
             </li>
+            <li>
+                <button id="btn-tab-importacao" onclick="switchTab(event, 'tab-importacao')">
+                    <i data-lucide="folder-open" style="width: 15px;"></i> IMPORTAR PDFs
+                </button>
+            </li>
         </ul>
     </nav>
 
@@ -1773,6 +1778,88 @@
         </div>
 
         <!-- ABA 05 - EXECUÇÃO FINANCEIRA E PAGAMENTO -->
+        <!-- ABA IMPORTAÇÃO EM MASSA DE PDFs -->
+        <div id="tab-importacao" class="tab-content">
+            <section class="step-card">
+                <div class="step-header">
+                    <span class="step-badge">IMPORTAÇÃO</span>
+                    <h2 class="step-title">Importar PDFs em Massa — Contratos &amp; Empenhos</h2>
+                </div>
+                <p style="color: var(--text-muted); margin-bottom: 1.2rem;">
+                    Selecione uma pasta (ou vários arquivos) com os PDFs dos contratos. O sistema irá cruzar os
+                    nomes dos arquivos com os contratos cadastrados e mostrar quais estão com anexo, quais estão
+                    sem arquivo e quais ainda não foram cadastrados.
+                </p>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="importacaoPdfInput">
+                            <i data-lucide="folder-open" style="width:14px; vertical-align:middle;"></i>
+                            Selecionar arquivos PDF
+                        </label>
+                        <input type="file" id="importacaoPdfInput" accept=".pdf,.doc,.docx" multiple
+                               style="padding:0.4rem;"
+                               onchange="analisarArquivosImportacao(this.files)">
+                        <small style="color:var(--text-muted); margin-top:4px; display:block;">
+                            Selecione múltiplos arquivos de uma só vez (Ctrl+A na pasta).
+                            Os nomes devem conter o número do contrato (ex: <em>057-2026-SESP</em> ou
+                            <em>CONTRATO Nº 037-2026-SESP</em>).
+                        </small>
+                    </div>
+                </div>
+                <div id="importacaoResumo" style="display:none; margin-top:1rem;">
+                    <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
+                        <span id="imp-total" style="background:var(--sesp-accent);color:#fff;padding:4px 12px;border-radius:20px;font-size:0.8rem;">0 arquivos</span>
+                        <span id="imp-vinculados" style="background:#10b981;color:#fff;padding:4px 12px;border-radius:20px;font-size:0.8rem;">0 já vinculados</span>
+                        <span id="imp-pendentes" style="background:#f59e0b;color:#fff;padding:4px 12px;border-radius:20px;font-size:0.8rem;">0 para vincular</span>
+                        <span id="imp-sem-contrato" style="background:#ef4444;color:#fff;padding:4px 12px;border-radius:20px;font-size:0.8rem;">0 sem contrato</span>
+                        <span id="imp-contratos-sem-pdf" style="background:#6b7280;color:#fff;padding:4px 12px;border-radius:20px;font-size:0.8rem;">0 contratos sem PDF</span>
+                    </div>
+                    <button class="btn btn-primary" id="btnVincularTodos"
+                            onclick="vincularTodosOsPdfs()"
+                            style="margin-bottom:1rem; display:none;">
+                        <i data-lucide="link" style="width:14px;"></i> Vincular todos os PDFs pendentes
+                    </button>
+                    <div id="importacaoProgressBar" style="display:none; margin-bottom:1rem;">
+                        <div style="background:var(--border-color);border-radius:8px;height:10px;overflow:hidden;">
+                            <div id="importacaoProgressFill" style="height:100%;background:#10b981;width:0%;transition:width 0.3s;"></div>
+                        </div>
+                        <small id="importacaoProgressLabel" style="color:var(--text-muted);">Processando...</small>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                            <thead>
+                                <tr style="background:var(--sesp-blue);color:#fff;">
+                                    <th style="padding:8px 12px;text-align:left;">Arquivo</th>
+                                    <th style="padding:8px 12px;text-align:left;">Nº Contrato Detectado</th>
+                                    <th style="padding:8px 12px;text-align:center;">Status</th>
+                                    <th style="padding:8px 12px;text-align:center;">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="importacaoTbody"></tbody>
+                        </table>
+                    </div>
+                    <div id="importacaoContratosOrfaos" style="margin-top:1.5rem; display:none;">
+                        <h3 style="font-size:0.95rem; margin-bottom:0.5rem;">
+                            <i data-lucide="alert-triangle" style="width:14px; vertical-align:middle;"></i>
+                            Contratos cadastrados sem PDF na pasta selecionada
+                        </h3>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                                <thead>
+                                    <tr style="background:#6b7280;color:#fff;">
+                                        <th style="padding:8px 12px;text-align:left;">Nº Contrato</th>
+                                        <th style="padding:8px 12px;text-align:left;">Credor</th>
+                                        <th style="padding:8px 12px;text-align:center;">Tem Arquivo?</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orfaosTbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
         <div id="tab-execucao" class="tab-content">
             <section class="step-card">
                 <div class="step-header">
@@ -2778,7 +2865,8 @@
                 'tab-overview',
                 'tab-unidade',
                 'tab-questionario',
-                'tab-execucao'
+                'tab-execucao',
+                'tab-importacao'
             ];
 
             const firstVisibleTabId = orderedTabs.find((tabId) => {
@@ -3055,6 +3143,252 @@
            ========================================================================== */
 
         // NAVEGAÇÃO ENTRE ABAS
+        /* ==========================================================================
+           IMPORTAÇÃO EM MASSA DE PDFs
+           ========================================================================== */
+
+        // Tenta extrair o número do contrato de um nome de arquivo PDF
+        function extrairNumContratoDoNome(nomeArquivo) {
+            const nome = String(nomeArquivo || '').replace(/\.[^.]+$/, ''); // remove extensão
+
+            // Padrões: 057-2026-SESP, 057/2026/SESP, Nº 057-2026-SESP, N. 044-2021-SESP
+            const patterns = [
+                /[Nn][\u00ba.°\s]*(\d{2,3})[-\/](\d{4})[-\/]?(SESP|MTI)/i,
+                /\b(\d{2,3})[-\/](\d{4})[-\/]?(SESP|MTI)\b/i,
+                /contrato[^\d]*(\d{2,3})[-\/](\d{4})[-\/]?(SESP|MTI)/i,
+            ];
+
+            for (const pattern of patterns) {
+                const match = nome.match(pattern);
+                if (match) {
+                    const num = match[1].padStart(3, '0');
+                    const ano = match[2];
+                    const sufixo = (match[3] || 'SESP').toUpperCase();
+                    return `${num}/${ano}/${sufixo}`;
+                }
+            }
+            return null;
+        }
+
+        let importacaoArquivos = []; // referências aos File objects
+
+        async function analisarArquivosImportacao(files) {
+            if (!files || files.length === 0) return;
+
+            // Garante que os contratos estão carregados
+            if (!Object.keys(DB_CONTRATOS).length) {
+                await loadOverviewTab();
+            }
+
+            importacaoArquivos = Array.from(files);
+            const contratos = Object.values(DB_CONTRATOS);
+
+            const linhas = [];
+            const numerosComPdf = new Set();
+
+            // Analisa cada arquivo
+            for (const file of importacaoArquivos) {
+                const numDetectado = extrairNumContratoDoNome(file.name);
+                const numNormalizado = numDetectado ? normalizeContractNumber(numDetectado) : null;
+                const contrato = numNormalizado ? (DB_CONTRATOS[numNormalizado] || null) : null;
+
+                let status, statusLabel, statusColor, acaoHtml;
+
+                if (!numDetectado) {
+                    status = 'sem-numero';
+                    statusLabel = '⚠️ Número não detectado';
+                    statusColor = '#f59e0b';
+                    acaoHtml = '<span style="color:var(--text-muted);">Renomear arquivo</span>';
+                } else if (!contrato) {
+                    status = 'sem-contrato';
+                    statusLabel = '❌ Contrato não cadastrado';
+                    statusColor = '#ef4444';
+                    acaoHtml = `<button class="btn btn-secondary" style="font-size:0.75rem;padding:3px 8px;"
+                        onclick="carregarContratoParaEdicao('${escapeJsString(numNormalizado)}'); switchTab(null,'tab-cadastro');">
+                        Cadastrar</button>`;
+                } else if (contrato.conteudoArquivoBase64 && contrato.conteudoArquivoBase64.length > 20) {
+                    status = 'ja-vinculado-base64';
+                    statusLabel = '✅ Já vinculado (base64)';
+                    statusColor = '#10b981';
+                    acaoHtml = `<button class="btn btn-secondary" style="font-size:0.75rem;padding:3px 8px;"
+                        onclick="importarPdfParaContrato('${escapeJsString(numNormalizado)}', ${importacaoArquivos.indexOf(file)})">
+                        Substituir</button>`;
+                } else if (contrato.arquivoContrato && contrato.arquivoContrato.length > 0) {
+                    status = 'pendente-reenvio';
+                    statusLabel = '🔗 Arquivo cadastrado (reenviar)';
+                    statusColor = '#f59e0b';
+                    acaoHtml = `<button class="btn btn-primary" style="font-size:0.75rem;padding:3px 8px;"
+                        data-num="${escapeHtml(numNormalizado)}" data-idx="${importacaoArquivos.indexOf(file)}"
+                        onclick="importarPdfParaContrato('${escapeJsString(numNormalizado)}', ${importacaoArquivos.indexOf(file)}, this)">
+                        Vincular</button>`;
+                } else {
+                    status = 'pendente';
+                    statusLabel = '🔗 Pronto para vincular';
+                    statusColor = '#3b82f6';
+                    acaoHtml = `<button class="btn btn-primary" style="font-size:0.75rem;padding:3px 8px;"
+                        data-num="${escapeHtml(numNormalizado)}" data-idx="${importacaoArquivos.indexOf(file)}"
+                        onclick="importarPdfParaContrato('${escapeJsString(numNormalizado)}', ${importacaoArquivos.indexOf(file)}, this)">
+                        Vincular</button>`;
+                }
+
+                if (numNormalizado) numerosComPdf.add(numNormalizado);
+                linhas.push({ file, numDetectado, numNormalizado, contrato, status, statusLabel, statusColor, acaoHtml });
+            }
+
+            // Contratos sem PDF na pasta
+            const orfaos = contratos.filter(c => {
+                const num = normalizeContractNumber(c.numContrato);
+                return num && !numerosComPdf.has(num);
+            });
+
+            // Contadores
+            const total = linhas.length;
+            const jaVinculados = linhas.filter(l => l.status === 'ja-vinculado-base64').length;
+            const pendentes = linhas.filter(l => l.status === 'pendente' || l.status === 'pendente-reenvio').length;
+            const semContrato = linhas.filter(l => l.status === 'sem-contrato' || l.status === 'sem-numero').length;
+
+            // Atualiza badges
+            document.getElementById('imp-total').textContent = `${total} arquivo${total !== 1 ? 's' : ''}`;
+            document.getElementById('imp-vinculados').textContent = `${jaVinculados} já vinculados`;
+            document.getElementById('imp-pendentes').textContent = `${pendentes} para vincular`;
+            document.getElementById('imp-sem-contrato').textContent = `${semContrato} sem contrato`;
+            document.getElementById('imp-contratos-sem-pdf').textContent = `${orfaos.length} contratos sem PDF`;
+
+            // Exibe botão de vincular todos se há pendentes
+            const btnVincularTodos = document.getElementById('btnVincularTodos');
+            btnVincularTodos.style.display = pendentes > 0 ? 'inline-flex' : 'none';
+
+            // Monta tabela principal
+            const tbody = document.getElementById('importacaoTbody');
+            tbody.innerHTML = linhas.map((linha, i) => `
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:8px 12px; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                        title="${escapeHtml(linha.file.name)}">
+                        <i data-lucide="file-text" style="width:13px; vertical-align:middle;"></i>
+                        ${escapeHtml(linha.file.name)}
+                    </td>
+                    <td style="padding:8px 12px; font-family:monospace;">
+                        ${linha.numNormalizado ? escapeHtml(linha.numNormalizado) : '<span style="color:var(--text-muted);">—</span>'}
+                    </td>
+                    <td style="padding:8px 12px; text-align:center;">
+                        <span style="background:${linha.statusColor}22;color:${linha.statusColor};padding:2px 8px;border-radius:20px;font-size:0.78rem;white-space:nowrap;">
+                            ${linha.statusLabel}
+                        </span>
+                    </td>
+                    <td style="padding:8px 12px; text-align:center;" id="imp-acao-${i}">
+                        ${linha.acaoHtml}
+                    </td>
+                </tr>
+            `).join('');
+
+            // Monta tabela de órfãos
+            const orfaosSection = document.getElementById('importacaoContratosOrfaos');
+            if (orfaos.length > 0) {
+                orfaosSection.style.display = 'block';
+                document.getElementById('orfaosTbody').innerHTML = orfaos.map(c => {
+                    const temArquivo = !!(c.conteudoArquivoBase64 && c.conteudoArquivoBase64.length > 20) || !!c.arquivoContrato;
+                    return `
+                        <tr style="border-bottom:1px solid var(--border-color);">
+                            <td style="padding:8px 12px; font-family:monospace;">${escapeHtml(c.numContrato)}</td>
+                            <td style="padding:8px 12px;">${escapeHtml(c.credor || '-')}</td>
+                            <td style="padding:8px 12px; text-align:center;">
+                                <span style="color:${temArquivo ? '#10b981' : '#ef4444'}; font-weight:600;">
+                                    ${temArquivo ? '✅ Sim' : '❌ Não'}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                orfaosSection.style.display = 'none';
+            }
+
+            document.getElementById('importacaoResumo').style.display = 'block';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        async function importarPdfParaContrato(numContrato, fileIndex, btnEl) {
+            const file = importacaoArquivos[fileIndex];
+            const contrato = DB_CONTRATOS[normalizeContractNumber(numContrato)];
+            if (!file || !contrato) {
+                alert('Arquivo ou contrato não encontrado.');
+                return;
+            }
+
+            if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Salvando...'; }
+
+            try {
+                // Lê base64 se for PDF
+                let conteudoArquivoBase64 = contrato.conteudoArquivoBase64 || '';
+                if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') {
+                    conteudoArquivoBase64 = await readFileAsBase64(file);
+                }
+
+                // Upload do arquivo para o servidor
+                let arquivoContrato = contrato.arquivoContrato || '';
+                try {
+                    const uploadResult = await uploadContractAttachment(numContrato, file);
+                    if (uploadResult?.arquivoContrato) arquivoContrato = uploadResult.arquivoContrato;
+                } catch (uploadErr) {
+                    console.warn('Upload para disco falhou, salvando apenas base64:', uploadErr);
+                }
+
+                // Salva o contrato atualizado
+                const contratoAtualizado = { ...contrato, arquivoContrato, conteudoArquivoBase64 };
+                await saveContract(contratoAtualizado);
+                updateLocalContractCache(contratoAtualizado);
+
+                // Atualiza a célula de ação
+                const numIdx = importacaoArquivos.indexOf(file);
+                const acoCell = document.getElementById(`imp-acao-${numIdx}`);
+                if (acoCell) {
+                    acoCell.innerHTML = '<span style="color:#10b981; font-weight:600;">✅ Vinculado</span>';
+                }
+
+                // Atualiza badge de pendentes
+                const pendentes = document.querySelectorAll('#importacaoTbody button[data-num]');
+                const pendentesAtivos = Array.from(pendentes).filter(b => !b.disabled).length;
+                document.getElementById('imp-pendentes').textContent = `${pendentesAtivos} para vincular`;
+                if (pendentesAtivos === 0) document.getElementById('btnVincularTodos').style.display = 'none';
+
+            } catch (error) {
+                if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Vincular'; }
+                alert(`Erro ao vincular "${file.name}": ${error.message}`);
+            }
+        }
+
+        async function vincularTodosOsPdfs() {
+            const btnTodos = document.getElementById('btnVincularTodos');
+            const progressBar = document.getElementById('importacaoProgressBar');
+            const progressFill = document.getElementById('importacaoProgressFill');
+            const progressLabel = document.getElementById('importacaoProgressLabel');
+
+            const botoesVincular = Array.from(document.querySelectorAll('#importacaoTbody button[data-num]'))
+                .filter(b => !b.disabled);
+
+            if (!botoesVincular.length) return;
+
+            btnTodos.disabled = true;
+            progressBar.style.display = 'block';
+
+            for (let i = 0; i < botoesVincular.length; i++) {
+                const btn = botoesVincular[i];
+                const num = btn.getAttribute('data-num');
+                const idx = parseInt(btn.getAttribute('data-idx'), 10);
+
+                progressLabel.textContent = `Vinculando ${i + 1} de ${botoesVincular.length}: ${num}`;
+                progressFill.style.width = `${Math.round(((i) / botoesVincular.length) * 100)}%`;
+
+                await importarPdfParaContrato(num, idx, btn);
+            }
+
+            progressFill.style.width = '100%';
+            progressLabel.textContent = `✅ ${botoesVincular.length} PDF(s) vinculados com sucesso!`;
+            btnTodos.style.display = 'none';
+        }
+
+        /* ========================================================================== */
+
         function switchTab(event, tabId) {
             document.querySelectorAll('.nav-links button').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
