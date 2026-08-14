@@ -740,7 +740,7 @@
   </div>
 </main>
 
-<footer>estoque:items · dados compartilhados entre usuários deste painel</footer>
+<footer>controle de patrimônio · dados persistidos no banco de dados</footer>
 
 <!-- Modal -->
 <div class="overlay" id="overlay">
@@ -785,11 +785,9 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="api-client.js"></script>
 <script>
 (function(){
-  const STORAGE_KEY = 'estoque:items';
-  const SHARED = true;
-
   let items = [];
   let editingRp = null; // rp original sendo editado (null = criação)
   let dashFilter = '';  // busca aplicada aos gráficos do dashboard
@@ -844,21 +842,13 @@
 
   async function loadItems(){
     try{
-      const res = await window.storage.get(STORAGE_KEY, SHARED);
-      items = res ? JSON.parse(res.value) : [];
+      const data = await window.apiFetchJson('/api/patrimonio');
+      items = Array.isArray(data.items) ? data.items : [];
     }catch(e){
       items = [];
+      showToast('Erro ao carregar os dados do servidor.');
     }
     render();
-  }
-
-  async function persist(){
-    try{
-      const res = await window.storage.set(STORAGE_KEY, JSON.stringify(items), SHARED);
-      if(!res){ showToast('Falha ao salvar. Tente novamente.'); }
-    }catch(e){
-      showToast('Erro ao salvar os dados.');
-    }
   }
 
   function escapeHtml(str){
@@ -1177,18 +1167,30 @@
     const quantidade = Number(els.inputQtd.value);
     const estado = els.inputEstado.value;
 
-    if(editingRp){
-      const idx = items.findIndex(i=> i.rp === editingRp);
-      if(idx > -1){ items[idx] = { rp: editingRp, descricao, quantidade, estado }; }
-      showToast('Item atualizado.');
-    }else{
-      items.push({ rp, descricao, quantidade, estado });
-      showToast('Item cadastrado.');
+    els.saveBtn.disabled = true;
+    try{
+      if(editingRp){
+        await window.apiFetchJson('/api/patrimonio/' + encodeURIComponent(editingRp), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ descricao, quantidade, estado })
+        });
+        showToast('Item atualizado.');
+      }else{
+        await window.apiFetchJson('/api/patrimonio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rp, descricao, quantidade, estado })
+        });
+        showToast('Item cadastrado.');
+      }
+      closeModal();
+      await loadItems();
+    }catch(err){
+      showToast(err && err.message ? err.message : 'Erro ao salvar. Tente novamente.');
+    }finally{
+      els.saveBtn.disabled = false;
     }
-
-    await persist();
-    closeModal();
-    render();
   }
 
   async function deleteItem(rp){
@@ -1196,10 +1198,13 @@
     if(!it) return;
     const confirmed = confirm(`Excluir o item RP ${rp} — "${it.descricao}"?`);
     if(!confirmed) return;
-    items = items.filter(i=> i.rp !== rp);
-    await persist();
-    render();
-    showToast('Item excluído.');
+    try{
+      await window.apiFetchJson('/api/patrimonio/' + encodeURIComponent(rp), { method: 'DELETE' });
+      showToast('Item excluído.');
+      await loadItems();
+    }catch(err){
+      showToast(err && err.message ? err.message : 'Erro ao excluir. Tente novamente.');
+    }
   }
 
   function exportCsv(){

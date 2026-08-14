@@ -70,6 +70,19 @@ CREATE TABLE IF NOT EXISTS contacts (
 CREATE INDEX IF NOT EXISTS idx_contacts_unidade ON contacts (unidade);
 CREATE INDEX IF NOT EXISTS idx_contacts_setor ON contacts (setor);
 
+CREATE TABLE IF NOT EXISTS patrimonio (
+  id BIGSERIAL PRIMARY KEY,
+  rp VARCHAR(50) NOT NULL UNIQUE,
+  descricao TEXT NOT NULL,
+  quantidade INTEGER NOT NULL DEFAULT 0,
+  estado VARCHAR(50) NOT NULL DEFAULT 'Bom',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_patrimonio_rp ON patrimonio (rp);
+CREATE INDEX IF NOT EXISTS idx_patrimonio_estado ON patrimonio (estado);
+
 CREATE TABLE IF NOT EXISTS units (
   id BIGSERIAL PRIMARY KEY,
   code VARCHAR(50) NOT NULL UNIQUE,

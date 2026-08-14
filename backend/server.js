@@ -1230,6 +1230,56 @@ app.delete('/api/contacts/:id', async (req, res) => {
   });
 });
 
+app.get('/api/patrimonio', async (req, res) => {
+  db.all('SELECT id, rp, descricao, quantidade, estado FROM patrimonio ORDER BY rp ASC', [], (err, rows) => {
+    if (err) return res.status(500).json({ message: 'Erro ao buscar patrimônio.' });
+    res.json({ items: rows });
+  });
+});
+
+app.post('/api/patrimonio', async (req, res) => {
+  const { rp, descricao, quantidade, estado } = req.body;
+  if (!rp || !descricao) {
+    return res.status(400).json({ message: 'RP e descrição são obrigatórios.' });
+  }
+  const qtd = Number.isFinite(Number(quantidade)) ? Number(quantidade) : 0;
+  db.run(
+    'INSERT INTO patrimonio (rp, descricao, quantidade, estado) VALUES (?, ?, ?, ?)',
+    [rp, descricao, qtd, estado || 'Bom'],
+    function (err) {
+      if (err) {
+        if (/unique/i.test(err.message)) {
+          return res.status(409).json({ message: 'Já existe um item com este Nº de RP.' });
+        }
+        return res.status(500).json({ message: 'Erro ao criar item de patrimônio.' });
+      }
+      res.json({ id: this.lastID, rp, descricao, quantidade: qtd, estado: estado || 'Bom' });
+    }
+  );
+});
+
+app.put('/api/patrimonio/:rp', async (req, res) => {
+  const { rp } = req.params;
+  const { descricao, quantidade, estado } = req.body;
+  const qtd = Number.isFinite(Number(quantidade)) ? Number(quantidade) : 0;
+  db.run(
+    'UPDATE patrimonio SET descricao = ?, quantidade = ?, estado = ?, updated_at = NOW() WHERE rp = ?',
+    [descricao, qtd, estado || 'Bom', rp],
+    function (err) {
+      if (err) return res.status(500).json({ message: 'Erro ao atualizar item de patrimônio.' });
+      res.json({ rp, descricao, quantidade: qtd, estado: estado || 'Bom' });
+    }
+  );
+});
+
+app.delete('/api/patrimonio/:rp', async (req, res) => {
+  const { rp } = req.params;
+  db.run('DELETE FROM patrimonio WHERE rp = ?', [rp], function (err) {
+    if (err) return res.status(500).json({ message: 'Erro ao excluir item de patrimônio.' });
+    res.json({ success: true });
+  });
+});
+
 app.get('/api/units', async (req, res) => {
   db.all('SELECT * FROM units ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ message: 'Erro ao buscar unidades.' });
