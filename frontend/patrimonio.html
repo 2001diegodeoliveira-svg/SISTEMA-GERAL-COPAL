@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Patrimônio</title>
+<style>
+  :root{
+    --ink:#1B1F23;
+    --ink-soft:#4B5560;
+    --bg:#F5F4F0;
+    --panel:#FFFFFF;
+    --line:#DAD7CF;
+    --primary:#1B3A5C;
+    --primary-dark:#12283F;
+    --accent:#2E6F95;
+    --stamp:#8A6D3B;
+
+    --novo:#2F7D4F;
+    --bom:#3B7A87;
+    --regular:#B8862B;
+    --ruim:#C1502E;
+    --inservivel:#8C2F2F;
+
+    --radius:3px;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+
+  ::selection{ background:var(--accent); color:#fff; }
+
+  /* ---------- Header ---------- */
+  header.topbar{
+    background:var(--primary);
+    color:#fff;
+    padding:22px 28px 0 28px;
+    border-bottom:4px solid var(--stamp);
+  }
+  .topbar-inner{
+    max-width:1180px;
+    margin:0 auto;
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:16px;
+    padding-bottom:18px;
+  }
+  .topbar-actions{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .brand-mark{
+    width:42px;height:42px;
+    border:2px solid rgba(255,255,255,.55);
+    border-radius:2px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:.5px;
+  }
+  .brand h1{
+    font-size:19px;
+    font-weight:600;
+    margin:0;
+    letter-spacing:.2px;
+  }
+  .brand p{
+    margin:2px 0 0 0;
+    font-size:12.5px;
+    color:rgba(255,255,255,.7);
+    font-family:var(--mono);
+    letter-spacing:.3px;
+  }
+
+  /* stat strip */
+  .stats{
+    max-width:1180px;
+    margin:0 auto;
+    display:flex;
+    border-top:1px solid rgba(255,255,255,.18);
+  }
+  .stat{
+    flex:1;
+    padding:14px 20px;
+    border-right:1px solid rgba(255,255,255,.18);
+  }
+  .stat:last-child{border-right:none;}
+  .stat .num{
+    font-family:var(--mono);
+    font-size:22px;
+    font-weight:600;
+    line-height:1;
+  }
+  .stat .label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.7px;
+    color:rgba(255,255,255,.65);
+    margin-top:6px;
+  }
+  .stat .breakdown{
+    margin-top:8px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .chip-mini{
+    font-size:10.5px;
+    font-family:var(--mono);
+    padding:2px 6px;
+    border-radius:2px;
+    background:rgba(255,255,255,.12);
+  }
+
+  /* ---------- Main ---------- */
+  main{
+    max-width:1180px;
+    margin:0 auto;
+    padding:24px 28px 60px 28px;
+  }
+
+  /* ---------- Tabs ---------- */
+  .tabs{
+    display:flex;
+    gap:4px;
+    margin-bottom:18px;
+    border-bottom:1px solid var(--line);
+  }
+  .tab-btn{
+    font-family:var(--sans);
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--ink-soft);
+    background:none;
+    border:none;
+    padding:10px 4px;
+    margin-right:22px;
+    cursor:pointer;
+    position:relative;
+    top:1px;
+    border-bottom:2px solid transparent;
+  }
+  .tab-btn:hover{ color:var(--ink); }
+  .tab-btn.active{
+    color:var(--primary);
+    border-bottom-color:var(--primary);
+  }
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  .toolbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  .toolbar input[type="text"], .toolbar select{
+    font-family:var(--sans);
+    font-size:13.5px;
+    padding:9px 12px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--panel);
+    color:var(--ink);
+  }
+  .toolbar input[type="text"]{
+    flex:1;
+    min-width:200px;
+  }
+  .toolbar select{ min-width:170px; }
+  .dash-toolbar{ margin-bottom:14px; }
+  .filter-info{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--primary-dark);
+    background:#EFEDE6;
+    border:1px solid var(--line);
+    padding:7px 12px;
+    border-radius:var(--radius);
+  }
+
+  .btn{
+    font-family:var(--sans);
+    font-size:13.5px;
+    font-weight:600;
+    padding:9px 16px;
+    border-radius:var(--radius);
+    border:1px solid transparent;
+    cursor:pointer;
+    transition:filter .12s ease, transform .05s ease;
+    white-space:nowrap;
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn-primary{ background:var(--primary); color:#fff; }
+  .btn-primary:hover{ filter:brightness(1.12); }
+  .btn-ghost{ background:var(--panel); color:var(--ink); border-color:var(--line); }
+  .btn-ghost:hover{ background:#EFEDE6; }
+  .btn-danger-text{ background:none; border:none; color:var(--ruim); font-weight:600; cursor:pointer; font-size:12.5px; padding:4px 6px;}
+  .btn-danger-text:hover{ text-decoration:underline; }
+  .btn-edit-text{ background:none; border:none; color:var(--accent); font-weight:600; cursor:pointer; font-size:12.5px; padding:4px 6px;}
+  .btn-edit-text:hover{ text-decoration:underline; }
+
+  /* ---------- Table ---------- */
+  .table-wrap{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+  }
+  thead th{
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    color:var(--ink-soft);
+    background:#EFEDE6;
+    padding:11px 16px;
+    border-bottom:1px solid var(--line);
+    position:sticky;
+    top:0;
+  }
+  tbody td{
+    padding:12px 16px;
+    border-bottom:1px solid #EEECE5;
+    font-size:13.5px;
+    vertical-align:middle;
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background:#FAF9F6; }
+
+  td.rp{
+    font-family:var(--mono);
+    font-weight:600;
+    color:var(--primary-dark);
+    letter-spacing:.3px;
+  }
+  td.qtd{
+    font-family:var(--mono);
+    font-weight:600;
+    text-align:right;
+    width:90px;
+  }
+  td.acoes{
+    text-align:right;
+    white-space:nowrap;
+    width:120px;
+  }
+
+  .tag{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:11.5px;
+    font-weight:600;
+    padding:4px 9px;
+    border-radius:20px;
+    color:#fff;
+  }
+  .tag.Novo{ background:var(--novo); }
+  .tag.Bom{ background:var(--bom); }
+  .tag.Regular{ background:var(--regular); }
+  .tag.Ruim{ background:var(--ruim); }
+  .tag.Inservível{ background:var(--inservivel); }
+
+  /* ---------- Dashboard ---------- */
+  .dash-summary{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+  }
+  .dash-card{
+    flex:1;
+    min-width:150px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-left:4px solid var(--primary);
+    border-radius:var(--radius);
+    padding:14px 16px;
+  }
+  .dash-card .num{
+    font-family:var(--mono);
+    font-size:24px;
+    font-weight:600;
+    color:var(--primary-dark);
+    line-height:1;
+  }
+  .dash-card .label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    color:var(--ink-soft);
+    margin-top:6px;
+  }
+  .dash-card.Novo{ border-left-color:var(--novo); }
+  .dash-card.Bom{ border-left-color:var(--bom); }
+  .dash-card.Regular{ border-left-color:var(--regular); }
+  .dash-card.Ruim{ border-left-color:var(--ruim); }
+  .dash-card.Inservível{ border-left-color:var(--inservivel); }
+
+  .dash-section-title{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    color:var(--ink-soft);
+    font-weight:600;
+    margin:0 0 10px 0;
+  }
+
+  .charts-row{
+    display:grid;
+    grid-template-columns: 360px 1fr;
+    gap:14px;
+    margin-bottom:20px;
+  }
+  @media (max-width:860px){ .charts-row{ grid-template-columns:1fr; } }
+  .chart-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px;
+  }
+  .chart-card h3{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    color:var(--ink-soft);
+    font-weight:600;
+    margin:0 0 14px 0;
+  }
+  .donut-wrap{
+    display:flex;
+    align-items:center;
+    gap:22px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .donut-box{
+    position:relative;
+    width:180px;
+    height:180px;
+    flex:none;
+  }
+  .donut-box svg{ width:100%; height:100%; display:block; }
+  .donut-center{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    pointer-events:none;
+  }
+  .donut-center .n{
+    font-family:var(--mono);
+    font-size:28px;
+    font-weight:700;
+    color:var(--primary-dark);
+    line-height:1;
+  }
+  .donut-center .l{
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    color:var(--ink-soft);
+    margin-top:5px;
+  }
+  .legend{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:grid;
+    gap:9px;
+    min-width:210px;
+    flex:1;
+  }
+  .legend li{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:13px;
+    color:var(--ink);
+  }
+  .legend .dot{
+    width:12px;
+    height:12px;
+    border-radius:3px;
+    flex:none;
+  }
+  .legend .pct{
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--ink-soft);
+    width:44px;
+    text-align:right;
+  }
+  .legend .cnt{
+    font-family:var(--mono);
+    font-weight:600;
+    margin-left:auto;
+    color:var(--primary-dark);
+  }
+
+  .toplist{ display:grid; gap:14px; }
+  .top-item{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:4px 12px;
+    align-items:center;
+  }
+  .top-item .lbl{
+    font-size:13px;
+    font-weight:600;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .top-item .tot{
+    font-family:var(--mono);
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--primary-dark);
+  }
+  .top-item .bar{
+    grid-column:1 / -1;
+    display:flex;
+    height:14px;
+    border-radius:4px;
+    overflow:hidden;
+    background:#EFEDE6;
+  }
+  .top-item .bar span{ display:block; height:100%; min-width:2px; }
+
+  td.item-desc{
+    font-weight:600;
+  }
+  td.item-rps{
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--ink-soft);
+  }
+  td.state-count{
+    text-align:center;
+    font-family:var(--mono);
+    font-size:13px;
+    width:64px;
+  }
+  td.state-count .zero{ color:#C9C5B9; }
+  td.item-total{
+    text-align:right;
+    font-family:var(--mono);
+    font-weight:700;
+    color:var(--primary-dark);
+  }
+
+  .dist-bar{
+    display:flex;
+    height:8px;
+    width:100%;
+    border-radius:4px;
+    overflow:hidden;
+    background:#EFEDE6;
+    margin-top:6px;
+  }
+  .dist-bar span{ display:block; height:100%; }
+  .dist-bar .Novo{ background:var(--novo); }
+  .dist-bar .Bom{ background:var(--bom); }
+  .dist-bar .Regular{ background:var(--regular); }
+  .dist-bar .Ruim{ background:var(--ruim); }
+  .dist-bar .Inservível{ background:var(--inservivel); }
+  td.item-desc-cell{ min-width:220px; }
+
+  .empty-state{
+    padding:60px 20px;
+    text-align:center;
+    color:var(--ink-soft);
+  }
+  .empty-state .glyph{
+    font-family:var(--mono);
+    font-size:28px;
+    color:var(--line);
+    margin-bottom:10px;
+  }
+  .empty-state p{ margin:4px 0; font-size:13.5px; }
+  .empty-state .sub{ font-size:12px; color:#8B8577; }
+
+  .loading-row td{ text-align:center; padding:40px; color:var(--ink-soft); font-size:13px; }
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(20,24,28,.5);
+    display:none;
+    align-items:flex-start;
+    justify-content:center;
+    padding:60px 20px;
+    z-index:50;
+  }
+  .overlay.open{ display:flex; }
+  .modal{
+    background:var(--panel);
+    width:100%;
+    max-width:440px;
+    border-radius:var(--radius);
+    border:1px solid var(--line);
+    box-shadow:0 12px 40px rgba(0,0,0,.18);
+  }
+  .modal-head{
+    padding:18px 22px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .modal-head h2{ margin:0; font-size:15.5px; font-weight:600; }
+  .modal-head button{
+    background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-soft);
+    line-height:1;padding:2px 6px;
+  }
+  .modal-body{ padding:20px 22px; }
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+    font-weight:600;
+  }
+  .field input, .field select{
+    width:100%;
+    font-family:var(--sans);
+    font-size:14px;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:#FCFBF9;
+  }
+  .field input:focus, .field select:focus, .toolbar input:focus, .toolbar select:focus{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+    background:#fff;
+  }
+  .field input.rp-input{ font-family:var(--mono); }
+  .field-error{
+    font-size:12px;
+    color:var(--ruim);
+    margin-top:5px;
+    display:none;
+  }
+  .field-error.show{ display:block; }
+
+  .modal-foot{
+    padding:16px 22px 20px 22px;
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    border-top:1px solid var(--line);
+  }
+
+  .toast{
+    position:fixed;
+    bottom:22px;
+    left:50%;
+    transform:translateX(-50%) translateY(10px);
+    background:var(--ink);
+    color:#fff;
+    padding:11px 18px;
+    border-radius:var(--radius);
+    font-size:13px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease;
+    z-index:60;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  footer{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 28px 30px 28px;
+    color:#8B8577;
+    font-size:11.5px;
+    font-family:var(--mono);
+  }
+
+  @media (max-width:640px){
+    .stats{ flex-wrap:wrap; }
+    .stat{ flex:1 1 50%; border-bottom:1px solid rgba(255,255,255,.18); }
+    td.acoes{ width:auto; }
+    thead th:nth-child(3), td:nth-child(3){ display:none; } /* esconder quantidade coluna larga? mantemos qtd, ocultamos nada crítico */
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">RP</div>
+      <div>
+        <h1>Controle de Patrimônio COPAL</h1>
+        <p>Registro de bens — Nº RP · Descrição · Quantidade · Estado de conservação</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" id="exportBtn" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:#fff;">Exportar CSV</button>
+      <button class="btn btn-ghost" id="homeBtn" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:#fff;">HOME</button>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat">
+      <div class="num" id="statTotalItens">–</div>
+      <div class="label">Itens cadastrados</div>
+    </div>
+    <div class="stat">
+      <div class="num" id="statTotalQtd">–</div>
+      <div class="label">Quantidade total</div>
+    </div>
+    <div class="stat" style="flex:2;">
+      <div class="label" style="margin-bottom:0;">Por estado de conservação</div>
+      <div class="breakdown" id="statBreakdown"></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab-btn active" id="tabDashboardBtn" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" id="tabEstoqueBtn" data-tab="estoque">Estoque</button>
+  </div>
+
+  <!-- ===== Painel: Dashboard (tela principal) ===== -->
+  <div class="panel active" id="panelDashboard">
+    <div class="toolbar dash-toolbar">
+      <input type="text" id="dashSearchInput" placeholder="Buscar item por Nº RP ou descrição para filtrar os gráficos…">
+      <button class="btn btn-ghost" id="dashClearBtn" style="display:none;">Limpar filtro</button>
+      <span class="filter-info" id="dashFilterInfo"></span>
+    </div>
+
+    <div class="dash-summary" id="dashSummary">
+      <!-- cards preenchidos via JS -->
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3>Distribuição por estado de conservação</h3>
+        <div class="donut-wrap">
+          <div class="donut-box">
+            <svg viewBox="0 0 200 200" class="donut" id="donutSvg" aria-hidden="true">
+              <circle cx="100" cy="100" r="72" fill="none" stroke="#EFEDE6" stroke-width="36"></circle>
+            </svg>
+            <div class="donut-center">
+              <div class="n" id="donutTotal">0</div>
+              <div class="l">unidades</div>
+            </div>
+          </div>
+          <ul class="legend" id="donutLegend"></ul>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>Maiores itens por quantidade</h3>
+        <div class="toplist" id="topItemsChart"></div>
+      </div>
+    </div>
+
+    <p class="dash-section-title">Quantidade por item, distribuída por estado de conservação</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="item-desc-cell">Item descrito</th>
+            <th class="state-count">Novo</th>
+            <th class="state-count">Bom</th>
+            <th class="state-count">Regular</th>
+            <th class="state-count">Ruim</th>
+            <th class="state-count">Inservível</th>
+            <th style="width:90px; text-align:right;">Total</th>
+          </tr>
+        </thead>
+        <tbody id="dashboardBody">
+          <tr class="loading-row"><td colspan="7">Carregando…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== Painel: Estoque (lista + busca) ===== -->
+  <div class="panel" id="panelEstoque">
+    <div class="toolbar">
+      <input type="text" id="searchInput" placeholder="Buscar por Nº RP ou descrição…">
+      <select id="filterEstado">
+        <option value="">Todos os estados</option>
+        <option value="Novo">Novo</option>
+        <option value="Bom">Bom</option>
+        <option value="Regular">Regular</option>
+        <option value="Ruim">Ruim</option>
+        <option value="Inservível">Inservível</option>
+      </select>
+      <button class="btn btn-primary" id="newItemBtn">+ Novo item</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:120px;">Nº RP</th>
+            <th>Descrição</th>
+            <th style="width:90px; text-align:right;">Qtd.</th>
+            <th style="width:140px;">Estado</th>
+            <th style="width:120px; text-align:right;">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr class="loading-row"><td colspan="5">Carregando estoque…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<footer>estoque:items · dados compartilhados entre usuários deste painel</footer>
+
+<!-- Modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalTitle">Novo item</h2>
+      <button id="closeModalBtn" aria-label="Fechar">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="inputRp">Nº de RP</label>
+        <input type="text" id="inputRp" class="rp-input" placeholder="ex: 004521">
+        <div class="field-error" id="errorRp">Informe um Nº de RP válido.</div>
+      </div>
+      <div class="field">
+        <label for="inputDescricao">Descrição do item</label>
+        <input type="text" id="inputDescricao" placeholder="ex: Cadeira giratória com braço">
+        <div class="field-error" id="errorDescricao">Informe a descrição do item.</div>
+      </div>
+      <div class="field">
+        <label for="inputQtd">Quantidade</label>
+        <input type="number" id="inputQtd" min="0" step="1" placeholder="ex: 1">
+        <div class="field-error" id="errorQtd">Informe uma quantidade válida (0 ou mais).</div>
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label for="inputEstado">Estado de conservação</label>
+        <select id="inputEstado">
+          <option value="Novo">Novo</option>
+          <option value="Bom" selected>Bom</option>
+          <option value="Regular">Regular</option>
+          <option value="Ruim">Ruim</option>
+          <option value="Inservível">Inservível</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="cancelBtn">Cancelar</button>
+      <button class="btn btn-primary" id="saveBtn">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'estoque:items';
+  const SHARED = true;
+
+  let items = [];
+  let editingRp = null; // rp original sendo editado (null = criação)
+  let dashFilter = '';  // busca aplicada aos gráficos do dashboard
+
+  const els = {
+    tableBody: document.getElementById('tableBody'),
+    searchInput: document.getElementById('searchInput'),
+    filterEstado: document.getElementById('filterEstado'),
+    newItemBtn: document.getElementById('newItemBtn'),
+    overlay: document.getElementById('overlay'),
+    modalTitle: document.getElementById('modalTitle'),
+    closeModalBtn: document.getElementById('closeModalBtn'),
+    cancelBtn: document.getElementById('cancelBtn'),
+    saveBtn: document.getElementById('saveBtn'),
+    inputRp: document.getElementById('inputRp'),
+    inputDescricao: document.getElementById('inputDescricao'),
+    inputQtd: document.getElementById('inputQtd'),
+    inputEstado: document.getElementById('inputEstado'),
+    errorRp: document.getElementById('errorRp'),
+    errorDescricao: document.getElementById('errorDescricao'),
+    errorQtd: document.getElementById('errorQtd'),
+    toast: document.getElementById('toast'),
+    exportBtn: document.getElementById('exportBtn'),
+    homeBtn: document.getElementById('homeBtn'),
+    statTotalItens: document.getElementById('statTotalItens'),
+    statTotalQtd: document.getElementById('statTotalQtd'),
+    statBreakdown: document.getElementById('statBreakdown'),
+    tabEstoqueBtn: document.getElementById('tabEstoqueBtn'),
+    tabDashboardBtn: document.getElementById('tabDashboardBtn'),
+    panelEstoque: document.getElementById('panelEstoque'),
+    panelDashboard: document.getElementById('panelDashboard'),
+    dashSummary: document.getElementById('dashSummary'),
+    dashboardBody: document.getElementById('dashboardBody'),
+    donutSvg: document.getElementById('donutSvg'),
+    donutTotal: document.getElementById('donutTotal'),
+    donutLegend: document.getElementById('donutLegend'),
+    topItemsChart: document.getElementById('topItemsChart'),
+    dashSearchInput: document.getElementById('dashSearchInput'),
+    dashClearBtn: document.getElementById('dashClearBtn'),
+    dashFilterInfo: document.getElementById('dashFilterInfo'),
+  };
+
+  const ESTADOS = ['Novo','Bom','Regular','Ruim','Inservível'];
+  const ESTADO_COLORS = { 'Novo':'#2F7D4F', 'Bom':'#3B7A87', 'Regular':'#B8862B', 'Ruim':'#C1502E', 'Inservível':'#8C2F2F' };
+
+  function showToast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=> els.toast.classList.remove('show'), 2200);
+  }
+
+  async function loadItems(){
+    try{
+      const res = await window.storage.get(STORAGE_KEY, SHARED);
+      items = res ? JSON.parse(res.value) : [];
+    }catch(e){
+      items = [];
+    }
+    render();
+  }
+
+  async function persist(){
+    try{
+      const res = await window.storage.set(STORAGE_KEY, JSON.stringify(items), SHARED);
+      if(!res){ showToast('Falha ao salvar. Tente novamente.'); }
+    }catch(e){
+      showToast('Erro ao salvar os dados.');
+    }
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  }
+
+  function getFiltered(){
+    const q = els.searchInput.value.trim().toLowerCase();
+    const estadoFiltro = els.filterEstado.value;
+    return items.filter(it=>{
+      const matchesQ = !q || it.rp.toLowerCase().includes(q) || it.descricao.toLowerCase().includes(q);
+      const matchesEstado = !estadoFiltro || it.estado === estadoFiltro;
+      return matchesQ && matchesEstado;
+    });
+  }
+
+  function render(){
+    renderStats();
+    renderDashboard();
+    const list = getFiltered();
+
+    if(items.length === 0){
+      els.tableBody.innerHTML = `
+        <tr><td colspan="5">
+          <div class="empty-state">
+            <div class="glyph">RP · 000000</div>
+            <p>Nenhum item cadastrado ainda.</p>
+            <p class="sub">Clique em "Novo item" para registrar o primeiro bem do estoque.</p>
+          </div>
+        </td></tr>`;
+      return;
+    }
+
+    if(list.length === 0){
+      els.tableBody.innerHTML = `
+        <tr><td colspan="5">
+          <div class="empty-state">
+            <p>Nenhum item encontrado para este filtro.</p>
+            <p class="sub">Ajuste a busca ou o filtro de estado.</p>
+          </div>
+        </td></tr>`;
+      return;
+    }
+
+    els.tableBody.innerHTML = list
+      .slice()
+      .sort((a,b)=> a.rp.localeCompare(b.rp, 'pt-BR', {numeric:true}))
+      .map(it => `
+        <tr>
+          <td class="rp">${escapeHtml(it.rp)}</td>
+          <td>${escapeHtml(it.descricao)}</td>
+          <td class="qtd">${it.quantidade}</td>
+          <td><span class="tag ${it.estado}">${it.estado}</span></td>
+          <td class="acoes">
+            <button class="btn-edit-text" data-action="edit" data-rp="${escapeHtml(it.rp)}">Editar</button>
+            <button class="btn-danger-text" data-action="delete" data-rp="${escapeHtml(it.rp)}">Excluir</button>
+          </td>
+        </tr>
+      `).join('');
+  }
+
+  function getDashItems(){
+    const q = dashFilter.trim().toLowerCase();
+    if(!q) return items;
+    return items.filter(it=> it.rp.toLowerCase().includes(q) || it.descricao.toLowerCase().includes(q));
+  }
+
+  function updateDashFilterInfo(){
+    const q = dashFilter.trim();
+    if(!q){
+      els.dashClearBtn.style.display = 'none';
+      els.dashFilterInfo.style.display = 'none';
+      els.dashFilterInfo.textContent = '';
+      return;
+    }
+    const n = getDashItems().length;
+    els.dashClearBtn.style.display = '';
+    els.dashFilterInfo.style.display = '';
+    els.dashFilterInfo.textContent = `Filtrando por "${q}" — ${n} item(ns)`;
+  }
+
+  function renderStats(){
+    els.statTotalItens.textContent = items.length;
+    const totalQtd = items.reduce((sum,it)=> sum + (Number(it.quantidade) || 0), 0);
+    els.statTotalQtd.textContent = totalQtd;
+
+    const counts = {};
+    ESTADOS.forEach(e=> counts[e] = 0);
+    items.forEach(it=> { if(counts[it.estado] !== undefined) counts[it.estado]++; });
+
+    els.statBreakdown.innerHTML = ESTADOS
+      .filter(e=> counts[e] > 0)
+      .map(e=> `<span class="chip-mini">${e} · ${counts[e]}</span>`)
+      .join('') || '<span class="chip-mini">—</span>';
+  }
+
+  // ---------- Dashboard: agregação por item, sem depender de busca ----------
+  function renderDonutChart(qtdPorEstado, totalQtd){
+    const circ = 2 * Math.PI * 72;
+    const total = totalQtd;
+    let acc = 0;
+    const segs = ESTADOS.map(e=>{
+      const frac = total > 0 ? (qtdPorEstado[e] || 0) / total : 0;
+      const dash = frac * circ;
+      const s = { e, frac, dash, offset: -acc };
+      acc += dash;
+      return s;
+    });
+
+    let inner = '<circle cx="100" cy="100" r="72" fill="none" stroke="#EFEDE6" stroke-width="36"></circle>';
+    inner += segs
+      .filter(s=> s.frac > 0)
+      .map(s=> `
+        <circle cx="100" cy="100" r="72" fill="none" stroke="${ESTADO_COLORS[s.e]}" stroke-width="36"
+          stroke-dasharray="${s.dash} ${circ - s.dash}" stroke-dashoffset="${s.offset}"
+          transform="rotate(-90 100 100)"></circle>`)
+      .join('');
+    els.donutSvg.innerHTML = inner;
+    els.donutTotal.textContent = total;
+
+    els.donutLegend.innerHTML = ESTADOS.map(e=>{
+      const v = qtdPorEstado[e] || 0;
+      const pct = total > 0 ? (v / total * 100) : 0;
+      return `
+        <li>
+          <span class="dot" style="background:${ESTADO_COLORS[e]}"></span>
+          <span>${e}</span>
+          <span class="pct">${v > 0 ? pct.toFixed(0) + '%' : '—'}</span>
+          <span class="cnt">${v}</span>
+        </li>`;
+    }).join('');
+  }
+
+  function renderTopChart(grupos){
+    const tops = Object.values(grupos)
+      .map(g=>({
+        descricao: g.descricao,
+        totais: g.totais,
+        total: ESTADOS.reduce((s,e)=> s + g.totais[e], 0)
+      }))
+      .sort((a,b)=> b.total - a.total)
+      .slice(0,6);
+
+    els.topItemsChart.innerHTML = tops.length === 0
+      ? '<div class="empty-state" style="padding:20px 10px;"><p>Sem dados para exibir.</p><p class="sub">Cadastre itens na aba Estoque.</p></div>'
+      : tops.map(t=>{
+          const segs = ESTADOS
+            .filter(e=> t.totais[e] > 0)
+            .map(e=> `<span style="background:${ESTADO_COLORS[e]};width:${(t.totais[e]/t.total*100).toFixed(2)}%" title="${e}: ${t.totais[e]}"></span>`)
+            .join('');
+          return `
+            <div class="top-item">
+              <div class="lbl" title="${escapeHtml(t.descricao)}">${escapeHtml(t.descricao)}</div>
+              <div class="tot">${t.total} un.</div>
+              <div class="bar">${segs}</div>
+            </div>`;
+        }).join('');
+  }
+
+  function renderDashboard(){
+    // Cards de resumo por estado (contagem de itens, não de quantidade)
+    updateDashFilterInfo();
+    const data = getDashItems();
+    const totalItens = data.length;
+    const totalQtd = data.reduce((s,it)=> s + (Number(it.quantidade)||0), 0);
+    const qtdPorEstado = {};
+    ESTADOS.forEach(e=> qtdPorEstado[e] = 0);
+    data.forEach(it=> { qtdPorEstado[it.estado] = (qtdPorEstado[it.estado]||0) + (Number(it.quantidade)||0); });
+
+    let cardsHtml = `
+      <div class="dash-card">
+        <div class="num">${totalItens}</div>
+        <div class="label">Itens cadastrados</div>
+      </div>
+      <div class="dash-card">
+        <div class="num">${totalQtd}</div>
+        <div class="label">Quantidade total</div>
+      </div>
+    `;
+    ESTADOS.forEach(e=>{
+      cardsHtml += `
+        <div class="dash-card ${e}">
+          <div class="num">${qtdPorEstado[e]}</div>
+          <div class="label">Qtd. em estado "${e}"</div>
+        </div>`;
+    });
+    els.dashSummary.innerHTML = cardsHtml;
+
+    renderDonutChart(qtdPorEstado, totalQtd);
+
+    // Agrupamento por descrição do item (case-insensitive), somando quantidade por estado
+    if(data.length === 0){
+      els.topItemsChart.innerHTML = '<div class="empty-state" style="padding:20px 10px;"><p>Sem dados para exibir.</p><p class="sub">Ajuste a busca acima.</p></div>';
+      const emptyMsg = dashFilter.trim()
+        ? `<p>Nenhum item encontrado para "${escapeHtml(dashFilter.trim())}".</p><p class="sub">Ajuste a busca ou clique em "Limpar filtro".</p>`
+        : `<p>Nenhum item cadastrado ainda.</p><p class="sub">Cadastre itens na aba "Estoque" para ver o resumo aqui.</p>`;
+      els.dashboardBody.innerHTML = `
+        <tr><td colspan="7">
+          <div class="empty-state">${emptyMsg}</div>
+        </td></tr>`;
+      return;
+    }
+
+    const grupos = {};
+    data.forEach(it=>{
+      const chave = it.descricao.trim().toLowerCase();
+      if(!grupos[chave]){
+        grupos[chave] = { descricao: it.descricao.trim(), rps: [], totais: {} };
+        ESTADOS.forEach(e=> grupos[chave].totais[e] = 0);
+      }
+      grupos[chave].rps.push(it.rp);
+      grupos[chave].totais[it.estado] = (grupos[chave].totais[it.estado] || 0) + (Number(it.quantidade)||0);
+    });
+
+    renderTopChart(grupos);
+
+    const linhas = Object.values(grupos).sort((a,b)=> a.descricao.localeCompare(b.descricao, 'pt-BR'));
+
+    els.dashboardBody.innerHTML = linhas.map(g=>{
+      const total = ESTADOS.reduce((s,e)=> s + g.totais[e], 0);
+      const barSegments = ESTADOS
+        .filter(e=> g.totais[e] > 0)
+        .map(e=> `<span class="${e}" style="width:${(g.totais[e]/total*100).toFixed(2)}%" title="${e}: ${g.totais[e]}"></span>`)
+        .join('');
+      const cellsHtml = ESTADOS.map(e=>{
+        const v = g.totais[e];
+        return `<td class="state-count">${v > 0 ? v : '<span class="zero">–</span>'}</td>`;
+      }).join('');
+      return `
+        <tr>
+          <td class="item-desc-cell">
+            <div class="item-desc">${escapeHtml(g.descricao)}</div>
+            <div class="item-rps">${g.rps.length} RP${g.rps.length>1?'s':''}: ${g.rps.map(escapeHtml).join(', ')}</div>
+            <div class="dist-bar">${barSegments}</div>
+          </td>
+          ${cellsHtml}
+          <td class="item-total">${total}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  function switchTab(tab){
+    const isEstoque = tab === 'estoque';
+    els.tabEstoqueBtn.classList.toggle('active', isEstoque);
+    els.tabDashboardBtn.classList.toggle('active', !isEstoque);
+    els.panelEstoque.classList.toggle('active', isEstoque);
+    els.panelDashboard.classList.toggle('active', !isEstoque);
+  }
+
+  function openModal(rpToEdit){
+    clearErrors();
+    if(rpToEdit){
+      const it = items.find(i=> i.rp === rpToEdit);
+      if(!it) return;
+      editingRp = rpToEdit;
+      els.modalTitle.textContent = 'Editar item';
+      els.inputRp.value = it.rp;
+      els.inputRp.disabled = true;
+      els.inputDescricao.value = it.descricao;
+      els.inputQtd.value = it.quantidade;
+      els.inputEstado.value = it.estado;
+    }else{
+      editingRp = null;
+      els.modalTitle.textContent = 'Novo item';
+      els.inputRp.disabled = false;
+      els.inputRp.value = '';
+      els.inputDescricao.value = '';
+      els.inputQtd.value = '';
+      els.inputEstado.value = 'Bom';
+    }
+    els.overlay.classList.add('open');
+    setTimeout(()=> (rpToEdit ? els.inputDescricao : els.inputRp).focus(), 30);
+  }
+
+  function closeModal(){
+    els.overlay.classList.remove('open');
+  }
+
+  function clearErrors(){
+    [els.errorRp, els.errorDescricao, els.errorQtd].forEach(e=> e.classList.remove('show'));
+    [els.inputRp, els.inputDescricao, els.inputQtd].forEach(e=> e.style.borderColor = '');
+  }
+
+  function validate(){
+    clearErrors();
+    let ok = true;
+    const rp = els.inputRp.value.trim();
+    const descricao = els.inputDescricao.value.trim();
+    const qtd = els.inputQtd.value;
+
+    if(!rp){
+      els.errorRp.classList.add('show'); els.inputRp.style.borderColor = 'var(--ruim)'; ok = false;
+    }else if(!editingRp && items.some(i=> i.rp === rp)){
+      els.errorRp.textContent = 'Já existe um item com este Nº de RP.';
+      els.errorRp.classList.add('show'); els.inputRp.style.borderColor = 'var(--ruim)'; ok = false;
+    }
+
+    if(!descricao){
+      els.errorDescricao.classList.add('show'); els.inputDescricao.style.borderColor = 'var(--ruim)'; ok = false;
+    }
+
+    if(qtd === '' || isNaN(qtd) || Number(qtd) < 0){
+      els.errorQtd.classList.add('show'); els.inputQtd.style.borderColor = 'var(--ruim)'; ok = false;
+    }
+
+    return ok;
+  }
+
+  async function saveItem(){
+    if(!validate()) return;
+
+    const rp = els.inputRp.value.trim();
+    const descricao = els.inputDescricao.value.trim();
+    const quantidade = Number(els.inputQtd.value);
+    const estado = els.inputEstado.value;
+
+    if(editingRp){
+      const idx = items.findIndex(i=> i.rp === editingRp);
+      if(idx > -1){ items[idx] = { rp: editingRp, descricao, quantidade, estado }; }
+      showToast('Item atualizado.');
+    }else{
+      items.push({ rp, descricao, quantidade, estado });
+      showToast('Item cadastrado.');
+    }
+
+    await persist();
+    closeModal();
+    render();
+  }
+
+  async function deleteItem(rp){
+    const it = items.find(i=> i.rp === rp);
+    if(!it) return;
+    const confirmed = confirm(`Excluir o item RP ${rp} — "${it.descricao}"?`);
+    if(!confirmed) return;
+    items = items.filter(i=> i.rp !== rp);
+    await persist();
+    render();
+    showToast('Item excluído.');
+  }
+
+  function exportCsv(){
+    if(items.length === 0){ showToast('Não há itens para exportar.'); return; }
+    const header = ['Nº RP','Descrição','Quantidade','Estado de conservação'];
+    const rows = items
+      .slice()
+      .sort((a,b)=> a.rp.localeCompare(b.rp, 'pt-BR', {numeric:true}))
+      .map(it => [it.rp, it.descricao, it.quantidade, it.estado]);
+
+    const csv = [header, ...rows]
+      .map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(';'))
+      .join('\r\n');
+
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `controle-patrimonio-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // Events
+  els.tabEstoqueBtn.addEventListener('click', ()=> switchTab('estoque'));
+  els.tabDashboardBtn.addEventListener('click', ()=> switchTab('dashboard'));
+  els.newItemBtn.addEventListener('click', ()=> openModal(null));
+  els.closeModalBtn.addEventListener('click', closeModal);
+  els.cancelBtn.addEventListener('click', closeModal);
+  els.overlay.addEventListener('click', (e)=> { if(e.target === els.overlay) closeModal(); });
+  els.saveBtn.addEventListener('click', saveItem);
+  els.exportBtn.addEventListener('click', exportCsv);
+  els.homeBtn.addEventListener('click', ()=>{
+    const host = (window.location.hostname || '').toLowerCase();
+    const base = host.includes('vercel.app') ? '/frontend/' : '';
+    window.location.href = base + 'home.html.html';
+  });
+  els.searchInput.addEventListener('input', render);
+  els.filterEstado.addEventListener('change', render);
+  els.dashSearchInput.addEventListener('input', ()=>{
+    dashFilter = els.dashSearchInput.value;
+    renderDashboard();
+  });
+  els.dashClearBtn.addEventListener('click', ()=>{
+    dashFilter = '';
+    els.dashSearchInput.value = '';
+    renderDashboard();
+  });
+
+  els.tableBody.addEventListener('click', (e)=>{
+    const btn = e.target.closest('button[data-action]');
+    if(!btn) return;
+    const rp = btn.getAttribute('data-rp');
+    if(btn.dataset.action === 'edit') openModal(rp);
+    if(btn.dataset.action === 'delete') deleteItem(rp);
+  });
+
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape' && els.overlay.classList.contains('open')) closeModal();
+    if(e.key === 'Enter' && els.overlay.classList.contains('open') && document.activeElement !== els.inputDescricao) {
+      // permite Enter para salvar quando não estiver quebrando fluxo de outros campos de texto multiline (não há)
+    }
+  });
+
+  loadItems();
+})();
+</script>
+
+</body>
+</html>
