@@ -330,6 +330,7 @@
             <li id="usuarioNavTab"><a href="cadastrouser.html.html" onclick="openUserRegistration(event)"><i data-lucide="user-plus" style="width: 15px;"></i> Usuário</a></li>
             <li id="painelNavTab"><a href="painel.html.html" onclick="openPainelPrincipal(event)"><i data-lucide="monitor" style="width: 15px;"></i> Painel</a></li>
             <li id="patrimonioNavTab"><a href="patrimonio.html"><i data-lucide="archive" style="width: 15px;"></i> CONTROLE DE PATRIMONIO</a></li>
+            <li id="gerenciadorNavTab" style="display:none;"><a href="gerenciadordeusuario.html"><i data-lucide="users" style="width: 15px;"></i> GERENCIADOR DE USUARIO</a></li>
             <li id="userNavTab" style="display:none;"><a href="#developerUsersPanel"><i data-lucide="users" style="width: 15px;"></i> Usuários</a></li>
             <li id="cadastroRapidoNavTab" style="display:none;">
                 <a href="#" onclick="abrirCadastroRapido(event)">
@@ -504,6 +505,8 @@
             if (isAdmin) {
                 const tabEl = document.getElementById('cadastroRapidoNavTab');
                 if (tabEl) tabEl.style.display = 'block';
+                const gerenciadorTabEl = document.getElementById('gerenciadorNavTab');
+                if (gerenciadorTabEl) gerenciadorTabEl.style.display = 'block';
             }
         })();
 
