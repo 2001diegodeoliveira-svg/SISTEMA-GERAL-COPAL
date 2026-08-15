@@ -309,7 +309,11 @@
     <h1>Gerenciador de Usuários</h1>
     <p>Usuários cadastrados no sistema — dados reais do banco</p>
   </div>
-  <div class="live-badge"><span class="dot"></span> ao vivo</div>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <div class="live-badge"><span class="dot"></span> ao vivo</div>
+    <button class="btn" style="padding:8px 16px; font-size:12px;" onclick="window.location.href=resolveFrontendPath('cadastrouser.html.html');">CADASTRO DE USUÁRIO</button>
+    <button class="btn" style="padding:8px 16px; font-size:12px;" onclick="window.location.href=resolveFrontendPath('home.html.html');">HOME</button>
+  </div>
 </header>
 
 <div id="accessDenied" class="access-denied">
