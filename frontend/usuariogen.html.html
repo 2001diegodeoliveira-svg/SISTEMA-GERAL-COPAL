@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerenciador de Usuários</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0d1210;
+    --panel: #131a19;
+    --panel-2: #1a2321;
+    --line: #26312e;
+    --text: #e9efe9;
+    --text-dim: #8a9a92;
+    --accent: #5ee6a8;
+    --accent-dim: #1f4436;
+    --warn: #e6b95e;
+    --warn-dim: #4a3c1c;
+    --danger: #e66b6b;
+    --danger-dim: #4a2020;
+    --blue: #7aa8e6;
+    --blue-dim: #1f3555;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    padding: 32px;
+    min-height:100vh;
+  }
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    margin-bottom:28px;
+    flex-wrap:wrap;
+    gap:16px;
+  }
+  header h1{
+    font-size:22px;
+    font-weight:600;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    margin:0;
+    color:var(--text-dim);
+    font-size:13px;
+  }
+  .live-badge{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--accent);
+    border:1px solid var(--accent-dim);
+    background: rgba(94,230,168,0.06);
+    padding:6px 12px;
+    border-radius:20px;
+  }
+  .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--accent);
+    animation: pulse 1.6s infinite ease-in-out;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:1; box-shadow:0 0 0 0 rgba(94,230,168,0.5);}
+    50%{opacity:0.4;}
+  }
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    margin-bottom:24px;
+  }
+  .stat{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px 18px;
+  }
+  .stat .label{
+    font-size:12px;
+    color:var(--text-dim);
+    margin-bottom:8px;
+  }
+  .stat .value{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:26px;
+    font-weight:500;
+  }
+  .stat .value.accent{color:var(--accent);}
+  .stat .value.warn{color:var(--warn);}
+  .stat .value.danger{color:var(--danger);}
+
+  .layout{
+    display:grid;
+    grid-template-columns: 2.2fr 1fr;
+    gap:20px;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  .card-head{
+    padding:14px 18px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .card-head h2{
+    font-size:14px;
+    font-weight:500;
+    margin:0;
+  }
+  .card-head .hint{
+    font-size:11px;
+    color:var(--text-dim);
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  .filters{
+    display:flex;
+    gap:8px;
+    padding:10px 18px;
+    border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  select, input[type="text"]{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'Space Grotesk', sans-serif;
+    font-size:12px;
+    padding:6px 10px;
+    border-radius:6px;
+  }
+  input[type="text"]{flex:1; min-width:180px;}
+
+  #feed{
+    max-height:560px;
+    overflow-y:auto;
+  }
+  .row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 18px;
+    border-bottom:1px solid var(--line);
+    animation: slidein 0.4s ease;
+  }
+  @keyframes slidein{
+    from{opacity:0; transform:translateY(-6px); background:rgba(94,230,168,0.08);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  .avatar{
+    width:30px;height:30px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    font-weight:500;
+    flex-shrink:0;
+  }
+  .row-body{flex:1; min-width:0;}
+  .row-body .main{
+    font-size:13px;
+    margin:0;
+  }
+  .row-body .main .doc{
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--accent);
+  }
+  .row-body .meta{
+    font-size:11px;
+    color:var(--text-dim);
+    margin:3px 0 0;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .tag{
+    font-size:10px;
+    font-family:'IBM Plex Mono', monospace;
+    padding:3px 8px;
+    border-radius:20px;
+    flex-shrink:0;
+  }
+  .tag.criado{background:var(--accent-dim); color:var(--accent);}
+  .tag.editado{background:var(--blue-dim); color:var(--blue);}
+  .tag.excluido{background:var(--danger-dim); color:var(--danger);}
+  .tag.admin{background:var(--danger-dim); color:var(--danger);}
+  .tag.developer{background:#2a2a4a; color:#c4b5fd;}
+
+  .side-list{padding:6px 0;}
+  .side-item{
+    display:flex;
+    justify-content:space-between;
+    padding:10px 18px;
+    border-bottom:1px solid var(--line);
+    font-size:12px;
+  }
+  .side-item:last-child{border-bottom:none;}
+  .side-item .name{color:var(--text);}
+  .side-item .count{
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--text-dim);
+  }
+  .bar-track{
+    height:4px;
+    background:var(--panel-2);
+    border-radius:2px;
+    margin-top:6px;
+    overflow:hidden;
+  }
+  .bar-fill{
+    height:100%;
+    background:var(--accent);
+    border-radius:2px;
+    transition: width 0.6s ease;
+  }
+
+  #feed::-webkit-scrollbar{width:8px;}
+  #feed::-webkit-scrollbar-thumb{background:var(--line); border-radius:4px;}
+
+  .empty{
+    text-align:center;
+    color:var(--text-dim);
+    font-size:12px;
+    font-family:'IBM Plex Mono', monospace;
+    padding:40px 18px;
+  }
+
+  .btn{
+    border:1px solid var(--line);
+    background:var(--panel-2);
+    color:var(--text);
+    font-family:'Space Grotesk', sans-serif;
+    font-size:11px;
+    padding:5px 10px;
+    border-radius:6px;
+    cursor:pointer;
+    transition: all 0.2s;
+  }
+  .btn:hover{border-color:var(--accent); color:var(--accent);}
+  .btn.danger:hover{border-color:var(--danger); color:var(--danger);}
+
+  .access-denied{ display:none; text-align:center; padding:60px 20px; }
+  .access-denied.active{ display:block; }
+  .access-denied h2{ color:var(--danger); font-size:20px; margin-bottom:8px; }
+  .access-denied p{ color:var(--text-dim); font-size:13px; }
+
+  .modal-overlay{
+    position:fixed;
+    top:0;left:0;right:0;bottom:0;
+    background:rgba(6,10,9,0.75);
+    backdrop-filter:blur(4px);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:1000;
+    padding:20px;
+  }
+  .modal-overlay.active{display:flex;}
+  .modal{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    width:100%;
+    max-width:560px;
+    padding:22px;
+  }
+  .modal h3{font-size:15px; margin:0 0 6px;}
+  .modal p{font-size:12px; color:var(--text-dim); margin:0 0 16px;}
+  .perms{display:grid; grid-template-columns:repeat(2,1fr); gap:10px;}
+  .perm-item{
+    display:flex; align-items:center; gap:8px;
+    background:var(--panel-2); border:1px solid var(--line);
+    border-radius:6px; padding:10px 12px; font-size:12px;
+  }
+  .perm-item input{accent-color:var(--accent);}
+  .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:18px;}
+
+  footer{
+    margin-top:20px;
+    font-size:11px;
+    color:var(--text-dim);
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  @media(max-width:800px){
+    .layout{grid-template-columns:1fr;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .perms{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Gerenciador de Usuários</h1>
+    <p>Usuários cadastrados no sistema — dados reais do banco</p>
+  </div>
+  <div class="live-badge"><span class="dot"></span> ao vivo</div>
+</header>
+
+<div id="accessDenied" class="access-denied">
+  <h2>⚠ Acesso restrito</h2>
+  <p>Esta área é exclusiva para administradores do sistema.</p>
+  <button class="btn" style="margin-top:16px;" onclick="window.location.href=resolveFrontendPath('home.html.html');">Voltar para a Home</button>
+</div>
+
+<div id="gerenciadorContent" style="display:none;">
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Usuários cadastrados</div>
+      <div class="value accent" id="stat-total">0</div>
+    </div>
+    <div class="stat">
+      <div class="label">Ativos</div>
+      <div class="value" id="stat-ativos">0</div>
+    </div>
+    <div class="stat">
+      <div class="label">Administradores</div>
+      <div class="value warn" id="stat-admins">0</div>
+    </div>
+    <div class="stat">
+      <div class="label">Inativos / Bloqueados</div>
+      <div class="value danger" id="stat-inativos">0</div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="card">
+      <div class="card-head">
+        <h2>Usuários cadastrados</h2>
+        <span class="hint">via /auth/users</span>
+      </div>
+      <div class="filters">
+        <select id="filter-status">
+          <option value="">Todos os status</option>
+          <option value="ativo">Ativo</option>
+          <option value="inativo">Inativo</option>
+          <option value="pendente">Pendente</option>
+          <option value="aprovado">Aprovado</option>
+        </select>
+        <select id="filter-role">
+          <option value="">Todos os papéis</option>
+          <option value="admin">Administrador</option>
+          <option value="developer">Desenvolvedor</option>
+          <option value="user">Usuário</option>
+        </select>
+        <input type="text" id="filter-doc" placeholder="Buscar por nome, e-mail, matrícula ou unidade...">
+      </div>
+      <div id="feed"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Por papel</h2>
+      </div>
+      <div class="side-list" id="role-ranking"></div>
+      <div class="card-head" style="border-top:1px solid var(--line);">
+        <h2>Por unidade</h2>
+      </div>
+      <div class="side-list" id="unit-ranking"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="permModal">
+  <div class="modal">
+    <h3>Editar Permissões de Acesso</h3>
+    <p id="permModalUserName">Ajuste os módulos liberados para o usuário selecionado.</p>
+    <div class="perms">
+      <label class="perm-item"><input type="checkbox" id="access-perm-processos"> Processos</label>
+      <label class="perm-item"><input type="checkbox" id="access-perm-unidade"> Unidade</label>
+      <label class="perm-item"><input type="checkbox" id="access-perm-cadastro-inicial"> Cadastro Inicial</label>
+      <label class="perm-item"><input type="checkbox" id="access-perm-aditivos"> Aditivos &amp; Atualizações</label>
+      <label class="perm-item"><input type="checkbox" id="access-perm-empenho"> Empenho</label>
+      <label class="perm-item"><input type="checkbox" id="access-perm-overview"> Visão Geral</label>
+      <label class="perm-item"><input type="checkbox" id="access-perm-questionario-docs"> Questionário &amp; Docs</label>
+      <label class="perm-item"><input type="checkbox" id="access-perm-execucao-pagamento"> Execução &amp; Pagamento</label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closePermModal()">Fechar</button>
+      <button class="btn" onclick="saveAccessPermissions()">Salvar Alterações</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Conectado ao banco de dados do Sistema COPAL — dados reais em tempo real.
+</footer>
+
+<script src="api-client.js"></script>
+
+<script>
+function resolveFrontendPath(relativePath) {
+  const normalized = String(relativePath || '').replace(/^\.?\/?/, '');
+  if ((window.location.hostname || '').toLowerCase().includes('vercel.app')) {
+    return `/frontend/${normalized}`;
+  }
+  return normalized;
+}
+
+const DEFAULT_REQUEST_PERMISSIONS = {
+  processos: true,
+  unidade: true,
+  cadastroInicial: true,
+  aditivosAtualizacoes: true,
+  empenho: false,
+  visaoGeral: false,
+  questionarioDocs: false,
+  execucaoPagamento: false
+};
+
+const ACCESS_PERMISSION_MAP = {
+  processos: 'access-perm-processos',
+  unidade: 'access-perm-unidade',
+  cadastroInicial: 'access-perm-cadastro-inicial',
+  aditivosAtualizacoes: 'access-perm-aditivos',
+  empenho: 'access-perm-empenho',
+  visaoGeral: 'access-perm-overview',
+  questionarioDocs: 'access-perm-questionario-docs',
+  execucaoPagamento: 'access-perm-execucao-pagamento'
+};
+
+const PERMISSION_LABELS = {
+  processos: 'Processos',
+  unidade: 'Unidade',
+  cadastroInicial: 'Cadastro Inicial',
+  aditivosAtualizacoes: 'Aditivos & Atualizações',
+  empenho: 'Empenho',
+  visaoGeral: 'Visão Geral',
+  questionarioDocs: 'Questionário & Docs',
+  execucaoPagamento: 'Execução & Pagamento'
+};
+
+let registeredUsers = [];
+let accessPermissionTargetUserId = null;
+let authToken = localStorage.getItem('accessToken') || '';
+
+const feedEl = document.getElementById('feed');
+const filterStatus = document.getElementById('filter-status');
+const filterRole = document.getElementById('filter-role');
+const filterDoc = document.getElementById('filter-doc');
+
+function getAuthHeaders(isJson = true) {
+  const headers = {};
+  if (isJson) headers['Content-Type'] = 'application/json';
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+  return headers;
+}
+
+function safeParsePermissions(value) {
+  if (!value) return {};
+  if (typeof value === 'object') return value;
+  try { return JSON.parse(value); } catch (e) { return {}; }
+}
+
+function normalizeApprovalPermissions(source) {
+  const parsed = safeParsePermissions(source);
+  const result = {};
+  Object.keys(DEFAULT_REQUEST_PERMISSIONS).forEach((key) => {
+    result[key] = !!(parsed[key] ?? DEFAULT_REQUEST_PERMISSIONS[key]);
+  });
+  return result;
+}
+
+function getPermissionsSummaryText(permissions) {
+  const enabled = Object.entries(permissions || {})
+    .filter(([, active]) => !!active)
+    .map(([key]) => PERMISSION_LABELS[key] || key);
+  return enabled.length ? `Liberado (${enabled.length}): ${enabled.join(', ')}` : 'Nenhum módulo liberado';
+}
+
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function initials(name) {
+  return String(name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('') || '?';
+}
+
+function avatarColor(seed) {
+  const colors = ['#5ee6a8', '#e6b95e', '#7aa8e6', '#e67ac4', '#c4e67a', '#e6a07a', '#7ae6d9'];
+  const index = Math.abs(String(seed || '').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % colors.length);
+  return colors[index];
+}
+
+function getStatusBadgeClass(statusValue) {
+  const normalized = String(statusValue || '').toLowerCase();
+  if (normalized === 'aprovado' || normalized === 'ativo') return 'tag criado';
+  if (normalized === 'rejeitado' || normalized === 'inativo' || normalized === 'bloqueado') return 'tag excluido';
+  return 'tag editado';
+}
+
+function renderRoleRanking() {
+  const counts = {};
+  registeredUsers.forEach((u) => {
+    const role = String(u.role || 'user').toLowerCase();
+    counts[role] = (counts[role] || 0) + 1;
+  });
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const max = Math.max(1, ...entries.map(e => e[1]));
+  const el = document.getElementById('role-ranking');
+  el.innerHTML = entries.length
+    ? entries.map(([role, count]) => `
+        <div class="side-item">
+          <div style="flex:1;">
+            <div style="display:flex; justify-content:space-between;">
+              <span class="name" style="text-transform:capitalize;">${escapeHtml(role)}</span>
+              <span class="count">${count}</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:${(count/max*100).toFixed(0)}%;"></div></div>
+          </div>
+        </div>`).join('')
+    : '<div class="empty">Sem dados</div>';
+}
+
+function renderUnitRanking() {
+  const counts = {};
+  registeredUsers.forEach((u) => {
+    const unit = String(u.unidade || 'Não informado').trim() || 'Não informado';
+    counts[unit] = (counts[unit] || 0) + 1;
+  });
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const max = Math.max(1, ...entries.map(e => e[1]));
+  const el = document.getElementById('unit-ranking');
+  el.innerHTML = entries.length
+    ? entries.map(([unit, count]) => `
+        <div class="side-item">
+          <div style="flex:1;">
+            <div style="display:flex; justify-content:space-between;">
+              <span class="name">${escapeHtml(unit)}</span>
+              <span class="count">${count}</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:${(count/max*100).toFixed(0)}%;"></div></div>
+          </div>
+        </div>`).join('')
+    : '<div class="empty">Sem dados</div>';
+}
+
+function updateStats() {
+  const total = registeredUsers.length;
+  const ativos = registeredUsers.filter((u) => String(u.account_status || u.status || '').toLowerCase().includes('ativo')).length;
+  const admins = registeredUsers.filter((u) => ['admin', 'developer'].includes(String(u.role || '').toLowerCase())).length;
+  const inativos = total - ativos;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-ativos').textContent = ativos;
+  document.getElementById('stat-admins').textContent = admins;
+  document.getElementById('stat-inativos').textContent = inativos;
+}
+
+function renderUsers() {
+  const searchTerm = String(filterDoc.value || '').trim().toLowerCase();
+  const statusFilter = filterStatus.value.toLowerCase();
+  const roleFilter = filterRole.value.toLowerCase();
+
+  const filtered = registeredUsers.filter((u) => {
+    const role = String(u.role || 'user').toLowerCase();
+    const status = String(u.account_status || u.status || '').toLowerCase();
+    const haystack = `${u.name || ''} ${u.email || ''} ${u.matricula || ''} ${u.unidade || ''} ${u.perfil || ''}`.toLowerCase();
+    if (searchTerm && !haystack.includes(searchTerm)) return false;
+    if (statusFilter && !status.includes(statusFilter)) return false;
+    if (roleFilter && role !== roleFilter) return false;
+    return true;
+  });
+
+  if (!filtered.length) {
+    feedEl.innerHTML = '<div class="empty">Nenhum usuário encontrado.</div>';
+    return;
+  }
+
+  feedEl.innerHTML = filtered.map((u) => {
+    const statusLabel = u.account_status || u.status || 'Não informado';
+    const userRole = String(u.role || 'user').toLowerCase();
+    const canRevoke = userRole !== 'admin' && userRole !== 'developer';
+    const roleLabel = u.role || 'user';
+    const roleTagClass = userRole === 'admin' ? 'tag admin' : (userRole === 'developer' ? 'tag developer' : 'tag editado');
+    const userPermissions = normalizeApprovalPermissions(u.permissions || u.permissions_json || {});
+    const permissionsSummary = getPermissionsSummaryText(userPermissions);
+
+    const actions = canRevoke
+      ? `<button class="btn" onclick="openPermModal(${u.id})">Permissões</button>
+         <button class="btn danger" onclick="revokeUserAccess(${u.id}, '${escapeHtml(String(u.name || '')).replace(/'/g, "\\'")}')">Excluir Acesso</button>`
+      : '<span style="color:#8a9a92; font-size:11px; font-family:\'IBM Plex Mono\',monospace;">Protegido</span>';
+
+    return `
+      <div class="row">
+        <div class="avatar" style="background:${avatarColor(u.email || u.id)}22; color:${avatarColor(u.email || u.id)};">${initials(u.name)}</div>
+        <div class="row-body">
+          <p class="main"><strong>${escapeHtml(u.name || '-')}</strong> <span class="doc">${escapeHtml(u.email || '-')}</span></p>
+          <p class="meta">${escapeHtml(u.matricula || '-')} · ${escapeHtml(u.unidade || '-')} · ${escapeHtml(u.perfil || '-')}</p>
+          <p class="meta" style="color:#7d8f85;">${escapeHtml(permissionsSummary)}</p>
+        </div>
+        <span class="${roleTagClass}">${escapeHtml(roleLabel)}</span>
+        <span class="${getStatusBadgeClass(statusLabel)}">${escapeHtml(statusLabel)}</span>
+        <div style="display:flex; gap:6px; flex-shrink:0;">${actions}</div>
+      </div>`;
+  }).join('');
+}
+
+async function fetchRegisteredUsers() {
+  if (!authToken) { registeredUsers = []; renderUsers(); return; }
+  try {
+    const res = await fetch('/auth/users', { headers: getAuthHeaders(false) });
+    const data = await res.json();
+    registeredUsers = res.ok ? (data.users || []) : [];
+  } catch (error) {
+    console.error(error);
+    registeredUsers = [];
+  }
+  updateStats();
+  renderRoleRanking();
+  renderUnitRanking();
+  renderUsers();
+}
+
+async function verifyAdminAccess() {
+  const deniedEl = document.getElementById('accessDenied');
+  const contentEl = document.getElementById('gerenciadorContent');
+
+  if (!authToken) { deniedEl.classList.add('active'); return; }
+
+  try {
+    const res = await fetch('/auth/me', { headers: getAuthHeaders(false) });
+    if (!res.ok) {
+      authToken = '';
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('userRole');
+      deniedEl.classList.add('active');
+      return;
+    }
+    const data = await res.json();
+    const role = String(data.user?.role || 'user').toLowerCase();
+    localStorage.setItem('userRole', role);
+
+    if (role === 'admin' || role === 'developer') {
+      deniedEl.classList.remove('active');
+      contentEl.style.display = 'block';
+      await fetchRegisteredUsers();
+    } else {
+      deniedEl.classList.add('active');
+    }
+  } catch (error) {
+    console.error('Erro na verificação de acesso:', error);
+    authToken = '';
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('userRole');
+    deniedEl.classList.add('active');
+  }
+}
+
+function getRegisteredUserById(id) {
+  return registeredUsers.find((user) => Number(user.id) === Number(id)) || null;
+}
+
+function openPermModal(id) {
+  const user = getRegisteredUserById(id);
+  if (!user) return;
+  accessPermissionTargetUserId = Number(id);
+  const permissions = normalizeApprovalPermissions(user.permissions || user.permissions_json || {});
+  Object.entries(ACCESS_PERMISSION_MAP).forEach(([key, inputId]) => {
+    const input = document.getElementById(inputId);
+    if (input) input.checked = !!permissions[key];
+  });
+  const nameEl = document.getElementById('permModalUserName');
+  if (nameEl) nameEl.textContent = `Ajuste os módulos liberados para: ${user.name || user.email || 'Usuário selecionado'}.`;
+  document.getElementById('permModal').classList.add('active');
+}
+
+function closePermModal() {
+  accessPermissionTargetUserId = null;
+  document.getElementById('permModal').classList.remove('active');
+}
+
+async function saveAccessPermissions() {
+  if (!accessPermissionTargetUserId) {
+    alert('Selecione um usuário antes de salvar permissões.');
+    return;
+  }
+  const permissions = {};
+  Object.entries(ACCESS_PERMISSION_MAP).forEach(([key, inputId]) => {
+    const input = document.getElementById(inputId);
+    permissions[key] = !!(input && input.checked);
+  });
+  try {
+    const res = await fetch(`/auth/users/${accessPermissionTargetUserId}/permissions`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ permissions, canViewOverview: !!permissions.visaoGeral })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert(data.message || 'Permissões atualizadas com sucesso.');
+      closePermModal();
+      await fetchRegisteredUsers();
+    } else {
+      alert(data.message || 'Erro ao atualizar permissões do usuário.');
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Erro de conexão ao servidor.');
+  }
+}
+
+async function revokeUserAccess(id, name) {
+  if (!confirm(`Deseja remover o acesso do usuário ${name || 'selecionado'}?`)) return;
+  try {
+    const res = await fetch(`/auth/users/${id}/revoke-access`, {
+      method: 'PUT',
+      headers: getAuthHeaders()
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert(data.message || 'Acesso removido com sucesso.');
+      await fetchRegisteredUsers();
+    } else {
+      alert(data.message || 'Erro ao remover acesso do usuário.');
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Erro de conexão ao servidor.');
+  }
+}
+
+[filterStatus, filterRole, filterDoc].forEach((el) => {
+  el.addEventListener('input', renderUsers);
+});
+
+verifyAdminAccess();
+</script>
+
+</body>
+</html>
