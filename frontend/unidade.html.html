@@ -1648,6 +1648,9 @@
         const OFFLINE_UNIT_USERS_KEY = 'COPAL_OFFLINE_UNIT_USERS';
         const OFFLINE_CONTRACTS_KEY = 'COPAL_OFFLINE_CONTRACTS_V2';
 
+        // Limpeza automática de caches legados (antigos localStorage)
+        ['COPAL_OFFLINE_UNITS', 'COPAL_OFFLINE_UNIT_USERS', 'COPAL_OFFLINE_CONTRACTS'].forEach((key) => localStorage.removeItem(key));
+
         function loadOfflineUnits() {
             try {
                 const data = JSON.parse(localStorage.getItem(OFFLINE_UNITS_KEY) || '[]');

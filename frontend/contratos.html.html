@@ -4392,7 +4392,9 @@
 
         // ABA UNIDADES
         async function fetchAllContracts() {
-            hydrateContractsCache();
+        // Limpeza automática de caches legados de contratos (antigos localStorage)
+        ['sgc_contracts_cache_v2'].forEach((key) => localStorage.removeItem(key));
+        hydrateContractsCache();
             try {
                 const data = await apiFetchJson('/api/contracts');
                 if (Array.isArray(data.contracts)) {

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Limpar Cache do Sistema</title>
+<style>
+  :root{ --primary:#1B3A5C; --accent:#2E6F95; --ink:#1B1F23; --line:#DAD7CF; --bg:#F5F4F0; }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; padding:40px 16px;
+    background:var(--bg); color:var(--ink);
+    font-family:'Segoe UI', system-ui, sans-serif;
+    display:flex; align-items:flex-start; justify-content:center;
+    min-height:100vh;
+  }
+  .card{
+    background:#fff; max-width:520px; width:100%;
+    border:1px solid var(--line); border-radius:6px;
+    padding:28px;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+  }
+  h1{ font-size:18px; margin:0 0 6px; color:var(--primary); }
+  p{ font-size:13.5px; line-height:1.5; color:#4B5560; margin:0 0 18px; }
+  ul{ font-size:12.5px; color:#6b7280; margin:0 0 20px; padding-left:18px; }
+  li{ margin-bottom:4px; font-family:ui-monospace, monospace; }
+  .btn{
+    display:inline-block; border:none; cursor:pointer;
+    font-family:inherit; font-size:14px; font-weight:600;
+    padding:11px 18px; border-radius:4px;
+  }
+  .btn-primary{ background:var(--primary); color:#fff; margin-right:8px; }
+  .btn-primary:hover{ filter:brightness(1.15); }
+  .btn-ghost{ background:#EFEDE6; color:var(--ink); }
+  .btn-ghost:hover{ background:#e3e0d6; }
+  .status{ margin-top:16px; font-size:13px; padding:10px 14px; border-radius:4px; display:none; }
+  .status.ok{ display:block; background:#e7f3ec; color:#2F7D4F; border:1px solid #bfe3cd; }
+  .status.err{ display:block; background:#fdecec; color:#C1502E; border:1px solid #f2c4c4; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Limpar cache do sistema</h1>
+    <p>Clique abaixo para apagar do navegador os dados armazenados em cache do Sistema Geral COPAL (contratos, unidades e caches locais). Os dados persistidos no banco de dados não são afetados.</p>
+    <ul>
+      <li>sgc_contracts_cache_v2</li>
+      <li>sgc_contracts_cache_v3</li>
+      <li>COPAL_OFFLINE_CONTRACTS</li>
+      <li>COPAL_OFFLINE_CONTRACTS_V2</li>
+      <li>COPAL_OFFLINE_UNITS</li>
+      <li>COPAL_OFFLINE_UNIT_USERS</li>
+      <li>API_BASE_URL</li>
+    </ul>
+    <button class="btn btn-primary" id="limparBtn">Limpar caches agora</button>
+    <button class="btn btn-ghost" id="voltarBtn">Voltar para a home</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <script>
+    const KEYS = [
+      'sgc_contracts_cache_v2',
+      'sgc_contracts_cache_v3',
+      'COPAL_OFFLINE_CONTRACTS',
+      'COPAL_OFFLINE_CONTRACTS_V2',
+      'COPAL_OFFLINE_UNITS',
+      'COPAL_OFFLINE_UNIT_USERS',
+      'API_BASE_URL',
+    ];
+
+    function resolveFrontendPath(relativePath) {
+      const normalizedPath = String(relativePath || '').replace(/^\.?\/?/, '');
+      if ((window.location.hostname || '').toLowerCase().includes('vercel.app')) {
+        return `/frontend/${normalizedPath}`;
+      }
+      return normalizedPath;
+    }
+
+    document.getElementById('limparBtn').addEventListener('click', () => {
+      let removed = 0;
+      try {
+        KEYS.forEach((key) => {
+          if (localStorage.getItem(key) !== null) {
+            localStorage.removeItem(key);
+            removed++;
+          }
+        });
+        sessionStorage.removeItem('contractsDashboardTarget');
+        sessionStorage.removeItem('contractsAuthBootstrap');
+        const status = document.getElementById('status');
+        status.className = 'status ok';
+        status.textContent = `Cache limpo com sucesso (${removed} item(ns) removidos). Recarregue a página do sistema.`;
+      } catch (error) {
+        const status = document.getElementById('status');
+        status.className = 'status err';
+        status.textContent = 'Erro ao limpar o cache: ' + error.message;
+      }
+    });
+
+    document.getElementById('voltarBtn').addEventListener('click', () => {
+      window.location.href = resolveFrontendPath('home.html.html');
+    });
+  </script>
+</body>
+</html>
