@@ -1490,18 +1490,19 @@ app.get('/api/kpis', async (req, res) => {
     }
 
     const contratosComDados = Math.max(1, totalContratos);
-    const conformidade = Math.min(99.9, Math.max(70, 84 + ((contratosAtivos / contratosComDados) * 14)));
+    const conformidade = totalContratos > 0 ? Math.min(99.9, Math.max(70, 84 + ((contratosAtivos / contratosComDados) * 14))) : 0;
     const pagamentoNotas = Math.max(0, totalEmpenhos + Math.ceil(totalAditivos * 0.25));
-    const valorMilhoes = valorTotal > 0 ? (valorTotal / 1000000) : 54.8;
+    const valorMilhoes = valorTotal > 0 ? (valorTotal / 1000000) : 0;
+    const barAtivos = totalContratos > 0 ? Math.min(100, Math.round((contratosAtivos / totalContratos) * 100)) : 0;
 
     res.json([
-      { title: 'Contratos Ativos', value: String(contratosAtivos || 128), trend: '+8 este mes', neon: 'blue', icon: 'fa-layer-group', bar: 72 },
-      { title: 'Aditivos Ativos', value: String(totalAditivos || 47), trend: '+5 este mes', neon: 'cyan', icon: 'fa-file-circle-plus', bar: 61 },
-      { title: 'Atualizacoes', value: '23', trend: '+12 hoje', neon: 'green', icon: 'fa-arrows-rotate', bar: 56 },
-      { title: 'Empenhos em Andamento', value: String(totalEmpenhos || 89), trend: '+15 hoje', neon: 'purple', icon: 'fa-receipt', bar: 68 },
-      { title: 'Conformidade', value: `${conformidade.toFixed(1)}%`, trend: 'Excellent', neon: 'teal', icon: 'fa-shield-halved', bar: Math.round(conformidade) },
-      { title: 'Notas de Pagamento', value: String(pagamentoNotas || 134), trend: '+22 este mes', neon: 'gold', icon: 'fa-dollar-sign', bar: 66 },
-      { title: 'Valor Total Contratos', value: `R$ ${valorMilhoes.toFixed(1).replace('.', ',')}M`, trend: '+12,6% este mes', neon: 'light', icon: 'fa-chart-line', bar: 84 },
+      { title: 'Contratos Ativos', value: String(contratosAtivos), trend: totalContratos > 0 ? `${totalContratos} registrados` : 'Sem contratos', neon: 'blue', icon: 'fa-layer-group', bar: barAtivos },
+      { title: 'Aditivos Ativos', value: String(totalAditivos), trend: totalAditivos > 0 ? 'Registrados' : 'Sem aditivos', neon: 'cyan', icon: 'fa-file-circle-plus', bar: totalContratos > 0 ? Math.min(100, Math.round((totalAditivos / totalContratos) * 100)) : 0 },
+      { title: 'Atualizacoes', value: '0', trend: 'Sem atualizacoes', neon: 'green', icon: 'fa-arrows-rotate', bar: 0 },
+      { title: 'Empenhos em Andamento', value: String(totalEmpenhos), trend: totalEmpenhos > 0 ? 'Registrados' : 'Sem empenhos', neon: 'purple', icon: 'fa-receipt', bar: totalContratos > 0 ? Math.min(100, Math.round((totalEmpenhos / totalContratos) * 100)) : 0 },
+      { title: 'Conformidade', value: `${conformidade.toFixed(1)}%`, trend: conformidade > 0 ? 'Calculada' : 'Sem dados', neon: 'teal', icon: 'fa-shield-halved', bar: Math.round(conformidade) },
+      { title: 'Notas de Pagamento', value: String(pagamentoNotas), trend: pagamentoNotas > 0 ? 'Registradas' : 'Sem notas', neon: 'gold', icon: 'fa-dollar-sign', bar: totalContratos > 0 ? Math.min(100, Math.round((pagamentoNotas / totalContratos) * 100)) : 0 },
+      { title: 'Valor Total Contratos', value: `R$ ${valorMilhoes.toFixed(1).replace('.', ',')}M`, trend: valorTotal > 0 ? 'Total contratado' : 'Sem valores', neon: 'light', icon: 'fa-chart-line', bar: 0 },
     ]);
   } catch (error) {
     console.error('Erro em /api/kpis:', error);
@@ -1531,7 +1532,7 @@ app.get('/api/funcionarios', async (req, res) => {
         status: isAway ? 'Ausente' : 'Online',
         atividade: isAway
           ? 'Aguardando retorno operacional'
-          : `Analisando Contrato CT-2025-${String((100 + (id % 180))).padStart(3, '0')}`,
+          : 'Operacao sem contratos registrados',
         tempoOnlineSeg: Math.max(0, tempoOnlineSeg),
         online: Math.min(100, Math.max(0, online)),
       };
@@ -1552,15 +1553,20 @@ app.get('/api/empresa/localizacao', async (req, res) => {
 
     if (!row) {
       return res.json({
-        cep: '01310-100',
-        empresa: 'Tech Solutions Ltda',
+        cep: '',
+        empresa: '',
+        logradouro: '',
+        numero: '',
+        bairro: '',
+        cidade: '',
+        uf: '',
       });
     }
 
     const mapped = mapContractRow(row);
     return res.json({
-      cep: mapped.cep || '01310-100',
-      empresa: mapped.credor || 'Tech Solutions Ltda',
+      cep: mapped.cep || '',
+      empresa: mapped.credor || '',
       logradouro: mapped.logradouro || '',
       numero: mapped.numEndereco || '',
       bairro: mapped.bairro || '',
