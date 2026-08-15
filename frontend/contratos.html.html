@@ -4398,11 +4398,12 @@
             try {
                 const data = await apiFetchJson('/api/contracts');
                 if (Array.isArray(data.contracts)) {
-                    const mergedContracts = { ...DB_CONTRATOS };
+                    const serverContracts = {};
                     data.contracts.forEach(contract => {
-                        mergedContracts[normalizeContractNumber(contract.numContrato)] = contract;
+                        serverContracts[normalizeContractNumber(contract.numContrato)] = contract;
                     });
-                    DB_CONTRATOS = mergedContracts;
+                    DB_CONTRATOS = serverContracts;
+                    localStorage.removeItem(CONTRACTS_CACHE_KEY);
                     persistContractsCache();
                 }
             } catch (error) {
