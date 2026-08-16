@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGC COPAL - Introdução</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #F9F6F0;
+            color: #1E1B18;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Spacer to allow standard scrolling before/after */
+        .spacer {
+            height: 50vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #888;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            gap: 1.5rem;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .spacer .btn-entrar {
+            display: inline-block;
+            padding: 0.9rem 2.2rem;
+            background-color: #FF4B3E;
+            color: #fff;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            border-radius: 999px;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .spacer .btn-entrar:hover {
+            background-color: #e33d31;
+            transform: translateY(-2px);
+        }
+
+        /* Horizontal Scroll Section */
+        .horizontal-section {
+            position: relative;
+            height: 100vh;
+            background-color: #1E1B18;
+            color: #F9F6F0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Flex Track for Continuous Flow */
+        .horizontal-track {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            will-change: transform;
+            padding: 0 10vw;
+            gap: 4vw;
+        }
+
+        /* Text and Inline Element Styling */
+        .ticker-text {
+            font-size: clamp(3rem, 7vw, 7rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+
+        .ticker-highlight {
+            color: #FF4B3E;
+            font-style: italic;
+        }
+
+        /* Inline SVG Punctuation / Icons */
+        .ticker-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            vertical-align: middle;
+            width: clamp(60px, 8vw, 120px);
+            height: clamp(60px, 8vw, 120px);
+            flex-shrink: 0;
+        }
+
+        .ticker-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: #FF4B3E;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="spacer">Bem-vindo ao SGC COPAL</div>
+
+    <!-- Horizontal Scroll Section -->
+    <section class="horizontal-section">
+        <div class="horizontal-track">
+
+            <span class="ticker-text">SISTEMA DE <span class="ticker-highlight">CONTROLE</span></span>
+
+            <!-- Inline SVG Shield / Document 1 -->
+            <div class="ticker-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L3 5.5V11C3 16.5 6.9 21.2 12 22C17.1 21.2 21 16.5 21 11V5.5L12 2Z"/>
+                    <path d="M12 6.5V17.5M12 6.5L8.5 8.5M12 6.5L15.5 8.5" stroke="#F9F6F0" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <span class="ticker-text">CONTRATUAL DA <span class="ticker-highlight">COPAL SESP</span></span>
+
+            <!-- Inline SVG Handshake / Trust 2 -->
+            <div class="ticker-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 11L8 7L12 11L16 7L20 11M4 11V17H20V11M4 11L6 9M20 11L18 9" stroke="#FF4B3E" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 17V14H16V17" stroke="#FF4B3E" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+
+            <span class="ticker-text">TRANSFORME SUA GESTÃO</span>
+
+            <!-- Inline SVG Star 3 -->
+            <div class="ticker-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="8" fill="none" stroke="#FF4B3E" stroke-width="2.5"/>
+                    <circle cx="12" cy="12" r="3" fill="#FF4B3E"/>
+                </svg>
+            </div>
+
+            <span class="ticker-text">COM <span class="ticker-highlight">SEGURANÇA</span> E <span class="ticker-highlight">EFICIÊNCIA</span>.</span>
+
+        </div>
+    </section>
+
+    <div class="spacer">Entre agora no sistema
+        <a class="btn-entrar" href="home.html.html">Entrar no Sistema</a>
+    </div>
+
+    <!-- GSAP & ScrollTrigger CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        const track = document.querySelector(".horizontal-track");
+
+        // Calculate total scroll distance dynamically
+        function getScrollAmount() {
+            return -(track.scrollWidth - window.innerWidth);
+        }
+
+        const tween = gsap.to(track, {
+            x: getScrollAmount,
+            ease: "none",
+            scrollTrigger: {
+                trigger: ".horizontal-section",
+                pin: true,
+                scrub: 1, // Smooth lag effect on scroll
+                end: () => `+=${track.scrollWidth - window.innerWidth}`,
+                invalidateOnRefresh: true, // Recalculate on window resize
+                onLeave: () => {
+                    window.location.href = "home.html.html";
+                }
+            }
+        });
+    </script>
+</body>
+</html>
