@@ -499,6 +499,7 @@ async function authenticateToken(req, res, next) {
   }
 
   req.user = session;
+  touchSessionLastSeen(token);
   next();
 }
 
@@ -574,6 +575,7 @@ app.post('/auth/register', async (req, res) => {
           return res.status(500).json({ message: 'Erro interno no servidor.' });
         }
 
+        writeAuditLog(this.lastID, 'user_register', 'user', this.lastID, { email: email.toLowerCase(), name: name || '' });
         return res.json({
           message: 'Cadastro realizado com sucesso. Verifique o código enviado por e-mail.',
           devOtpCode: otpCode,
@@ -981,6 +983,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     await runQuery(db, 'UPDATE requisitions SET email_status = ?, sent_at = ?, email_error = ? WHERE id = ?', ['sent', Date.now(), '', requisitionRecordId]);
     await runQuery(db, 'UPDATE requisition_codes SET used_at = ? WHERE id = ?', [Date.now(), stored.id]);
 
+    writeAuditLog(req.user?.user_id, 'requisition_submit', 'requisition', requisitionRecordId, { reqNumberYear: reqNumberYear || '', reqCompany: reqCompany || '', reqRequesterName });
     return res.json({ message: 'Requisição validada e enviada para o e-mail da empresa contratada.' });
   } catch (error) {
     console.error('Erro ao enviar requisição para a empresa:', error);
@@ -1048,6 +1051,7 @@ app.put('/auth/users/:id/revoke-access', authenticateToken, authorizeAdmin, asyn
           return res.status(500).json({ message: 'Erro ao remover acesso do usuário.' });
         }
 
+        writeAuditLog(req.user?.user_id, 'user_revoke', 'user', id, { name: user.name, email: user.email });
         return res.json({
           success: true,
           message: 'Acesso do usuário removido com sucesso.',
@@ -1093,6 +1097,7 @@ app.put('/auth/users/:id/permissions', authenticateToken, authorizeAdmin, async 
           return res.status(500).json({ message: 'Erro ao atualizar permissões do usuário.' });
         }
 
+        writeAuditLog(req.user?.user_id, 'user_permissions', 'user', id, { name: user.name, email: user.email, permissions: parsedPermissions });
         return res.json({
           success: true,
           message: 'Permissões atualizadas com sucesso.',
@@ -1201,6 +1206,7 @@ app.post('/api/contacts', async (req, res) => {
     [unidade, setor, telefone, ramal || ''],
     function (err) {
       if (err) return res.status(500).json({ message: 'Erro ao criar contato.' });
+      writeAuditLog(req.user?.user_id, 'contact_create', 'contact', this.lastID, { unidade, setor, telefone });
       res.json({ id: this.lastID, unidade, setor, telefone, ramal: ramal || '' });
     }
   );
@@ -1217,6 +1223,7 @@ app.put('/api/contacts/:id', async (req, res) => {
     [unidade, setor, telefone, ramal || '', id],
     function (err) {
       if (err) return res.status(500).json({ message: 'Erro ao atualizar contato.' });
+      writeAuditLog(req.user?.user_id, 'contact_update', 'contact', id, { unidade, setor, telefone });
       res.json({ id: Number(id), unidade, setor, telefone, ramal: ramal || '' });
     }
   );
@@ -1226,6 +1233,7 @@ app.delete('/api/contacts/:id', async (req, res) => {
   const { id } = req.params;
   db.run('DELETE FROM contacts WHERE id = ?', [id], function (err) {
     if (err) return res.status(500).json({ message: 'Erro ao excluir contato.' });
+    writeAuditLog(req.user?.user_id, 'contact_delete', 'contact', id, {});
     res.json({ success: true });
   });
 });
@@ -1253,6 +1261,7 @@ app.post('/api/patrimonio', async (req, res) => {
         }
         return res.status(500).json({ message: 'Erro ao criar item de patrimônio.' });
       }
+      writeAuditLog(req.user?.user_id, 'patrimonio_create', 'patrimonio', rp, { rp, descricao, quantidade: qtd, estado: estado || 'Bom' });
       res.json({ id: this.lastID, rp, descricao, quantidade: qtd, estado: estado || 'Bom' });
     }
   );
@@ -1267,6 +1276,7 @@ app.put('/api/patrimonio/:rp', async (req, res) => {
     [descricao, qtd, estado || 'Bom', rp],
     function (err) {
       if (err) return res.status(500).json({ message: 'Erro ao atualizar item de patrimônio.' });
+      writeAuditLog(req.user?.user_id, 'patrimonio_update', 'patrimonio', rp, { rp, descricao, quantidade: qtd, estado: estado || 'Bom' });
       res.json({ rp, descricao, quantidade: qtd, estado: estado || 'Bom' });
     }
   );
@@ -1276,6 +1286,7 @@ app.delete('/api/patrimonio/:rp', async (req, res) => {
   const { rp } = req.params;
   db.run('DELETE FROM patrimonio WHERE rp = ?', [rp], function (err) {
     if (err) return res.status(500).json({ message: 'Erro ao excluir item de patrimônio.' });
+    writeAuditLog(req.user?.user_id, 'patrimonio_delete', 'patrimonio', rp, { rp });
     res.json({ success: true });
   });
 });
@@ -1306,6 +1317,7 @@ app.post('/api/units', authenticateToken, authorizeAdmin, async (req, res) => {
           if (userErr && userErr.code !== '23505') {
             console.error('Erro ao criar usuário ADM da unidade:', userErr);
           }
+          writeAuditLog(req.user?.user_id, 'unit_create', 'unit', unitId, { code, name });
           res.json({ id: unitId, code, name, location: location || '', responsible: responsible || '', status: status || 'Ativo' });
         }
       );
@@ -1330,6 +1342,7 @@ app.delete('/api/units/:id', authenticateToken, authorizeAdmin, async (req, res)
           return res.status(500).json({ message: 'Erro ao remover unidade.' });
         }
 
+        writeAuditLog(req.user?.user_id, 'unit_delete', 'unit', id, { code: unit.code, name: unit.name });
         return res.json({
           success: true,
           deletedUnit: {
@@ -1363,6 +1376,7 @@ app.post('/api/unit-users/:unitCode', async (req, res) => {
     [unitCode, login, unitPassHash, name || '', doc || '', email || '', phone || '', role || '', is_default ? 1 : 0],
     function (err) {
       if (err) return res.status(500).json({ message: 'Erro ao criar usuário da unidade.' });
+      writeAuditLog(req.user?.user_id, 'unit_user_create', 'unit_user', this.lastID, { unit_code: unitCode, login, name: name || '' });
       res.json({ id: this.lastID, unit_code: unitCode, login, name: name || '', doc: doc || '', email: email || '', phone: phone || '', role: role || '', is_default: is_default ? 1 : 0 });
     }
   );
@@ -1377,6 +1391,7 @@ app.put('/api/unit-users/:id', async (req, res) => {
     [login || '', unitPassHash, name || '', doc || '', email || '', phone || '', role || '', is_default ? 1 : 0, id],
     function (err) {
       if (err) return res.status(500).json({ message: 'Erro ao atualizar usuário da unidade.' });
+      writeAuditLog(req.user?.user_id, 'unit_user_update', 'unit_user', id, { login: login || '', name: name || '' });
       res.json({ success: true });
     }
   );
@@ -1386,6 +1401,7 @@ app.delete('/api/unit-users/:id', async (req, res) => {
   const { id } = req.params;
   db.run('DELETE FROM unit_users WHERE id = ?', [id], function (err) {
     if (err) return res.status(500).json({ message: 'Erro ao excluir usuário da unidade.' });
+    writeAuditLog(req.user?.user_id, 'unit_user_delete', 'unit_user', id, {});
     res.json({ success: true });
   });
 });
@@ -1465,6 +1481,48 @@ function safeDateDiffSeconds(dateValue) {
   return Math.max(0, seconds);
 }
 
+function touchSessionLastSeen(token) {
+  if (!token) return;
+  db.run('UPDATE sessions SET last_seen = ? WHERE token = ?', [Date.now(), token], () => {});
+}
+
+function writeAuditLog(userId, action, entityType, entityId, details = {}) {
+  const actorId = Number(userId) || null;
+  if (!actorId) return Promise.resolve();
+  return new Promise((resolve) => {
+    db.run(
+      'INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details) VALUES (?, ?, ?, ?, ?::jsonb)',
+      [actorId, action, entityType || '', String(entityId == null ? '' : entityId), JSON.stringify(details || {})],
+      () => resolve()
+    );
+  });
+}
+
+function actionLabel(action) {
+  const labels = {
+    contract_create: 'Cadastrou contrato',
+    contract_update: 'Atualizou contrato',
+    unit_create: 'Cadastrou unidade',
+    unit_update: 'Atualizou unidade',
+    unit_delete: 'Excluiu unidade',
+    unit_user_create: 'Cadastrou usuário de unidade',
+    unit_user_update: 'Atualizou usuário de unidade',
+    unit_user_delete: 'Excluiu usuário de unidade',
+    contact_create: 'Cadastrou contato',
+    contact_update: 'Atualizou contato',
+    contact_delete: 'Excluiu contato',
+    patrimonio_create: 'Cadastrou patrimônio',
+    patrimonio_update: 'Atualizou patrimônio',
+    patrimonio_delete: 'Excluiu patrimônio',
+    user_register: 'Solicitou cadastro de usuário',
+    user_approve: 'Aprovou usuário',
+    user_revoke: 'Revogou acesso de usuário',
+    user_permissions: 'Alterou permissões de usuário',
+    requisition_submit: 'Enviou requisição',
+  };
+  return labels[action] || (action || 'Realizou ação');
+}
+
 app.get('/api/kpis', async (req, res) => {
   try {
     const [totalsRow, ativosRow, contratosRows] = await Promise.all([
@@ -1513,28 +1571,76 @@ app.get('/api/kpis', async (req, res) => {
 app.get('/api/funcionarios', async (req, res) => {
   try {
     const rows = await db.all(
-      "SELECT id, name, role, cargo, status, account_status, updated_at, created_at FROM users WHERE lower(coalesce(account_status, 'ativo')) = 'ativo' ORDER BY id DESC LIMIT 120"
+      "SELECT id, name, role, cargo, unidade, perfil, status, account_status, updated_at, created_at FROM users WHERE lower(coalesce(account_status, 'ativo')) = 'ativo' ORDER BY id DESC LIMIT 120"
     );
+
+    const lastSeenRows = await db.all(
+      `SELECT user_id, MAX(COALESCE(last_seen, created_at)) AS last_seen
+       FROM sessions
+       GROUP BY user_id`
+    );
+    const lastSeenMap = {};
+    (lastSeenRows || []).forEach((r) => { lastSeenMap[Number(r.user_id)] = r.last_seen; });
+
+    const lastActivityRows = await db.all(
+      `SELECT user_id, MAX(id) AS max_id FROM audit_logs GROUP BY user_id`
+    );
+    const lastActivityIds = (lastActivityRows || []).map((r) => r.max_id);
+
+    let lastActivityMap = {};
+    if (lastActivityIds.length) {
+      const placeholders = lastActivityIds.map(() => '?').join(',');
+      const activityRows = await db.all(
+        `SELECT a.id, a.user_id, a.action, a.entity_id, a.details, a.created_at FROM audit_logs a WHERE a.id IN (${placeholders})`,
+        lastActivityIds
+      );
+      (activityRows || []).forEach((r) => { lastActivityMap[Number(r.user_id)] = r; });
+    }
+
+    const ONLINE_WINDOW_MS = 10 * 60 * 1000;
 
     const mapped = (rows || []).map((row) => {
       const id = Number(row?.id || 0);
-      const statusText = String(row?.status || '').toLowerCase();
-      const isAway = statusText.includes('ausente') || statusText.includes('inativo') || statusText.includes('bloqueado');
-      const online = isAway ? (15 + (id % 25)) : (75 + (id % 24));
-      const since = row?.updated_at || row?.created_at;
-      const tempoOnlineSeg = safeDateDiffSeconds(since);
       const nome = String(row?.name || `Operador ${id || 1}`);
+      const lastSeen = Number(lastSeenMap[id]) || 0;
+      const now = Date.now();
+      const isOnline = lastSeen > 0 && (now - lastSeen) < ONLINE_WINDOW_MS;
+      const hasSession = lastSeen > 0;
+      const tempoOnlineSeg = hasSession ? Math.max(0, Math.floor((now - lastSeen) / 1000)) : 0;
+
+      let atividade = 'Sem atividades recentes';
+      const last = lastActivityMap[id];
+      if (last) {
+        const details = safeJsonParse(last?.details, {});
+        let label = actionLabel(last?.action);
+        if (last?.action === 'contract_create' && details?.numContrato) label = `Cadastrou o contrato ${details.numContrato}`;
+        if (last?.action === 'contract_update' && details?.numContrato) label = `Atualizou o contrato ${details.numContrato}`;
+        if (last?.action === 'unit_create' && details?.name) label = `Cadastrou a unidade ${details.name}`;
+        if (last?.action === 'contact_create' && details?.unidade) label = `Cadastrou contato de ${details.unidade}`;
+        if (last?.action === 'patrimonio_create' && details?.rp) label = `Cadastrou patrimônio RP ${details.rp}`;
+        if (last?.action === 'user_register' && details?.name) label = `Novo cadastro de ${details.name}`;
+        if (last?.action === 'user_approve') label = 'Aprovou um usuário';
+        if (last?.action === 'user_revoke' && details?.name) label = `Revogou acesso de ${details.name}`;
+        if (last?.action === 'requisition_submit') label = `Enviou requisição ${details?.reqNumberYear || ''}`;
+        atividade = label;
+      }
+
+      const funcao = String(row?.cargo || row?.role || row?.perfil || 'Usuário');
+      const unidade = String(row?.unidade || '');
 
       return {
+        id,
         nome,
-        foto: `https://i.pravatar.cc/60?img=${((id % 70) || 1)}`,
-        funcao: String(row?.cargo || row?.role || 'Analista'),
-        status: isAway ? 'Ausente' : 'Online',
-        atividade: isAway
-          ? 'Aguardando retorno operacional'
-          : 'Operacao sem contratos registrados',
-        tempoOnlineSeg: Math.max(0, tempoOnlineSeg),
-        online: Math.min(100, Math.max(0, online)),
+        email: row?.email || '',
+        funcao,
+        unidade,
+        perfil: row?.perfil || '',
+        role: row?.role || 'user',
+        status: isOnline ? 'Online' : (hasSession ? 'Ausente' : 'Offline'),
+        atividade,
+        tempoOnlineSeg,
+        online: isOnline ? Math.min(100, 80 + (id % 20)) : (hasSession ? 20 + (id % 20) : 0),
+        ultimaAtividade: last?.created_at || null,
       };
     });
 
@@ -1542,6 +1648,62 @@ app.get('/api/funcionarios', async (req, res) => {
   } catch (error) {
     console.error('Erro em /api/funcionarios:', error);
     res.status(500).json({ message: 'Erro ao carregar funcionários para monitoramento.' });
+  }
+});
+
+app.get('/api/activities', async (req, res) => {
+  try {
+    const rows = await db.all(
+      `SELECT a.id, a.user_id, u.name AS user_name, u.unidade, u.perfil, u.role, a.action, a.entity_type, a.entity_id, a.details, a.created_at
+       FROM audit_logs a
+       LEFT JOIN users u ON u.id = a.user_id
+       ORDER BY a.id DESC
+       LIMIT 100`
+    );
+
+    const activities = (rows || []).map((row) => {
+      const details = safeJsonParse(row?.details, {});
+      let descricao = actionLabel(row?.action);
+      if (row?.action === 'contract_create' && details?.numContrato) {
+        descricao = `Cadastrou o contrato ${details.numContrato}`;
+      } else if (row?.action === 'contract_update' && details?.numContrato) {
+        descricao = `Atualizou o contrato ${details.numContrato}`;
+      } else if (row?.action === 'unit_create' && details?.name) {
+        descricao = `Cadastrou a unidade ${details.name}`;
+      } else if (row?.action === 'contact_create' && details?.unidade) {
+        descricao = `Cadastrou o contato de ${details.unidade} (${details.setor || 'setor'})`;
+      } else if (row?.action === 'patrimonio_create' && details?.rp) {
+        descricao = `Cadastrou patrimônio RP ${details.rp}`;
+      } else if (row?.action === 'user_register' && details?.name) {
+        descricao = `Novo cadastro de ${details.name}`;
+      } else if (row?.action === 'user_approve') {
+        descricao = 'Aprovou um usuário';
+      } else if (row?.action === 'user_revoke' && details?.name) {
+        descricao = `Revogou acesso de ${details.name}`;
+      } else if (row?.action === 'requisition_submit') {
+        descricao = `Enviou requisição ${details?.reqNumberYear || ''}`;
+      }
+
+      return {
+        id: row?.id,
+        userId: row?.user_id,
+        userName: row?.user_name || 'Sistema',
+        unidade: row?.unidade || '',
+        perfil: row?.perfil || '',
+        role: row?.role || 'user',
+        action: row?.action,
+        entityType: row?.entity_type,
+        entityId: row?.entity_id,
+        descricao,
+        details,
+        created_at: row?.created_at,
+      };
+    });
+
+    res.json({ activities });
+  } catch (error) {
+    console.error('Erro em /api/activities:', error);
+    res.status(500).json({ message: 'Erro ao carregar atividades do monitoramento.' });
   }
 });
 
@@ -1752,6 +1914,7 @@ app.post('/api/contracts', authenticateToken, async (req, res) => {
     ],
     function (err) {
       if (err) return res.status(500).json({ message: 'Erro ao salvar contrato.' });
+      writeAuditLog(req.user?.user_id, 'contract_create', 'contract', normalizedNumContrato, { numContrato: normalizedNumContrato, credor: credor || '', valorGlobal: valorGlobal || '' });
       res.json({ message: 'Contrato salvo com sucesso.', id: this.lastID });
     }
   );
@@ -1778,6 +1941,7 @@ app.put('/api/user-requests/:id/approve', authenticateToken, authorizeAdmin, asy
 
   db.run('UPDATE users SET verified = TRUE, status = ?, account_status = ?, permissions_json = ?, can_view_overview = ? WHERE id = ?', ['Aprovado', 'ativo', permissionsJson, canViewOverview ? 1 : 0, id], function (err) {
     if (err) return res.status(500).json({ message: 'Erro ao aprovar usuário.' });
+    writeAuditLog(req.user?.user_id, 'user_approve', 'user', id, { permissions: parsedPermissions });
     res.json({ success: true });
   });
 });

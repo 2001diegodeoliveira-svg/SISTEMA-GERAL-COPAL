@@ -54,6 +54,8 @@ CREATE TABLE IF NOT EXISTS sessions (
   user_agent TEXT
 );
 
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS last_seen BIGINT;
+
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions (user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions (token);
 

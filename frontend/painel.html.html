@@ -824,12 +824,37 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="api-client.js"></script>
   <script>
     const API = {
       kpis: "/api/kpis",
       funcionarios: "/api/funcionarios",
-      localizacao: "/api/empresa/localizacao"
+      localizacao: "/api/empresa/localizacao",
+      activities: "/api/activities"
     };
+
+    const authToken = localStorage.getItem('accessToken') || '';
+
+    function apiHeaders(json = true) {
+      const headers = json ? { "Content-Type": "application/json" } : {};
+      if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+      return headers;
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatHora(value) {
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) return '--:--:--';
+      return parsed.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
 
     const fallbackKpis = [
       { title: "Contratos Ativos", value: "0", trend: "Sem contratos", neon: "blue", icon: "fa-layer-group", bar: 0 },
@@ -841,28 +866,13 @@
       { title: "Valor Total Contratos", value: "R$ 0,0M", trend: "Sem valores", neon: "light", icon: "fa-chart-line", bar: 0 }
     ];
 
-    const fallbackFuncionarios = [
-      { nome: "Ana Paula", foto: "https://i.pravatar.cc/60?img=32", funcao: "Analista", status: "Online", atividade: "Operacao sem contratos registrados", tempoOnlineSeg: 620, online: 90 },
-      { nome: "Carlos Silva", foto: "https://i.pravatar.cc/60?img=11", funcao: "Analista", status: "Online", atividade: "Operacao sem contratos registrados", tempoOnlineSeg: 577, online: 86 },
-      { nome: "Caio Silva", foto: "https://i.pravatar.cc/60?img=68", funcao: "Assistente", status: "Ausente", atividade: "Aguardando retorno operacional", tempoOnlineSeg: 50, online: 24 },
-      { nome: "Carlos Lima", foto: "https://i.pravatar.cc/60?img=53", funcao: "Analista", status: "Online", atividade: "Operacao sem contratos registrados", tempoOnlineSeg: 634, online: 88 },
-      { nome: "Diego Rocha", foto: "https://i.pravatar.cc/60?img=15", funcao: "Gestor", status: "Online", atividade: "Operacao sem contratos registrados", tempoOnlineSeg: 700, online: 92 },
-      { nome: "Marina Costa", foto: "https://i.pravatar.cc/60?img=44", funcao: "Controladora", status: "Online", atividade: "Operacao sem contratos registrados", tempoOnlineSeg: 545, online: 79 },
-      { nome: "Rafael Dias", foto: "https://i.pravatar.cc/60?img=17", funcao: "Analista", status: "Ausente", atividade: "Pausa operacional programada", tempoOnlineSeg: 95, online: 35 },
-      { nome: "Juliana Alves", foto: "https://i.pravatar.cc/60?img=47", funcao: "Supervisora", status: "Online", atividade: "Operacao sem contratos registrados", tempoOnlineSeg: 662, online: 91 },
-      { nome: "Bruno Prado", foto: "https://i.pravatar.cc/60?img=59", funcao: "Assistente", status: "Online", atividade: "Operacao sem contratos registrados", tempoOnlineSeg: 488, online: 74 },
-      { nome: "Aline Souza", foto: "https://i.pravatar.cc/60?img=39", funcao: "Analista", status: "Online", atividade: "Operacao sem contratos registrados", tempoOnlineSeg: 532, online: 83 }
-    ];
+    const fallbackFuncionarios = [];
 
     const fallbackLocalizacao = { cep: "", empresa: "" };
 
-    const activityItems = [
-      { titulo: "Nenhuma atividade", texto: "Nenhuma atividade recente registrada", hora: "--" }
-    ];
+    const activityItems = [];
 
-    const alertItems = [
-      { titulo: "Sem alertas", texto: "Nenhum alerta registrado", hora: "--" }
-    ];
+    const alertItems = [];
 
     const flowSteps = ["Contrato", "Aditivos", "Atualizacoes", "Empenhos", "Conformidade", "Nota Pagamento", "Liquidacao", "Encerramento"];
 
@@ -872,9 +882,9 @@
       return `${mm}:${ss}`;
     }
 
-    async function getJsonWithFallback(url, fallback) {
+    async function getJsonWithFallback(url, fallback, useToken = false) {
       try {
-        const response = await fetch(url, { headers: { "Content-Type": "application/json" } });
+        const response = await fetch(url, { headers: useToken ? apiHeaders(false) : { "Content-Type": "application/json" } });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return await response.json();
       } catch (error) {
@@ -904,33 +914,51 @@
     }
 
     function renderActivities() {
-      document.getElementById("activities").innerHTML = activityItems
-        .map((item) => `<div class="item"><b>${item.titulo}</b><div>${item.texto}</div><small>${item.hora}</small></div>`)
+      const host = document.getElementById("activities");
+      if (!activityItems.length) {
+        host.innerHTML = '<div class="item"><b>Sem atividade</b><div>Ainda não há registros de cadastros.</div><small>--</small></div>';
+        return;
+      }
+      host.innerHTML = activityItems
+        .map((item) => `<div class="item"><b>${escapeHtml(item.userName || 'Sistema')} ${escapeHtml(item.descricao || item.titulo || '')}</b><div>${escapeHtml(item.unidade || '')}</div><small>${formatHora(item.hora)}</small></div>`)
         .join("");
     }
 
     function renderAlerts() {
-      document.getElementById("alertsList").innerHTML = alertItems
-        .map((item) => `<div class="item"><b><i class="fa-solid fa-flag" style="color:#ff7d92"></i> ${item.titulo}</b><div style="margin-top:3px">${item.texto}</div><small>${item.hora}</small></div>`)
+      const host = document.getElementById("alertsList");
+      if (!alertItems.length) {
+        host.innerHTML = '<div class="item"><b><i class="fa-solid fa-flag" style="color:#6f87a8"></i> Sem alertas</b><div style="margin-top:3px">Nenhum alerta registrado.</div><small>--</small></div>';
+        return;
+      }
+      host.innerHTML = alertItems
+        .map((item) => `<div class="item"><b><i class="fa-solid fa-flag" style="color:#ff7d92"></i> ${escapeHtml(item.titulo)}</b><div style="margin-top:3px">${escapeHtml(item.texto)}</div><small>${escapeHtml(item.hora)}</small></div>`)
         .join("");
     }
 
     function renderEmployees(funcionarios) {
-      document.getElementById("employeesTable").innerHTML = funcionarios
+      const list = Array.isArray(funcionarios) ? funcionarios : [];
+      const host = document.getElementById("employeesTable");
+      if (!list.length) {
+        host.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#6f87a8; padding:24px;">Nenhum usuário cadastrado no sistema.</td></tr>';
+        return;
+      }
+      host.innerHTML = list
         .map((pessoa, index) => {
           const statusClass = pessoa.status === "Online" ? "online" : "away";
           const delay = `${(index % 5) * 0.18}s`;
+          const atividade = pessoa.atividade || pessoa.atividadeAtual || 'Sem atividades recentes';
+          const unidade = pessoa.unidade || '';
           return `
             <tr>
               <td>
                 <div class="person">
-                  <img alt="${pessoa.nome}" src="${pessoa.foto}">
-                  <span>${pessoa.nome}</span>
+                  <img alt="${escapeHtml(pessoa.nome)}" src="${pessoa.foto || `https://i.pravatar.cc/60?img=${((Number(pessoa.id) || 1) % 70)}`}">
+                  <span>${escapeHtml(pessoa.nome)}${unidade ? `<small style="display:block;color:#6f87a8;font-size:11px">${escapeHtml(unidade)}</small>` : ''}</span>
                 </div>
               </td>
-              <td>${pessoa.funcao}</td>
-              <td><span class="status ${statusClass}">${pessoa.status}</span></td>
-              <td>${pessoa.atividade}</td>
+              <td>${escapeHtml(pessoa.funcao)}</td>
+              <td><span class="status ${statusClass}">${escapeHtml(pessoa.status)}</span></td>
+              <td>${escapeHtml(atividade)}</td>
               <td>${formatTempo(pessoa.tempoOnlineSeg)}</td>
               <td><div class="bar"><i style="--p:${Math.max(0, Math.min(100, pessoa.online || 0))}%;animation-delay:${delay}"></i></div></td>
             </tr>
@@ -1147,6 +1175,55 @@
       }
     }
 
+    async function fetchActivities() {
+      const data = await getJsonWithFallback(API.activities, { activities: [] }, true);
+      activityItems.length = 0;
+      (data.activities || []).forEach((a) => {
+        activityItems.push({
+          userName: a.userName,
+          descricao: a.descricao,
+          unidade: a.unidade || '',
+          hora: a.created_at,
+        });
+      });
+      renderActivities();
+    }
+
+    async function refreshFuncionarios() {
+      const data = await getJsonWithFallback(API.funcionarios, []);
+      const funcionarios = Array.isArray(data) ? data : [];
+      renderEmployees(funcionarios);
+
+      const onlineCount = funcionarios.filter((f) => f.status === 'Online').length;
+      document.getElementById("onlineUsers").textContent = String(onlineCount);
+      document.getElementById("onlineUsers").style.color = onlineCount > 0 ? "#66d1ff" : "#6f87a8";
+    }
+
+    async function refreshAlertas() {
+      try {
+        const res = await fetch(API.kpis, { headers: { "Content-Type": "application/json" } });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const alertsList = document.getElementById("alertsList");
+        if (!Array.isArray(data)) return;
+        const contratos = data.find((k) => /contratos ativos/i.test(k.title));
+        if (contratos) {
+          const val = parseInt(String(contratos.value).replace(/\D/g, ''), 10) || 0;
+          document.getElementById("criticalAlerts").textContent = String(val);
+          document.getElementById("criticalAlerts").style.color = val > 0 ? "#ff7f96" : "#6f87a8";
+        }
+        if (!alertsList) return;
+        const msgs = data.filter((k) => !/sem|0/i.test(k.trend));
+        if (!msgs.length) {
+          alertsList.innerHTML = '<div class="item"><b><i class="fa-solid fa-flag" style="color:#6f87a8"></i> Sem alertas</b><div style="margin-top:3px">Nenhum alerta registrado.</div><small>--</small></div>';
+        } else {
+          alertsList.innerHTML = msgs.map((k) => `<div class="item"><b><i class="fa-solid fa-flag" style="color:#ff7d92"></i> ${escapeHtml(k.title)}</b><div style="margin-top:3px">${escapeHtml(k.value)}</div><small>${formatHora(new Date().toISOString())}</small></div>`).join("");
+        }
+      } catch (error) {
+        document.getElementById("alertsList").innerHTML = '<div class="item"><b>Sem alertas</b><div>Nenhum alerta registrado.</div><small>--</small></div>';
+      }
+    }
+
     async function bootstrap() {
       const [kpis, funcionarios, localizacao] = await Promise.all([
         getJsonWithFallback(API.kpis, fallbackKpis),
@@ -1164,11 +1241,40 @@
       const cep = localizacao && localizacao.cep ? localizacao.cep : '';
       renderMapByCep(cep);
 
+      fetchActivities();
+      refreshAlertas();
+      updateOnlineCounter();
+
       setInterval(() => {
         document.getElementById("clock").textContent = new Date().toLocaleString("pt-BR");
-        document.getElementById("onlineUsers").textContent = String(40 + Math.floor(Math.random() * 6));
-        document.getElementById("criticalAlerts").textContent = String(2 + Math.floor(Math.random() * 4));
       }, 1000);
+
+      setInterval(() => {
+        refreshFuncionarios();
+        fetchActivities();
+        refreshAlertas();
+      }, 10000);
+    }
+
+    function updateOnlineCounter() {
+      const onlineUsers = document.getElementById("onlineUsers");
+      const criticalAlerts = document.getElementById("criticalAlerts");
+      fetch('/api/funcionarios', { headers: { "Content-Type": "application/json" } })
+        .then((r) => (r.ok ? r.json() : []))
+        .then((list) => {
+          const count = Array.isArray(list) ? list.filter((f) => f.status === 'Online').length : 0;
+          if (onlineUsers) onlineUsers.textContent = String(count);
+        })
+        .catch(() => {});
+      fetch('/api/kpis', { headers: { "Content-Type": "application/json" } })
+        .then((r) => (r.ok ? r.json() : []))
+        .then((data) => {
+          if (criticalAlerts && Array.isArray(data)) {
+            const contratos = data.find((k) => /contratos ativos/i.test(k.title));
+            if (contratos) criticalAlerts.textContent = String(parseInt(String(contratos.value).replace(/\D/g, ''), 10) || 0);
+          }
+        })
+        .catch(() => {});
     }
 
     bootstrap();
