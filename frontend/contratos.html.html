@@ -3014,10 +3014,12 @@
             };
 
             try {
-
                 const data = await apiFetchJson('/api/contracts', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(contractsAuthToken ? { Authorization: `Bearer ${contractsAuthToken}` } : {})
+                    },
                     body: JSON.stringify(normalizedContract)
                 });
 

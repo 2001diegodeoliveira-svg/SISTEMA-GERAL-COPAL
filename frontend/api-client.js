@@ -135,7 +135,17 @@
   }
 
   function isBackendPath(path) {
-    return typeof path === 'string' && (path.startsWith('/api/') || path.startsWith('/auth/'));
+    if (typeof path !== 'string') return false;
+    const trimmed = path.trim();
+    if (!trimmed) return false;
+
+    try {
+      const parsed = new URL(trimmed, window.location.origin);
+      const pathname = parsed.pathname || '';
+      return pathname.startsWith('/api/') || pathname.startsWith('/auth/');
+    } catch (error) {
+      return trimmed.startsWith('/api/') || trimmed.startsWith('/auth/');
+    }
   }
 
   async function canReachBase(baseUrl) {
@@ -214,8 +224,20 @@
     const rawUrl = typeof input === 'string' ? input : (input && input.url) || '';
 
     if (isBackendPath(rawUrl)) {
+      const token = localStorage.getItem('accessToken') || '';
+      const headers = new Headers(init && init.headers ? init.headers : {});
+      if (token && !headers.has('Authorization')) {
+        headers.set('Authorization', `Bearer ${token}`);
+      }
+
+      const normalizedInit = init ? { ...init, headers } : { headers };
+
+      if (typeof input === 'object' && input && input.headers && !(input.headers instanceof Headers) && !Object.prototype.hasOwnProperty.call(input, 'headers')) {
+        normalizedInit.headers = headers;
+      }
+
       if (onVercelHost) {
-        return originalFetch(input, init);
+        return originalFetch(input, normalizedInit);
       }
 
       if (!runtimeConfig) {
@@ -252,11 +274,11 @@
       async function doFetch(baseUrl) {
         const targetUrl = `${baseUrl}${rawUrl}`;
         if (typeof input === 'string') {
-          return originalFetch(targetUrl, init);
+          return originalFetch(targetUrl, normalizedInit);
         }
 
         const clonedRequest = new Request(targetUrl, input);
-        return originalFetch(clonedRequest, init);
+        return originalFetch(clonedRequest, normalizedInit);
       }
 
       try {
