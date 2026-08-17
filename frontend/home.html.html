@@ -294,6 +294,61 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* DEV PANEL — modal login */
+        .dev-modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(7,23,49,0.75); backdrop-filter: blur(4px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .dev-modal-overlay.active { display: flex; }
+        .dev-modal-card {
+            background: #fff; border-radius: 8px; padding: 2rem; width: 100%; max-width: 360px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25); border: 1px solid var(--border-color);
+        }
+        .dev-modal-card h3 { font-size: 1rem; margin-bottom: 1rem; color: var(--sesp-blue); display: flex; align-items: center; gap: 0.5rem; }
+        .dev-modal-card input {
+            width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 6px;
+            font-size: 0.85rem; margin-bottom: 0.75rem; outline: none;
+        }
+        .dev-modal-card input:focus { border-color: var(--sesp-accent); }
+        .dev-modal-card .dev-err { color: #dc2626; font-size: 0.78rem; margin-bottom: 0.5rem; display: none; }
+        .dev-modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.5rem; }
+        .dev-btn { padding: 0.5rem 1.2rem; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.82rem; }
+        .dev-btn-primary { background: var(--sesp-blue); color: #fff; }
+        .dev-btn-cancel { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+
+        /* DEV PANEL — painel */
+        .dev-section-title { font-size: 0.82rem; font-weight: 700; color: var(--sesp-blue); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+        .dev-stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.75rem; }
+        .dev-stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.8rem; text-align: center; }
+        .dev-stat .label { font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: 600; }
+        .dev-stat .num { font-size: 1.4rem; font-weight: 800; color: var(--sesp-blue); }
+        .dev-alert-badge { background: #dc2626; color: #fff; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+        .dev-alert-warn { background: #f59e0b; color: #fff; }
+        .dev-alert-crit { background: #dc2626; color: #fff; }
+        .dev-alert-ok { background: #10b981; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; }
+        .dev-ip-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0; border-bottom: 1px solid #f1f5f9; }
+        .dev-ip-row:last-child { border-bottom: none; }
+        .dev-ip-row .ip { font-family: monospace; font-size: 0.82rem; font-weight: 700; color: var(--sesp-blue); min-width: 140px; }
+        .dev-ip-row .meta { font-size: 0.75rem; color: #64748b; flex: 1; }
+        .dev-ip-row .btn-detail { background: var(--sesp-accent); color: #fff; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.72rem; cursor: pointer; font-weight: 600; }
+        .dev-db-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+        .dev-db-table th { background: #f1f5f9; padding: 6px 10px; text-align: left; font-weight: 700; border-bottom: 1px solid #e2e8f0; }
+        .dev-db-table td { padding: 6px 10px; border-bottom: 1px solid #f1f5f9; }
+        .dev-activity-item { display: flex; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.78rem; align-items: flex-start; }
+        .dev-activity-item:last-child { border-bottom: none; }
+        .dev-activity-item .time { color: #94a3b8; min-width: 70px; font-family: monospace; font-size: 0.72rem; }
+        .dev-activity-item .method { font-weight: 700; min-width: 40px; font-family: monospace; }
+        .dev-activity-item .method-GET { color: #10b981; }
+        .dev-activity-item .method-POST { color: #f59e0b; }
+        .dev-activity-item .method-PUT { color: #3b82f6; }
+        .dev-activity-item .method-DELETE { color: #dc2626; }
+        .dev-activity-item .path-text { color: #334155; flex: 1; word-break: break-all; }
+        .dev-activity-item .status-code { font-weight: 700; font-family: monospace; }
+        .dev-activity-item .status-ok { color: #10b981; }
+        .dev-activity-item .status-err { color: #dc2626; }
+        @media (max-width: 900px) { .dev-stat-row { grid-template-columns: repeat(2,1fr); } }
     </style>
 </head>
 <body>
@@ -335,6 +390,11 @@
             <li id="cadastroRapidoNavTab" style="display:none;">
                 <a href="#" onclick="abrirCadastroRapido(event)">
                     <i data-lucide="zap" style="width: 15px;"></i> Cadastro Rápido
+                </a>
+            </li>
+            <li id="devNavTab" style="display:none;">
+                <a href="#" onclick="openDevPanel(event)">
+                    <i data-lucide="terminal" style="width: 15px;"></i> Desenvolvedor
                 </a>
             </li>
         </ul>
@@ -475,7 +535,66 @@
             </div>
         </section>
 
-        <!-- SEÇÃO LATERAL: NOTÍCIAS -->
+        <!-- DEV PANEL — ACESSO EXCLUSIVO -->
+        <section id="devPanel" class="system-dashboard-panel" style="display:none; grid-column: 1 / -1;">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i data-lucide="terminal" style="width: 18px;"></i>
+                    Painel do Desenvolvedor — Engenharia de Software
+                </div>
+                <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <span id="devAlertCount" class="dev-alert-badge" style="display:none;">0</span>
+                    <span style="font-size:0.75rem;color:#93c5fd;">Acesso exclusivo dev</span>
+                </div>
+            </div>
+            <div class="panel-body">
+                <!-- ESTATÍSTICAS GERAIS -->
+                <div class="dev-section-title"><i data-lucide="activity" style="width:14px;"></i> Status do Sistema</div>
+                <div class="dev-stat-row">
+                    <div class="dev-stat"><div class="label">Visitantes Únicos</div><div class="num" id="devStatVisitors">-</div></div>
+                    <div class="dev-stat"><div class="label">Requisições Hoje</div><div class="num" id="devStatRequests">-</div></div>
+                    <div class="dev-stat"><div class="label">Tabelas DB</div><div class="num" id="devStatTables">-</div></div>
+                    <div class="dev-stat"><div class="label">Alertas Ativos</div><div class="num" id="devStatAlerts" style="color:#dc2626;">-</div></div>
+                </div>
+
+                <!-- IPs QUE ESTÃO ACESSANDO -->
+                <div class="dev-section-title" style="margin-top:1rem;"><i data-lucide="globe" style="width:14px;"></i> IPs Acessando o Sistema</div>
+                <div id="devVisitorsList" style="max-height:250px;overflow-y:auto;"></div>
+
+                <!-- ATIVIDADE DE UM IP -->
+                <div id="devActivitySection" style="display:none;margin-top:1rem;">
+                    <div class="dev-section-title"><i data-lucide="list" style="width:14px;"></i> Atividade do IP: <span id="devActivityIp" style="color:var(--sesp-accent);"></span></div>
+                    <div id="devActivityLog" style="max-height:300px;overflow-y:auto;"></div>
+                </div>
+
+                <!-- STATUS DO BANCO DE DADOS -->
+                <div class="dev-section-title" style="margin-top:1rem;"><i data-lucide="database" style="width:14px;"></i> Banco de Dados</div>
+                <div id="devDbInfo" style="display:grid;gap:0.5rem;"></div>
+
+                <!-- ALERTAS DE SEGURANÇA -->
+                <div class="dev-section-title" style="margin-top:1rem;"><i data-lucide="shield-alert" style="width:14px;"></i> Alertas de Segurança</div>
+                <div id="devAlertsList" style="max-height:300px;overflow-y:auto;"></div>
+
+                <div style="margin-top:0.5rem;text-align:right;">
+                    <button class="dev-btn dev-btn-primary" onclick="devRefreshAll()"><i data-lucide="refresh-cw" style="width:13px;vertical-align:middle;"></i> Atualizar Tudo</button>
+                    <button class="dev-btn dev-btn-cancel" onclick="devLogout()" style="margin-left:0.4rem;">Sair do Dev</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- DEV LOGIN MODAL -->
+        <div class="dev-modal-overlay" id="devLoginModal">
+            <div class="dev-modal-card">
+                <h3><i data-lucide="terminal" style="width:18px;"></i> Acesso Desenvolvedor</h3>
+                <div class="dev-err" id="devLoginErr">Credenciais inválidas.</div>
+                <input type="text" id="devLoginInput" placeholder="Login" autocomplete="off">
+                <input type="password" id="devPasswordInput" placeholder="Senha">
+                <div class="dev-modal-actions">
+                    <button class="dev-btn dev-btn-cancel" onclick="closeDevLoginModal()">Cancelar</button>
+                    <button class="dev-btn dev-btn-primary" onclick="devAuthenticate()">Entrar</button>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- RODAPÉ -->
@@ -508,7 +627,187 @@
                 const gerenciadorTabEl = document.getElementById('gerenciadorNavTab');
                 if (gerenciadorTabEl) gerenciadorTabEl.style.display = 'block';
             }
+            document.getElementById('devNavTab').style.display = 'block';
         })();
+
+        // =====================================================================
+        // DEV PANEL — lógica
+        // =====================================================================
+        const DEV_SECRET = btoa('DEVFULL:DEV2026');
+        let devAuthenticated = localStorage.getItem('devAuthenticated') === 'true';
+        let devRefreshInterval = null;
+
+        function openDevPanel(event) {
+            event.preventDefault();
+            if (devAuthenticated) {
+                showDevPanel();
+            } else {
+                document.getElementById('devLoginModal').classList.add('active');
+                document.getElementById('devLoginInput').focus();
+                lucide.createIcons();
+            }
+        }
+
+        function closeDevLoginModal() {
+            document.getElementById('devLoginModal').classList.remove('active');
+            document.getElementById('devLoginErr').style.display = 'none';
+            document.getElementById('devLoginInput').value = '';
+            document.getElementById('devPasswordInput').value = '';
+        }
+
+        async function devAuthenticate() {
+            const login = document.getElementById('devLoginInput').value.trim();
+            const password = document.getElementById('devPasswordInput').value;
+            const errEl = document.getElementById('devLoginErr');
+            errEl.style.display = 'none';
+            if (!login || !password) { errEl.textContent = 'Preencha login e senha.'; errEl.style.display = 'block'; return; }
+            try {
+                const res = await fetch(`${CR_API_BASE}/api/dev/auth`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ login, password })
+                });
+                const data = await res.json();
+                if (!res.ok) { errEl.textContent = data.message || 'Credenciais inválidas.'; errEl.style.display = 'block'; return; }
+                devAuthenticated = true;
+                localStorage.setItem('devAuthenticated', 'true');
+                closeDevLoginModal();
+                showDevPanel();
+            } catch (e) {
+                errEl.textContent = 'Erro de conexão.'; errEl.style.display = 'block';
+            }
+        }
+
+        function devLogout() {
+            devAuthenticated = false;
+            localStorage.removeItem('devAuthenticated');
+            document.getElementById('devPanel').style.display = 'none';
+            if (devRefreshInterval) { clearInterval(devRefreshInterval); devRefreshInterval = null; }
+        }
+
+        function showDevPanel() {
+            const panel = document.getElementById('devPanel');
+            panel.style.display = 'block';
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            lucide.createIcons();
+            devRefreshAll();
+            if (devRefreshInterval) clearInterval(devRefreshInterval);
+            devRefreshInterval = setInterval(devRefreshAll, 15000);
+        }
+
+        async function devFetch(url) {
+            try {
+                const res = await fetch(url, { headers: { 'X-Dev-Secret': DEV_SECRET } });
+                if (!res.ok) return null;
+                return await res.json();
+            } catch (e) { return null; }
+        }
+
+        async function devRefreshAll() {
+            await Promise.all([devLoadVisitors(), devLoadDbStatus(), devLoadAlerts()]);
+        }
+
+        async function devLoadVisitors() {
+            const data = await devFetch(`${CR_API_BASE}/api/dev/visitors`);
+            if (!data) return;
+            const visitors = data.visitors || [];
+            document.getElementById('devStatVisitors').textContent = visitors.length;
+            const totalReqs = visitors.reduce((s, v) => s + (v.totalRequests || 0), 0);
+            document.getElementById('devStatRequests').textContent = totalReqs;
+            const list = document.getElementById('devVisitorsList');
+            if (!visitors.length) {
+                list.innerHTML = '<div style="color:#94a3b8;font-size:0.82rem;padding:1rem;">Nenhum visitante registrado.</div>';
+                return;
+            }
+            list.innerHTML = visitors.map(v => {
+                const lastTime = v.lastAccess ? formatDevTime(v.lastAccess) : '-';
+                return `<div class="dev-ip-row">
+                    <span class="ip">${escapeHtmlDev(v.ip)}</span>
+                    <span class="meta">${escapeHtmlDev(v.lastUser !== '-' ? v.lastUser : 'anônimo')} &middot; ${v.totalRequests} req &middot; último: ${lastTime}</span>
+                    <button class="btn-detail" onclick="devShowActivity('${escapeHtmlDev(v.ip)}')">Ver Atividade</button>
+                </div>`;
+            }).join('');
+        }
+
+        async function devShowActivity(ip) {
+            const section = document.getElementById('devActivitySection');
+            section.style.display = 'block';
+            document.getElementById('devActivityIp').textContent = ip;
+            const log = document.getElementById('devActivityLog');
+            log.innerHTML = '<div style="color:#94a3b8;font-size:0.82rem;">Carregando...</div>';
+            const data = await devFetch(`${CR_API_BASE}/api/dev/activity/${encodeURIComponent(ip)}`);
+            if (!data || !data.activity) { log.innerHTML = '<div style="color:#94a3b8;">Nenhuma atividade encontrada.</div>'; return; }
+            const activities = data.activity;
+            if (!activities.length) { log.innerHTML = '<div style="color:#94a3b8;">Sem registros.</div>'; return; }
+            log.innerHTML = activities.map(a => {
+                const time = a.created_at ? formatDevTime(a.created_at) : '-';
+                const methodClass = `method-${a.method || 'GET'}`;
+                const statusClass = (a.status_code && a.status_code < 400) ? 'status-ok' : 'status-err';
+                return `<div class="dev-activity-item">
+                    <span class="time">${time}</span>
+                    <span class="method ${methodClass}">${a.method || '-'}</span>
+                    <span class="path-text">${escapeHtmlDev(a.path || '-')}</span>
+                    <span class="status-code ${statusClass}">${a.status_code || '-'}</span>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        async function devLoadDbStatus() {
+            const data = await devFetch(`${CR_API_BASE}/api/dev/db-status`);
+            if (!data) return;
+            document.getElementById('devStatTables').textContent = (data.tables || []).length;
+            const info = document.getElementById('devDbInfo');
+            let html = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+                <div class="dev-stat"><div class="label">Tamanho</div><div class="num" style="font-size:1.1rem;">${escapeHtmlDev(data.databaseSize || '-')}</div></div>
+                <div class="dev-stat"><div class="label">Conexões Ativas</div><div class="num" style="font-size:1.1rem;">${data.activeConnections || 0}</div></div>
+            </div>`;
+            if (data.tables && data.tables.length) {
+                html += '<div style="margin-top:0.5rem;overflow-x:auto;"><table class="dev-db-table"><thead><tr><th>Tabela</th><th>Linhas</th></tr></thead><tbody>';
+                data.tables.forEach(t => { html += `<tr><td>${escapeHtmlDev(t.name)}</td><td>${t.rows.toLocaleString()}</td></tr>`; });
+                html += '</tbody></table></div>';
+            }
+            info.innerHTML = html;
+        }
+
+        async function devLoadAlerts() {
+            const data = await devFetch(`${CR_API_BASE}/api/dev/alerts`);
+            if (!data) return;
+            const alerts = data.alerts || [];
+            const unresolved = data.unresolvedCount || 0;
+            const badge = document.getElementById('devAlertCount');
+            if (unresolved > 0) { badge.textContent = unresolved; badge.style.display = 'inline-block'; } else { badge.style.display = 'none'; }
+            document.getElementById('devStatAlerts').textContent = unresolved;
+            const list = document.getElementById('devAlertsList');
+            if (!alerts.length) { list.innerHTML = '<div style="color:#10b981;font-size:0.82rem;padding:0.5rem;">Nenhum alerta de segurança registrado.</div>'; return; }
+            list.innerHTML = alerts.map(a => {
+                const sevClass = a.severity === 'critical' ? 'dev-alert-crit' : (a.resolved ? 'dev-alert-ok' : 'dev-alert-warn');
+                const time = a.created_at ? formatDevTime(a.created_at) : '-';
+                return `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0;border-bottom:1px solid #f1f5f9;">
+                    <span class="${sevClass}" style="padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:700;white-space:nowrap;">${a.severity || 'warn'}</span>
+                    <span style="flex:1;font-size:0.78rem;color:#334155;">${escapeHtmlDev(a.description || a.alert_type)}</span>
+                    <span style="font-size:0.7rem;color:#94a3b8;white-space:nowrap;">${time}</span>
+                    ${!a.resolved ? `<button class="btn-detail" style="background:#10b981;" onclick="devResolveAlert(${a.id})">Resolver</button>` : '<span class="dev-alert-ok">Resolvido</span>'}
+                </div>`;
+            }).join('');
+        }
+
+        async function devResolveAlert(id) {
+            await devFetch(`${CR_API_BASE}/api/dev/alerts/${id}/resolve`);
+            devLoadAlerts();
+        }
+
+        function escapeHtmlDev(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function formatDevTime(isoStr) {
+            if (!isoStr) return '-';
+            const d = new Date(isoStr);
+            if (isNaN(d.getTime())) return String(isoStr).slice(11,19) || '-';
+            return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
 
         function openUserRegistration(event) {
             event.preventDefault();

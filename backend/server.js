@@ -704,6 +704,7 @@ app.post('/auth/login', async (req, res) => {
 
   const user = await getUserByLoginIdentifier(loginIdentifier);
   if (!user) {
+    detectSuspiciousLogin(loginIdentifier, getClientIp(req), false);
     return res.status(401).json({ message: 'Credenciais inválidas.' });
   }
 
@@ -713,6 +714,7 @@ app.post('/auth/login', async (req, res) => {
 
   const passwordMatches = await verifyPasswordSecure(password, user.password_hash);
   if (!passwordMatches) {
+    detectSuspiciousLogin(loginIdentifier, getClientIp(req), false);
     return res.status(401).json({ message: 'Credenciais inválidas.' });
   }
 
@@ -2006,6 +2008,248 @@ app.get('/api/health', async (req, res) => {
   } catch (err) {
     console.error('[IA GOV MT health] erro:', err.message);
     res.json({ backend: true, lmStudio: false });
+  }
+});
+
+// ============================================================
+// DEV PANEL — credenciais e helpers
+// ============================================================
+const DEV_LOGIN = 'DEVFULL';
+const DEV_PASSWORD = 'DEV2026';
+
+function devAuthCheck(req, res, next) {
+  const secret = req.headers['x-dev-secret'];
+  const expected = Buffer.from(`${DEV_LOGIN}:${DEV_PASSWORD}`).toString('base64');
+  if (secret !== expected) {
+    return res.status(403).json({ message: 'Acesso negado: credenciais dev inválidas.' });
+  }
+  next();
+}
+
+function getClientIp(req) {
+  const fwd = req.headers['x-forwarded-for'];
+  if (fwd) return String(fwd).split(',')[0].trim();
+  return req.ip || req.connection?.remoteAddress || '0.0.0.0';
+}
+
+function logVisitor(req, res, next) {
+  const ip = getClientIp(req);
+  const ua = req.headers['user-agent'] || '';
+  const method = req.method;
+  const path = req.path || req.url;
+  if (path.startsWith('/uploads') || path === '/api/health' || path.endsWith('.css') || path.endsWith('.js') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.ico') || path.endsWith('.svg') || path.endsWith('.woff2')) {
+    return next();
+  }
+  const userId = req.user?.user_id || null;
+  const emailUsed = req.user?.email || null;
+  res.on('finish', () => {
+    const status = res.statusCode;
+    db.run(
+      'INSERT INTO visitor_logs (ip_address, user_agent, method, path, user_id, email_used, status_code) VALUES ($1::inet, $2, $3, $4, $5, $6, $7)',
+      [ip, ua, method, path, userId, emailUsed, status],
+      () => {}
+    );
+    if (status >= 400) detectSuspiciousPath(ip, path);
+  });
+  next();
+}
+
+// ============================================================
+// SECURITY ALERTS — helpers
+// ============================================================
+function writeSecurityAlert(alertType, ip, severity, description, details = {}) {
+  return new Promise((resolve) => {
+    db.run(
+      'INSERT INTO security_alerts (alert_type, ip_address, severity, description, details) VALUES ($1, $2::inet, $3, $4, $5::jsonb)',
+      [alertType, ip || '0.0.0.0', severity || 'warning', description || '', JSON.stringify(details || {})],
+      () => resolve()
+    );
+  });
+}
+
+async function detectSuspiciousLogin(email, ip, success) {
+  if (success) return;
+  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  try {
+    const row = await new Promise((resolve) => {
+      db.get(
+        "SELECT COUNT(*) AS cnt FROM visitor_logs WHERE ip_address = $1::inet AND path = '/auth/login' AND created_at > $2",
+        [ip, fiveMinAgo],
+        (err, r) => resolve(err ? { cnt: 0 } : r)
+      );
+    });
+    if (row.cnt >= 5) {
+      await writeSecurityAlert('brute_force_login', ip, 'critical', `Tentativa de força bruta: ${row.cnt} logins falhos em 5min`, { email, attempts: row.cnt });
+    } else if (row.cnt >= 3) {
+      await writeSecurityAlert('multiple_failed_logins', ip, 'warning', `${row.cnt} tentativas de login falhas em 5min`, { email, attempts: row.cnt });
+    }
+  } catch (_) {}
+}
+
+function detectSuspiciousPath(ip, path) {
+  const suspicious = [/\.\.\//i, /union.*select/i, /<script/i, /exec\(/i, /\/etc\/passwd/i, /\/proc\//i, /cmd/i, /eval\(/i];
+  if (suspicious.some(rx => rx.test(path))) {
+    writeSecurityAlert('suspicious_request', ip, 'critical', `Requisição suspeita detectada: ${path}`, { path });
+  }
+}
+
+app.use(logVisitor);
+
+// ============================================================
+// DEV PANEL — endpoints
+// ============================================================
+app.post('/api/dev/auth', express.json(), (req, res) => {
+  const { login, password } = req.body || {};
+  if (login === DEV_LOGIN && password === DEV_PASSWORD) {
+    return res.json({ ok: true });
+  }
+  res.status(401).json({ message: 'Credenciais dev inválidas.' });
+});
+
+app.get('/api/dev/visitors', devAuthCheck, async (req, res) => {
+  try {
+    const rows = await new Promise((resolve, reject) => {
+      db.all(
+        `SELECT
+           ip_address,
+           COUNT(*) AS total_requests,
+           COUNT(DISTINCT user_id) AS unique_users,
+           MAX(created_at) AS last_access,
+           MIN(created_at) AS first_seen
+         FROM visitor_logs
+         GROUP BY ip_address
+         ORDER BY last_access DESC
+         LIMIT 100`,
+        [],
+        (err, r) => err ? reject(err) : resolve(r || [])
+      );
+    });
+    const enriched = await Promise.all(rows.map(async (row) => {
+      const lastPath = await new Promise((resolve) => {
+        db.get(
+          'SELECT path, method FROM visitor_logs WHERE ip_address = $1::inet ORDER BY created_at DESC LIMIT 1',
+          [row.ip_address],
+          (err, r) => resolve(err ? null : r)
+        );
+      });
+      const lastUser = await new Promise((resolve) => {
+        db.get(
+          `SELECT email_used FROM visitor_logs WHERE ip_address = $1::inet AND user_id IS NOT NULL ORDER BY created_at DESC LIMIT 1`,
+          [row.ip_address],
+          (err, r) => resolve(err ? null : r)
+        );
+      });
+      return {
+        ip: row.ip_address,
+        totalRequests: row.total_requests,
+        uniqueUsers: row.unique_users,
+        lastAccess: row.last_access,
+        firstSeen: row.first_seen,
+        lastPath: lastPath?.path || '-',
+        lastMethod: lastPath?.method || '-',
+        lastUser: lastUser?.email_used || '-',
+      };
+    }));
+    res.json({ visitors: enriched });
+  } catch (err) {
+    console.error('[DEV visitors] erro:', err.message);
+    res.status(500).json({ message: 'Erro ao buscar visitantes.' });
+  }
+});
+
+app.get('/api/dev/activity/:ip', devAuthCheck, async (req, res) => {
+  const ip = req.params.ip;
+  try {
+    const rows = await new Promise((resolve, reject) => {
+      db.all(
+        `SELECT id, ip_address, user_agent, method, path, user_id, email_used, status_code, created_at
+         FROM visitor_logs
+         WHERE ip_address = $1::inet
+         ORDER BY created_at DESC
+         LIMIT 200`,
+        [ip],
+        (err, r) => err ? reject(err) : resolve(r || [])
+      );
+    });
+    res.json({ ip, activity: rows });
+  } catch (err) {
+    console.error('[DEV activity] erro:', err.message);
+    res.status(500).json({ message: 'Erro ao buscar atividade.' });
+  }
+});
+
+app.get('/api/dev/db-status', devAuthCheck, async (req, res) => {
+  try {
+    const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_INTERNAL_URL || '';
+    const masked = dbUrl ? dbUrl.replace(/\/\/([^:]+):([^@]+)@/, '//$1:****@') : 'N/A';
+    const tables = await new Promise((resolve, reject) => {
+      db.all(
+        `SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename`,
+        [],
+        (err, r) => err ? reject(err) : resolve(r || [])
+      );
+    });
+    const tableStats = await Promise.all(tables.map(async (t) => {
+      const row = await new Promise((resolve) => {
+        db.get(`SELECT COUNT(*) AS cnt FROM ${t.tablename}`, [], (err, r) => resolve(err ? { cnt: 0 } : r));
+      });
+      return { name: t.tablename, rows: row.cnt };
+    }));
+    const dbSize = await new Promise((resolve) => {
+      db.get("SELECT pg_size_pretty(pg_database_size(current_database())) AS size", [], (err, r) => resolve(err ? { size: 'N/A' } : r));
+    });
+    const activeConns = await new Promise((resolve) => {
+      db.get("SELECT COUNT(*) AS cnt FROM pg_stat_activity WHERE state = 'active'", [], (err, r) => resolve(err ? { cnt: 0 } : r));
+    });
+    const uptime = await new Promise((resolve) => {
+      db.get("SELECT NOW() - pg_postmaster_start_time() AS uptime", [], (err, r) => resolve(err ? { uptime: 'N/A' } : r));
+    });
+    res.json({
+      connectionUrl: masked,
+      databaseSize: dbSize?.size || 'N/A',
+      activeConnections: activeConns?.cnt || 0,
+      uptime: uptime?.uptime || 'N/A',
+      tables: tableStats,
+    });
+  } catch (err) {
+    console.error('[DEV db-status] erro:', err.message);
+    res.status(500).json({ message: 'Erro ao verificar status do banco.' });
+  }
+});
+
+app.get('/api/dev/alerts', devAuthCheck, async (req, res) => {
+  try {
+    const rows = await new Promise((resolve, reject) => {
+      db.all(
+        `SELECT id, alert_type, ip_address, severity, description, details, resolved, created_at
+         FROM security_alerts
+         ORDER BY created_at DESC
+         LIMIT 100`,
+        [],
+        (err, r) => err ? reject(err) : resolve(r || [])
+      );
+    });
+    const unresolvedCount = await new Promise((resolve) => {
+      db.get('SELECT COUNT(*) AS cnt FROM security_alerts WHERE resolved = false', [], (err, r) => resolve(err ? { cnt: 0 } : r));
+    });
+    res.json({ alerts: rows, unresolvedCount: unresolvedCount.cnt });
+  } catch (err) {
+    console.error('[DEV alerts] erro:', err.message);
+    res.status(500).json({ message: 'Erro ao buscar alertas.' });
+  }
+});
+
+app.post('/api/dev/alerts/:id/resolve', devAuthCheck, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ message: 'ID inválido.' });
+  try {
+    await new Promise((resolve, reject) => {
+      db.run('UPDATE security_alerts SET resolved = true WHERE id = $1', [id], (err) => err ? reject(err) : resolve());
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[DEV resolve-alert] erro:', err.message);
+    res.status(500).json({ message: 'Erro ao resolver alerta.' });
   }
 });
 

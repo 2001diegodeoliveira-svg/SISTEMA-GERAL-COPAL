@@ -304,6 +304,38 @@ CREATE TABLE IF NOT EXISTS signatures (
 
 CREATE INDEX IF NOT EXISTS idx_signatures_entity ON signatures (entity_type, entity_id);
 
+CREATE TABLE IF NOT EXISTS visitor_logs (
+  id BIGSERIAL PRIMARY KEY,
+  ip_address INET NOT NULL,
+  user_agent TEXT,
+  method VARCHAR(10),
+  path TEXT,
+  user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  email_used VARCHAR(255),
+  status_code INTEGER,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_visitor_logs_ip ON visitor_logs (ip_address);
+CREATE INDEX IF NOT EXISTS idx_visitor_logs_created_at ON visitor_logs (created_at);
+CREATE INDEX IF NOT EXISTS idx_visitor_logs_user_id ON visitor_logs (user_id);
+
+CREATE TABLE IF NOT EXISTS security_alerts (
+  id BIGSERIAL PRIMARY KEY,
+  alert_type VARCHAR(80) NOT NULL,
+  ip_address INET,
+  severity VARCHAR(20) NOT NULL DEFAULT 'warning',
+  description TEXT,
+  details JSONB NOT NULL DEFAULT '{}'::jsonb,
+  resolved BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_security_alerts_ip ON security_alerts (ip_address);
+CREATE INDEX IF NOT EXISTS idx_security_alerts_type ON security_alerts (alert_type);
+CREATE INDEX IF NOT EXISTS idx_security_alerts_resolved ON security_alerts (resolved);
+CREATE INDEX IF NOT EXISTS idx_security_alerts_created_at ON security_alerts (created_at);
+
 CREATE OR REPLACE VIEW v_contract_overview AS
 SELECT
   c.id,
