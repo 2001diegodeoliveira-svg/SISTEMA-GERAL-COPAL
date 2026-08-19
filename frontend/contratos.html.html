@@ -3003,6 +3003,7 @@
 
                 contractsAuthToken = data.accessToken || '';
                 contractsCurrentUser = data.user || null;
+                localStorage.setItem('userName', getContractsUserDisplayName(contractsCurrentUser));
                 applyContractsPermissions(contractsCurrentUser);
                 if (contractsAuthToken) {
                     localStorage.setItem('accessToken', contractsAuthToken);
