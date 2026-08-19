@@ -33,7 +33,7 @@
             <div class="mt-2 md:mt-0 text-sm bg-blue-900 px-3 py-1 rounded border border-blue-700">
                 Módulo: <span class="font-semibold text-white">Extrato de Contratos</span>
             </div>
-            <button type="button" onclick="voltarParaContratos()" class="mt-2 md:mt-0 bg-white text-sespBlue font-semibold px-4 py-2 rounded border border-blue-200 hover:bg-blue-50">VOLTAR</button>
+            <button type="button" onclick="voltarParaHome()" class="mt-2 md:mt-0 bg-white text-sespBlue font-semibold px-4 py-2 rounded border border-blue-200 hover:bg-blue-50">HOME</button>
         </div>
     </header>
 
@@ -81,7 +81,7 @@
                     </div>
                     <div>
                         <p class="text-gray-500">CNPJ:</p>
-                        <p class="font-semibold text-gray-800 font-mono">00.000.000/0001-00</p>
+                        <p class="font-semibold text-gray-800 font-mono" id="lblCompanyCnpj">Não informado</p>
                     </div>
                 </div>
             </div>
@@ -316,7 +316,13 @@
 
         function linkAnexo(path, originalName) {
             if (!path) return 'Sem anexo';
-            const url = apiUrl(path);
+            const rawPath = String(path).trim();
+            const attachmentPath = /^https?:\/\//i.test(rawPath)
+                ? rawPath
+                : rawPath.startsWith('/')
+                    ? rawPath
+                    : `/uploads/contracts/${encodeURIComponent(rawPath)}`;
+            const url = apiUrl(attachmentPath);
             return `<a href="${escaparHtml(url)}" target="_blank" rel="noopener" class="text-sky-700 font-semibold">Visualizar${originalName ? ` (${escaparHtml(originalName)})` : ''}</a>`;
         }
 
@@ -365,6 +371,7 @@
 
             document.getElementById('lblContractNum').textContent = `CONTRATO ${contract.numContrato || ''}`;
             document.getElementById('lblCompanyName').textContent = obterNomeEmpresa(contract);
+            document.getElementById('lblCompanyCnpj').textContent = contract.cnpj || contract.CNPJ || contract.cnpjEmpresa || 'CNPJ não informado';
             const unitSelect = document.getElementById('unitSelect');
             unitSelect.innerHTML = '<option value="__ALL__">Todas as unidades do contrato</option>' + obterUnidades(contract).map((unit) => `<option value="${escaparHtml(unit)}">${escaparHtml(unit)}</option>`).join('');
             document.querySelector('#contractResult .text-right p').innerHTML = `Vigência: <span class="font-semibold text-gray-800">${escaparHtml(formatarData(contract.dtInicial))} até ${escaparHtml(formatarData(contract.dtFinal))}</span>`;
@@ -373,6 +380,10 @@
 
         function voltarParaContratos() {
             window.location.href = 'contratos.html.html';
+        }
+
+        function voltarParaHome() {
+            window.location.href = 'home.html.html';
         }
 
         async function salvarContratoAtual() {
