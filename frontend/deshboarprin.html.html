@@ -898,6 +898,11 @@
                 <div class="contract-details-block" style="margin-bottom: 12px;">${unidades.length ? utils.escapeHtml(unidades.join(' / ')) : 'Nenhuma unidade vinculada.'}</div>
 
                 <div class="contract-details-block"><strong>Última atualização:</strong> ${utils.escapeHtml(utils.getLastUpdateLabel(contract))}</div>
+                <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+                    <button class="btn btn-primary" type="button" onclick="openContractsModule('${utils.escapeHtml(utils.getContractNumber(contract))}')">
+                        <i class="fa-solid fa-pen-to-square"></i> Editar contrato
+                    </button>
+                </div>
             `;
 
             detailsPanel.style.display = 'block';
