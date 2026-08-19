@@ -1413,6 +1413,8 @@ function mapContractRow(row) {
 
   const numContrato = row.numContrato || row.numcontrato || '';
   const numProcesso = row.numProcesso || row.numprocesso || '';
+  const razaoSocial = row.razaoSocial || row.razaosocial || '';
+  const nomeFantasia = row.nomeFantasia || row.nomefantasia || '';
   const valorGlobal = row.valorGlobal || row.valorglobal || '';
   const dtInicial = row.dtInicial || row.dtinicial || '';
   const dtFinal = row.dtFinal || row.dtfinal || '';
@@ -1435,6 +1437,8 @@ function mapContractRow(row) {
     ...row,
     numContrato,
     numProcesso,
+    razaoSocial,
+    nomeFantasia,
     valorGlobal,
     dtInicial,
     dtFinal,
@@ -1757,7 +1761,7 @@ app.get('/api/contracts', async (req, res) => {
 
   // Omit conteudoArquivoBase64 from list to avoid 60MB+ responses; fetch it per-contract
   contractsDb.all(
-    `SELECT id, numContrato, numProcesso, credor, cep, logradouro, numEndereco, bairro, cidade, uf,
+    `SELECT id, numContrato, numProcesso, credor, razaoSocial, nomeFantasia, cep, logradouro, numEndereco, bairro, cidade, uf,
             telefoneFixo, telefoneWhatsapp, emailEmpresa, valorGlobal, objeto, dtInicial, dtFinal,
             prazoEntrega, formaContagem, tipoEntrega, arquivoContrato,
             CASE WHEN conteudoArquivoBase64 IS NOT NULL AND conteudoArquivoBase64 != '' THEN '__HAS_PDF__' ELSE '' END AS conteudoArquivoBase64,
@@ -1802,6 +1806,8 @@ app.post('/api/contracts', authenticateToken, async (req, res) => {
     numContrato,
     numProcesso,
     credor,
+    razaoSocial,
+    nomeFantasia,
     cep,
     logradouro,
     numEndereco,
@@ -1837,6 +1843,8 @@ app.post('/api/contracts', authenticateToken, async (req, res) => {
         numContrato,
         numProcesso,
         credor,
+        razaoSocial,
+        nomeFantasia,
         cep,
         logradouro,
         numEndereco,
@@ -1859,11 +1867,13 @@ app.post('/api/contracts', authenticateToken, async (req, res) => {
         unidades,
         aditivos,
         empenhos
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?::jsonb)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?::jsonb)
       ON CONFLICT (numContrato)
       DO UPDATE SET
         numProcesso = EXCLUDED.numProcesso,
         credor = EXCLUDED.credor,
+        razaoSocial = EXCLUDED.razaoSocial,
+        nomeFantasia = EXCLUDED.nomeFantasia,
         cep = EXCLUDED.cep,
         logradouro = EXCLUDED.logradouro,
         numEndereco = EXCLUDED.numEndereco,
@@ -1891,6 +1901,8 @@ app.post('/api/contracts', authenticateToken, async (req, res) => {
       normalizedNumContrato,
       numProcesso || '',
       credor || '',
+      razaoSocial || '',
+      nomeFantasia || '',
       cep || '',
       logradouro || '',
       numEndereco || '',

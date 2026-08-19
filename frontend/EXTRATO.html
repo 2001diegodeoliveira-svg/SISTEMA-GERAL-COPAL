@@ -33,6 +33,7 @@
             <div class="mt-2 md:mt-0 text-sm bg-blue-900 px-3 py-1 rounded border border-blue-700">
                 Módulo: <span class="font-semibold text-white">Extrato de Contratos</span>
             </div>
+            <button type="button" onclick="voltarParaContratos()" class="mt-2 md:mt-0 bg-white text-sespBlue font-semibold px-4 py-2 rounded border border-blue-200 hover:bg-blue-50">VOLTAR</button>
         </div>
     </header>
 
@@ -85,28 +86,42 @@
                 </div>
             </div>
 
-            <!-- CARDS FINANCEIROS -->
+            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <label for="unitSelect" class="block text-sm font-bold text-gray-700 mb-2">VISUALIZAR POR UNIDADE</label>
+                <select id="unitSelect" onchange="renderContractView()" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="__ALL__">Todas as unidades do contrato</option>
+                </select>
+            </div>
+
+            <!-- SALDOS DO CONTRATO -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-blue-500">
-                    <p class="text-xs text-gray-500 font-semibold uppercase">Valor Inicial</p>
+                    <p class="text-xs text-gray-500 font-semibold uppercase">Saldo global do contrato</p>
                     <p class="text-lg font-bold text-gray-800 mt-1" id="cardInitial">R$ 1.000.000,00</p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-purple-500">
-                    <p class="text-xs text-gray-500 font-semibold uppercase">Aditivos</p>
+                    <p class="text-xs text-gray-500 font-semibold uppercase">Saldo de aditivo</p>
                     <p class="text-lg font-bold text-purple-700 mt-1" id="cardAmendments">R$ 200.000,00</p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-indigo-600">
-                    <p class="text-xs text-gray-500 font-semibold uppercase">Global Atualizado</p>
+                    <p class="text-xs text-gray-500 font-semibold uppercase">Saldo de empenho</p>
                     <p class="text-lg font-bold text-indigo-900 mt-1" id="cardGlobal">R$ 1.200.000,00</p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-amber-500">
-                    <p class="text-xs text-gray-500 font-semibold uppercase">Total Utilizado</p>
-                    <p class="text-lg font-bold text-amber-700 mt-1" id="cardUsed">R$ 180.000,00</p>
+                    <p class="text-xs text-gray-500 font-semibold uppercase">Saldo total</p>
+                    <p class="text-lg font-bold text-amber-700 mt-1" id="cardTotal">R$ 0,00</p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-emerald-500 sm:col-span-2 lg:col-span-1">
-                    <p class="text-xs text-gray-500 font-semibold uppercase">Saldo Atual</p>
+                    <p class="text-xs text-gray-500 font-semibold uppercase">Saldo total disponível</p>
                     <p class="text-lg font-bold text-emerald-700 mt-1" id="cardBalance">R$ 1.020.000,00</p>
                 </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200"><p class="text-xs text-gray-500 font-semibold uppercase">Saldo de aditivo usado</p><p class="text-lg font-bold text-gray-800 mt-1" id="cardAmendmentsUsed">R$ 0,00</p></div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200"><p class="text-xs text-gray-500 font-semibold uppercase">Saldo de empenho usado</p><p class="text-lg font-bold text-gray-800 mt-1" id="cardUsed">R$ 0,00</p></div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200"><p class="text-xs text-gray-500 font-semibold uppercase">Saldo disponível de aditivo</p><p class="text-lg font-bold text-gray-800 mt-1" id="cardAmendmentsAvailable">R$ 0,00</p></div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200"><p class="text-xs text-gray-500 font-semibold uppercase">Saldo disponível de empenho</p><p class="text-lg font-bold text-gray-800 mt-1" id="cardEmpenhoAvailable">R$ 0,00</p></div>
             </div>
 
             <!-- EXTRATO FINANCEIRO (TABELA ESTILO BANCÁRIO) -->
@@ -124,6 +139,8 @@
                                 <th class="py-3 px-4">Documento</th>
                                 <th class="py-3 px-4">Histórico</th>
                                 <th class="py-3 px-4">Empenho</th>
+                                <th class="py-3 px-4">Usuário</th>
+                                <th class="py-3 px-4">Unidades</th>
                                 <th class="py-3 px-4 text-right">Valor R$</th>
                                 <th class="py-3 px-4 text-right">Saldo R$</th>
                             </tr>
@@ -133,6 +150,16 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200"><h3 class="font-bold text-sespBlue text-base">HISTÓRICO DE ADITIVOS</h3></div>
+                <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-100 text-gray-600 text-xs uppercase"><th class="py-3 px-4">Tipo</th><th class="py-3 px-4">Data</th><th class="py-3 px-4">Detalhes</th><th class="py-3 px-4">Usuário</th><th class="py-3 px-4">Anexo</th><th class="py-3 px-4">Ação</th></tr></thead><tbody id="amendmentsTableBody"></tbody></table></div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200"><h3 class="font-bold text-sespBlue text-base">EMPENHOS</h3></div>
+                <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-100 text-gray-600 text-xs uppercase"><th class="py-3 px-4">Nº Empenho</th><th class="py-3 px-4">Tipo</th><th class="py-3 px-4">Unidades</th><th class="py-3 px-4">Valor</th><th class="py-3 px-4">Usuário</th><th class="py-3 px-4">Anexo</th><th class="py-3 px-4">Ação</th></tr></thead><tbody id="commitmentsTableBody"></tbody></table></div>
             </div>
 
         </div>
@@ -192,8 +219,47 @@
                 .replace(/'/g, '&#39;');
         }
 
-        function construirMovimentacoes(contract) {
-            const valorInicial = converterValor(contract?.valorGlobal);
+        let contratoAtual = null;
+
+        function pertenceAUnidade(item, unidade) {
+            if (unidade === '__ALL__') return true;
+            const unidades = Array.isArray(item?.unidades) ? item.unidades : [];
+            return unidades.length === 0 || unidades.includes(unidade);
+        }
+
+        function obterUnidades(contract) {
+            const unidades = new Set((contract?.unidades || []).map((item) => item?.unidade || item).filter(Boolean));
+            (contract?.empenhos || []).forEach((item) => (item.unidades || []).forEach((unidade) => unidades.add(unidade)));
+            unidades.add('CIOSP');
+            return Array.from(unidades).sort();
+        }
+
+        function calcularSaldos(contract, unidade) {
+            const unidadeData = (contract?.unidades || []).find((item) => (item?.unidade || item) === unidade);
+            const saldoGlobal = unidade === '__ALL__' || !unidadeData
+                ? converterValor(contract?.valorGlobal)
+                : converterValor(unidadeData.valor || contract?.valorGlobal);
+            const aditivos = (contract?.aditivos || []).filter((item) => pertenceAUnidade(item, unidade));
+            const empenhos = (contract?.empenhos || []).filter((item) => pertenceAUnidade(item, unidade));
+            const saldoAditivo = aditivos.reduce((total, item) => total + converterValorAditivo(item), 0);
+            const saldoEmpenho = empenhos.reduce((total, item) => total + converterValor(item.valorEmpenho), 0);
+            const saldoTotal = saldoGlobal + saldoAditivo;
+            const saldoAditivoUsado = Math.min(Math.max(saldoAditivo, 0), saldoEmpenho);
+            return {
+                saldoGlobal,
+                saldoAditivo,
+                saldoEmpenho,
+                saldoTotal,
+                saldoAditivoUsado,
+                saldoEmpenhoUsado: saldoEmpenho,
+                saldoTotalDisponivel: saldoTotal - saldoEmpenho,
+                saldoAditivoDisponivel: saldoAditivo - saldoAditivoUsado,
+                saldoEmpenhoDisponivel: saldoTotal - saldoEmpenho
+            };
+        }
+
+        function construirMovimentacoes(contract, unidade) {
+            const valorInicial = calcularSaldos(contract, unidade).saldoGlobal;
             const movimentacoes = [{
                 data: contract?.dtInicial,
                 tipo: 'SALDO',
@@ -204,7 +270,7 @@
                 tipoValor: 'C'
             }];
 
-            (contract?.aditivos || []).forEach((aditivo, index) => {
+            (contract?.aditivos || []).filter((item) => pertenceAUnidade(item, unidade)).forEach((aditivo, index) => {
                 movimentacoes.push({
                     data: aditivo.data,
                     tipo: 'ADITIVO',
@@ -216,7 +282,7 @@
                 });
             });
 
-            (contract?.empenhos || []).forEach((empenho) => {
+            (contract?.empenhos || []).filter((item) => pertenceAUnidade(item, unidade)).forEach((empenho) => {
                 movimentacoes.push({
                     data: empenho.dataLancamento || empenho.data,
                     tipo: 'EMPENHO',
@@ -236,36 +302,119 @@
             });
         }
 
-        function preencherExtrato(contract) {
-            const valorInicial = converterValor(contract?.valorGlobal);
-            const totalAditivos = (contract?.aditivos || []).reduce((total, item) => total + converterValorAditivo(item), 0);
-            const totalEmpenhado = (contract?.empenhos || []).reduce((total, item) => total + converterValor(item.valorEmpenho), 0);
-            const movimentacoes = construirMovimentacoes(contract);
+        function linkAnexo(path, originalName) {
+            if (!path) return 'Sem anexo';
+            const url = apiUrl(path);
+            return `<a href="${escaparHtml(url)}" target="_blank" rel="noopener" class="text-sky-700 font-semibold">Visualizar${originalName ? ` (${escaparHtml(originalName)})` : ''}</a>`;
+        }
 
-            document.getElementById('lblContractNum').textContent = `CONTRATO ${contract.numContrato || ''}`;
-            document.getElementById('lblCompanyName').textContent = contract.credor || 'Não informado';
-            document.getElementById('cardInitial').textContent = formatarMoeda(valorInicial);
-            document.getElementById('cardAmendments').textContent = formatarMoeda(totalAditivos);
-            document.getElementById('cardGlobal').textContent = formatarMoeda(valorInicial + totalAditivos);
-            document.getElementById('cardUsed').textContent = formatarMoeda(totalEmpenhado);
-            document.getElementById('cardBalance').textContent = formatarMoeda(valorInicial + totalAditivos - totalEmpenhado);
-            document.querySelector('#contractResult .text-right p').innerHTML = `Vigência: <span class="font-semibold text-gray-800">${escaparHtml(formatarData(contract.dtInicial))} até ${escaparHtml(formatarData(contract.dtFinal))}</span>`;
+        function renderHistoricos(contract, unidade) {
+            const aditivos = (contract?.aditivos || []).filter((item) => pertenceAUnidade(item, unidade));
+            const empenhos = (contract?.empenhos || []).filter((item) => pertenceAUnidade(item, unidade));
+            document.getElementById('amendmentsTableBody').innerHTML = aditivos.length ? aditivos.map((item) => {
+                const index = contract.aditivos.indexOf(item);
+                return `<tr class="border-b"><td class="py-3 px-4">${escaparHtml(item.tipo || 'N/A')}</td><td class="py-3 px-4">${escaparHtml(item.data || 'N/A')}</td><td class="py-3 px-4">${escaparHtml(item.obs || item.valor || 'Atualização contratual')}</td><td class="py-3 px-4">${escaparHtml(item.usuarioLancamento || 'Não informado')}</td><td class="py-3 px-4">${linkAnexo(item.arquivoAditivo, item.arquivoAditivoOriginal)}</td><td class="py-3 px-4"><button type="button" class="text-sky-700 font-semibold" onclick="editarAditivo(${index})">Editar</button></td></tr>`;
+            }).join('') : '<tr><td colspan="6" class="py-4 px-4 text-center text-gray-500">Nenhum aditivo lançado.</td></tr>';
+            document.getElementById('commitmentsTableBody').innerHTML = empenhos.length ? empenhos.map((item) => {
+                const index = contract.empenhos.indexOf(item);
+                const unidades = (item.unidades || []).join(', ') || 'Todas';
+                return `<tr class="border-b"><td class="py-3 px-4 font-semibold">${escaparHtml(item.numEmpenho || 'N/A')}</td><td class="py-3 px-4">${escaparHtml(item.tipoEmpenho || 'N/A')}</td><td class="py-3 px-4">${escaparHtml(unidades)}</td><td class="py-3 px-4">${escaparHtml(item.valorEmpenho || 'R$ 0,00')}</td><td class="py-3 px-4">${escaparHtml(item.usuarioLancamento || 'Não informado')}</td><td class="py-3 px-4">${linkAnexo(item.arquivoNotaEmpenho, item.arquivoNotaEmpenhoOriginal || item.arquivoNotaEmpenho)}</td><td class="py-3 px-4"><button type="button" class="text-sky-700 font-semibold" onclick="editarEmpenho(${index})">Editar</button></td></tr>`;
+            }).join('') : '<tr><td colspan="7" class="py-4 px-4 text-center text-gray-500">Nenhum empenho lançado.</td></tr>';
+        }
 
-            const tbody = document.getElementById('extractTableBody');
-            tbody.innerHTML = movimentacoes.map((item) => {
+        function renderContractView() {
+            const unidade = document.getElementById('unitSelect').value;
+            const saldos = calcularSaldos(contratoAtual, unidade);
+            const moneyFields = {
+                cardInitial: saldos.saldoGlobal,
+                cardAmendments: saldos.saldoAditivo,
+                cardGlobal: saldos.saldoEmpenho,
+                cardTotal: saldos.saldoTotal,
+                cardBalance: saldos.saldoTotalDisponivel,
+                cardAmendmentsUsed: saldos.saldoAditivoUsado,
+                cardUsed: saldos.saldoEmpenhoUsado,
+                cardAmendmentsAvailable: saldos.saldoAditivoDisponivel,
+                cardEmpenhoAvailable: saldos.saldoEmpenhoDisponivel
+            };
+            Object.entries(moneyFields).forEach(([id, value]) => { document.getElementById(id).textContent = formatarMoeda(value); });
+            const movimentacoes = construirMovimentacoes(contratoAtual, unidade);
+            document.getElementById('extractTableBody').innerHTML = movimentacoes.map((item) => {
                 const isCredit = item.tipoValor === 'C';
                 const valueClass = isCredit ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold';
-                const signal = isCredit ? '+' : '';
-                return `<tr class="hover:bg-blue-50/50 transition-colors">
-                    <td class="py-3 px-4 text-xs text-gray-600">${escaparHtml(formatarData(item.data))}</td>
-                    <td class="py-3 px-4"><span class="bg-gray-200 text-gray-800 px-2 py-0.5 rounded text-xs font-sans font-semibold">${escaparHtml(item.tipo)}</span></td>
-                    <td class="py-3 px-4 font-semibold text-gray-700">${escaparHtml(item.doc)}</td>
-                    <td class="py-3 px-4 text-gray-800 font-sans text-sm">${escaparHtml(item.historico)}</td>
-                    <td class="py-3 px-4 text-xs text-gray-500">${escaparHtml(item.empenho)}</td>
-                    <td class="py-3 px-4 text-right ${valueClass}">${signal}${formatarMoeda(Math.abs(item.valor))}</td>
-                    <td class="py-3 px-4 text-right font-bold text-gray-900">${formatarMoeda(item.saldo)}</td>
-                </tr>`;
+                const signal = isCredit ? '+' : '-';
+                const source = contratoAtual?.aditivos?.find((entry) => entry.obs === item.historico) || contratoAtual?.empenhos?.find((entry) => entry.numEmpenho === item.empenho);
+                return `<tr class="hover:bg-blue-50/50 transition-colors"><td class="py-3 px-4 text-xs text-gray-600">${escaparHtml(formatarData(item.data))}</td><td class="py-3 px-4"><span class="bg-gray-200 text-gray-800 px-2 py-0.5 rounded text-xs font-sans font-semibold">${escaparHtml(item.tipo)}</span></td><td class="py-3 px-4 font-semibold text-gray-700">${escaparHtml(item.doc)}</td><td class="py-3 px-4 text-gray-800 font-sans text-sm">${escaparHtml(item.historico)}</td><td class="py-3 px-4 text-xs text-gray-500">${escaparHtml(item.empenho)}</td><td class="py-3 px-4 text-xs text-gray-500">${escaparHtml(source?.usuarioLancamento || 'Sistema')}</td><td class="py-3 px-4 text-xs text-gray-500">${escaparHtml((source?.unidades || []).join(', ') || 'Todas')}</td><td class="py-3 px-4 text-right ${valueClass}">${signal}${formatarMoeda(Math.abs(item.valor))}</td><td class="py-3 px-4 text-right font-bold text-gray-900">${formatarMoeda(item.saldo)}</td></tr>`;
             }).join('');
+            renderHistoricos(contratoAtual, unidade);
+        }
+
+        function preencherExtrato(contract) {
+            contratoAtual = contract;
+
+            document.getElementById('lblContractNum').textContent = `CONTRATO ${contract.numContrato || ''}`;
+            document.getElementById('lblCompanyName').textContent = contract.nomeFantasia || contract.razaoSocial || contract.credor || 'Não informado';
+            const unitSelect = document.getElementById('unitSelect');
+            unitSelect.innerHTML = '<option value="__ALL__">Todas as unidades do contrato</option>' + obterUnidades(contract).map((unit) => `<option value="${escaparHtml(unit)}">${escaparHtml(unit)}</option>`).join('');
+            document.querySelector('#contractResult .text-right p').innerHTML = `Vigência: <span class="font-semibold text-gray-800">${escaparHtml(formatarData(contract.dtInicial))} até ${escaparHtml(formatarData(contract.dtFinal))}</span>`;
+            renderContractView();
+        }
+
+        function voltarParaContratos() {
+            window.location.href = 'contratos.html.html';
+        }
+
+        async function salvarContratoAtual() {
+            const response = await fetch(apiUrl('/api/contracts'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(contratoAtual)
+            });
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(data.message || 'Não foi possível salvar a alteração.');
+            }
+        }
+
+        async function editarAditivo(index) {
+            const item = contratoAtual?.aditivos?.[index];
+            if (!item) return;
+            const tipo = window.prompt('Tipo do aditivo:', item.tipo || '');
+            if (tipo === null) return;
+            const valor = window.prompt('Valor do aditivo:', item.valor || 'R$ 0,00');
+            if (valor === null) return;
+            const obs = window.prompt('Detalhes / justificativa:', item.obs || '');
+            if (obs === null) return;
+            item.tipo = tipo.trim().toUpperCase();
+            item.valor = valor.trim();
+            item.obs = obs.trim();
+            try {
+                await salvarContratoAtual();
+                renderContractView();
+                window.alert('Aditivo atualizado com sucesso.');
+            } catch (error) {
+                window.alert(error.message);
+            }
+        }
+
+        async function editarEmpenho(index) {
+            const item = contratoAtual?.empenhos?.[index];
+            if (!item) return;
+            const numero = window.prompt('Número do empenho:', item.numEmpenho || '');
+            if (numero === null) return;
+            const tipo = window.prompt('Tipo do empenho:', item.tipoEmpenho || '');
+            if (tipo === null) return;
+            const valor = window.prompt('Valor do empenho:', item.valorEmpenho || 'R$ 0,00');
+            if (valor === null) return;
+            item.numEmpenho = numero.trim();
+            item.tipoEmpenho = tipo.trim().toUpperCase();
+            item.valorEmpenho = valor.trim();
+            try {
+                await salvarContratoAtual();
+                renderContractView();
+                window.alert('Empenho atualizado com sucesso.');
+            } catch (error) {
+                window.alert(error.message);
+            }
         }
 
         async function consultarContrato() {

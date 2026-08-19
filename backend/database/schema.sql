@@ -171,6 +171,8 @@ CREATE TABLE IF NOT EXISTS contracts (
   numContrato VARCHAR(100) NOT NULL UNIQUE,
   numProcesso VARCHAR(100),
   credor VARCHAR(255),
+  razaoSocial VARCHAR(255),
+  nomeFantasia VARCHAR(255),
   cep VARCHAR(20),
   logradouro TEXT,
   numEndereco VARCHAR(30),
@@ -206,6 +208,8 @@ CREATE INDEX IF NOT EXISTS idx_contracts_status ON contracts (status);
 CREATE INDEX IF NOT EXISTS idx_contracts_dt_inicial ON contracts (dtInicial);
 
 ALTER TABLE contracts ADD COLUMN IF NOT EXISTS cep VARCHAR(20);
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS razaoSocial VARCHAR(255);
+ALTER TABLE contracts ADD COLUMN IF NOT EXISTS nomeFantasia VARCHAR(255);
 ALTER TABLE contracts ADD COLUMN IF NOT EXISTS logradouro TEXT;
 ALTER TABLE contracts ADD COLUMN IF NOT EXISTS numEndereco VARCHAR(30);
 ALTER TABLE contracts ADD COLUMN IF NOT EXISTS bairro VARCHAR(120);

@@ -1988,7 +1988,7 @@
         let contractsCurrentUser = null;
         const CONTRACTS_CACHE_KEY = 'sgc_contracts_cache_v3';
         let attachmentRuntimeConfigPromise = null;
-        const RATEIO_DEFAULT_UNITS = ['PM-MT', 'CBM-MT', 'CIOPAER', 'PJC-MT', 'POLITEC', 'SESP', 'COPAL'];
+        const RATEIO_DEFAULT_UNITS = ['PM-MT', 'CBM-MT', 'CIOPAER', 'CIOSP', 'PJC-MT', 'POLITEC', 'SESP', 'COPAL'];
 
         const CONTRACT_TABS_MAP = {
             cadastroInicial: 'tab-cadastro',
@@ -2188,6 +2188,8 @@
                 numContrato,
                 numProcesso: document.getElementById('numProcesso')?.value || existingContract?.numProcesso || '',
                 credor: document.getElementById('credor')?.value || existingContract?.credor || '',
+                razaoSocial: document.getElementById('razaoSocial')?.value || existingContract?.razaoSocial || '',
+                nomeFantasia: document.getElementById('nomeFantasia')?.value || existingContract?.nomeFantasia || '',
                 cep: document.getElementById('cep')?.value || existingContract?.cep || '',
                 logradouro: document.getElementById('logradouro')?.value || existingContract?.logradouro || '',
                 numEndereco: document.getElementById('numEndereco')?.value || existingContract?.numEndereco || '',
@@ -2700,6 +2702,8 @@
             setValue('numContrato', contract.numContrato || '');
             setValue('numProcesso', contract.numProcesso || '');
             setValue('credor', contract.credor || '');
+            setValue('razaoSocial', contract.razaoSocial || '');
+            setValue('nomeFantasia', contract.nomeFantasia || '');
             setValue('cep', contract.cep || '');
             setValue('logradouro', contract.logradouro || '');
             setValue('numEndereco', contract.numEndereco || '');
@@ -4093,6 +4097,8 @@
                     numContrato: num,
                     numProcesso: document.getElementById('numProcesso').value,
                     credor: document.getElementById('credor').value,
+                    razaoSocial: document.getElementById('razaoSocial').value,
+                    nomeFantasia: document.getElementById('nomeFantasia').value,
                     cep: document.getElementById('cep').value,
                     logradouro: document.getElementById('logradouro').value,
                     numEndereco: document.getElementById('numEndereco').value,
@@ -4278,8 +4284,6 @@
                 return;
             }
 
-            let nomeAnexo = fileInput.files.length > 0 ? fileInput.files[0].name : null;
-
             const processarSalvarEmpenho = async () => {
                 let contract = DB_CONTRATOS[numContrato] || await fetchContract(numContrato);
                 if (!contract) {
@@ -4291,13 +4295,28 @@
                     contract.empenhos = [];
                 }
 
+                let arquivoNotaEmpenho = '';
+                let arquivoNotaEmpenhoOriginal = '';
+                try {
+                    if (fileInput.files.length > 0) {
+                        const uploadResult = await uploadContractAttachment(numContrato, fileInput.files[0]);
+                        arquivoNotaEmpenho = uploadResult?.arquivoContrato || '';
+                        arquivoNotaEmpenhoOriginal = uploadResult?.arquivoOriginal || fileInput.files[0].name;
+                    }
+                } catch (error) {
+                    alert(error.message || 'Erro ao enviar o anexo do empenho.');
+                    return;
+                }
+
                 contract.empenhos.push({
                     unidades: unidadesSelecionadas,
                     numEmpenho: numEmpenho,
                     tipoEmpenho: tipoEmpenho,
                     valorEmpenho: valorEmpenho,
-                    arquivoNotaEmpenho: nomeAnexo,
-                    dataLancamento: new Date().toLocaleDateString('pt-BR')
+                    arquivoNotaEmpenho,
+                    arquivoNotaEmpenhoOriginal,
+                    dataLancamento: new Date().toLocaleDateString('pt-BR'),
+                    usuarioLancamento: getContractsUserDisplayName(contractsCurrentUser) || localStorage.getItem('userName') || 'Usuário não identificado'
                 });
 
                 try {
@@ -4425,7 +4444,8 @@
                 valor: valorAditivo,
                 obs: obsAditivo,
                 arquivoAditivo,
-                arquivoAditivoOriginal
+                arquivoAditivoOriginal,
+                usuarioLancamento: getContractsUserDisplayName(contractsCurrentUser) || localStorage.getItem('userName') || 'Usuário não identificado'
             });
 
             try {
@@ -4518,7 +4538,7 @@
         }
 
         function getCompanyName(contract) {
-            return (contract.credor || contract.razaoSocial || contract.nomeFantasia || '').toString().trim();
+            return (contract.nomeFantasia || contract.razaoSocial || contract.credor || '').toString().trim();
         }
 
         function filterOverviewContracts() {
