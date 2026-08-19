@@ -36,6 +36,7 @@
 
         body {
             display: flex;
+            height: 100vh;
             min-height: 100vh;
             background-color: var(--bg-page);
             color: var(--text-main);
@@ -44,6 +45,7 @@
 
         .sidebar {
             width: 260px;
+            height: 100vh;
             background-color: var(--sidebar-bg);
             color: #fff;
             display: flex;
@@ -109,6 +111,7 @@
 
         .main-content {
             flex: 1;
+            min-height: 0;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -141,7 +144,9 @@
 
         .content-area {
             flex: 1;
+            min-height: 0;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 32px;
             background-color: var(--bg-page);
         }
@@ -579,7 +584,7 @@
                 return String(contract?.numContrato || contract?.id || '-').trim();
             },
             getCompanyName(contract) {
-                return String(contract?.credor || contract?.razaoSocial || contract?.nomeFantasia || contract?.empresa || '-').trim();
+                return String(contract?.nomeFantasia || contract?.razaoSocial || contract?.empresa || contract?.nomeEmpresa || contract?.razao_social || contract?.credor || '-').trim();
             },
             getContractObject(contract) {
                 return String(contract?.objeto || '-').trim();
