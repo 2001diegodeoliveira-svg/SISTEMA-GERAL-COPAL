@@ -911,6 +911,11 @@
                 </button>
             </li>
             <li>
+                <button type="button" onclick="abrirExtratoContrato()">
+                    <i data-lucide="file-bar-chart-2" style="width: 15px;"></i> EXTRATO
+                </button>
+            </li>
+            <li>
                 <button id="btn-tab-unidade" onclick="switchTab(event, 'tab-unidade'); carregarAbaUnidades();">
                     <i data-lucide="building-2" style="width: 15px;"></i> ABA UNIDADES
                 </button>
@@ -1450,10 +1455,11 @@
                                     <th>Unidades</th>
                                     <th>Atualizações</th>
                                     <th>Última Atualização</th>
+                                    <th>Extrato</th>
                                 </tr>
                             </thead>
                             <tbody id="overviewTableBody">
-                                <tr><td colspan="7" style="text-align:center; color: var(--text-muted);">Nenhum contrato encontrado.</td></tr>
+                                <tr><td colspan="8" style="text-align:center; color: var(--text-muted);">Nenhum contrato encontrado.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -4572,7 +4578,7 @@
             if (!tbody) return;
 
             if (!filtered.length) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: var(--text-muted);">Nenhum contrato encontrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color: var(--text-muted);">Nenhum contrato encontrado.</td></tr>';
                 return;
             }
 
@@ -4590,7 +4596,8 @@
                     return new Date(Math.max(...valid.map(d => d.getTime()))).toLocaleDateString('pt-BR');
                 })();
 
-                return `<tr onclick="showOverviewContractDetails('${contract.numContrato || ''}')" style="cursor:pointer;">
+                const contractNumber = escapeJsString(contract.numContrato || '');
+                return `<tr onclick="showOverviewContractDetails('${contractNumber}')" style="cursor:pointer;">
                     <td>${contract.numContrato || '-'}</td>
                     <td>${getCompanyName(contract) || '-'}</td>
                     <td>${year}</td>
@@ -4598,6 +4605,7 @@
                     <td>${unitsCount}</td>
                     <td>${updates}</td>
                     <td>${lastUpdate}</td>
+                    <td><button type="button" class="btn btn-secondary" style="font-size:0.75rem; padding:0.35rem 0.55rem;" onclick="event.stopPropagation(); abrirExtratoContrato('${contractNumber}');">Ver extrato</button></td>
                 </tr>`;
             }).join('');
         }
@@ -4615,6 +4623,12 @@
             content.innerHTML = renderContractDetailsHtml(contract, { includeActions: false });
             panel.style.display = 'block';
             lucide.createIcons();
+        }
+
+        function abrirExtratoContrato(numContrato = '') {
+            const value = String(numContrato || document.getElementById('overviewContractNumber')?.value || '').trim();
+            const query = value ? `?contrato=${encodeURIComponent(value)}` : '';
+            window.location.href = `EXTRATO.html${query}`;
         }
 
         function formatOverviewMonth(month) {

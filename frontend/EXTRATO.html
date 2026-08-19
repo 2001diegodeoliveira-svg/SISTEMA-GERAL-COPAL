@@ -6,6 +6,7 @@
     <title>SESP - Sistema de Extrato Financeiro de Contratos</title>
     <!-- Tailwind CSS para estilização moderna e institucional -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="api-client.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -147,65 +148,154 @@
             }
         });
 
-        // Mock de dados financeiros do contrato 026/2026/SESP
-        const mockMovimentacoes = [
-            { data: "01/01/2026", tipo: "SALDO", doc: "—", historico: "Saldo inicial do contrato", empenho: "—", valor: 1000000.00, tipoValor: "C", saldo: 1000000.00 },
-            { data: "05/01/2026", tipo: "EMPENHO", doc: "001", historico: "Empenho emitido", empenho: "001/2026", valor: 200000.00, tipoValor: "N", saldo: 1000000.00 },
-            { data: "10/02/2026", tipo: "NOTA", doc: "NF 001", historico: "Nota fiscal lançada", empenho: "001/2026", valor: -50000.00, tipoValor: "D", saldo: 950000.00 },
-            { data: "20/02/2026", tipo: "NOTA", doc: "NF 002", historico: "Nota fiscal lançada", empenho: "001/2026", valor: -30000.00, tipoValor: "D", saldo: 920000.00 },
-            { data: "10/03/2026", tipo: "ADITIVO", doc: "1º TA", historico: "Acréscimo contratual", empenho: "002/2026", valor: 100000.00, tipoValor: "C", saldo: 1020000.00 },
-            { data: "15/03/2026", tipo: "NOTA", doc: "NF 003", historico: "Nota fiscal lançada", empenho: "002/2026", valor: -75000.00, tipoValor: "D", saldo: 945000.00 },
-            { data: "20/04/2026", tipo: "ADITIVO", doc: "2º TA", historico: "Acréscimo contratual", empenho: "003/2026", valor: 100000.00, tipoValor: "C", saldo: 1045000.00 },
-            { data: "25/04/2026", tipo: "NOTA", doc: "NF 004", historico: "Nota fiscal lançada", empenho: "003/2026", valor: -25000.00, tipoValor: "D", saldo: 1020000.00 }
-        ];
-
         function formatarMoeda(valor) {
             return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
-        function consultarContrato() {
+        function normalizarNumeroContrato(value) {
+            return String(value || '').trim().replace(/\s+/g, ' ').toUpperCase();
+        }
+
+        function converterValor(value) {
+            if (typeof value === 'number') return value;
+            const normalized = String(value || '').replace(/[^0-9,.-]/g, '').replace(/\./g, '').replace(',', '.');
+            const parsed = Number(normalized);
+            return Number.isFinite(parsed) ? parsed : 0;
+        }
+
+        function formatarData(value) {
+            if (!value) return 'N/A';
+            const text = String(value);
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(text)) return text;
+            const date = new Date(text);
+            return Number.isNaN(date.getTime()) ? text : date.toLocaleDateString('pt-BR');
+        }
+
+        function dataOrdenacao(value) {
+            if (!value) return 0;
+            const match = String(value).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            const date = match ? new Date(`${match[3]}-${match[2]}-${match[1]}`) : new Date(value);
+            return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+        }
+
+        function converterValorAditivo(aditivo) {
+            const valor = converterValor(aditivo?.valor);
+            return String(aditivo?.tipo || '').toUpperCase() === 'SUPRESSAO' ? -Math.abs(valor) : valor;
+        }
+
+        function escaparHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function construirMovimentacoes(contract) {
+            const valorInicial = converterValor(contract?.valorGlobal);
+            const movimentacoes = [{
+                data: contract?.dtInicial,
+                tipo: 'SALDO',
+                doc: '—',
+                historico: 'Saldo inicial do contrato',
+                empenho: '—',
+                valor: valorInicial,
+                tipoValor: 'C'
+            }];
+
+            (contract?.aditivos || []).forEach((aditivo, index) => {
+                movimentacoes.push({
+                    data: aditivo.data,
+                    tipo: 'ADITIVO',
+                    doc: `${index + 1}º TA`,
+                    historico: aditivo.obs || aditivo.tipo || 'Atualização contratual registrada',
+                    empenho: '—',
+                    valor: converterValorAditivo(aditivo),
+                    tipoValor: converterValorAditivo(aditivo) >= 0 ? 'C' : 'D'
+                });
+            });
+
+            (contract?.empenhos || []).forEach((empenho) => {
+                movimentacoes.push({
+                    data: empenho.dataLancamento || empenho.data,
+                    tipo: 'EMPENHO',
+                    doc: empenho.numEmpenho || '—',
+                    historico: `${empenho.tipoEmpenho || 'Empenho'} registrado${empenho.unidades?.length ? ` para ${empenho.unidades.join(', ')}` : ''}`,
+                    empenho: empenho.numEmpenho || '—',
+                    valor: -converterValor(empenho.valorEmpenho),
+                    tipoValor: 'D'
+                });
+            });
+
+            movimentacoes.sort((first, second) => dataOrdenacao(first.data) - dataOrdenacao(second.data));
+            let saldo = 0;
+            return movimentacoes.map((item) => {
+                saldo += item.valor;
+                return { ...item, saldo };
+            });
+        }
+
+        function preencherExtrato(contract) {
+            const valorInicial = converterValor(contract?.valorGlobal);
+            const totalAditivos = (contract?.aditivos || []).reduce((total, item) => total + converterValorAditivo(item), 0);
+            const totalEmpenhado = (contract?.empenhos || []).reduce((total, item) => total + converterValor(item.valorEmpenho), 0);
+            const movimentacoes = construirMovimentacoes(contract);
+
+            document.getElementById('lblContractNum').textContent = `CONTRATO ${contract.numContrato || ''}`;
+            document.getElementById('lblCompanyName').textContent = contract.credor || 'Não informado';
+            document.getElementById('cardInitial').textContent = formatarMoeda(valorInicial);
+            document.getElementById('cardAmendments').textContent = formatarMoeda(totalAditivos);
+            document.getElementById('cardGlobal').textContent = formatarMoeda(valorInicial + totalAditivos);
+            document.getElementById('cardUsed').textContent = formatarMoeda(totalEmpenhado);
+            document.getElementById('cardBalance').textContent = formatarMoeda(valorInicial + totalAditivos - totalEmpenhado);
+            document.querySelector('#contractResult .text-right p').innerHTML = `Vigência: <span class="font-semibold text-gray-800">${escaparHtml(formatarData(contract.dtInicial))} até ${escaparHtml(formatarData(contract.dtFinal))}</span>`;
+
+            const tbody = document.getElementById('extractTableBody');
+            tbody.innerHTML = movimentacoes.map((item) => {
+                const isCredit = item.tipoValor === 'C';
+                const valueClass = isCredit ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold';
+                const signal = isCredit ? '+' : '';
+                return `<tr class="hover:bg-blue-50/50 transition-colors">
+                    <td class="py-3 px-4 text-xs text-gray-600">${escaparHtml(formatarData(item.data))}</td>
+                    <td class="py-3 px-4"><span class="bg-gray-200 text-gray-800 px-2 py-0.5 rounded text-xs font-sans font-semibold">${escaparHtml(item.tipo)}</span></td>
+                    <td class="py-3 px-4 font-semibold text-gray-700">${escaparHtml(item.doc)}</td>
+                    <td class="py-3 px-4 text-gray-800 font-sans text-sm">${escaparHtml(item.historico)}</td>
+                    <td class="py-3 px-4 text-xs text-gray-500">${escaparHtml(item.empenho)}</td>
+                    <td class="py-3 px-4 text-right ${valueClass}">${signal}${formatarMoeda(Math.abs(item.valor))}</td>
+                    <td class="py-3 px-4 text-right font-bold text-gray-900">${formatarMoeda(item.saldo)}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function consultarContrato() {
             const inputVal = document.getElementById("contractInput").value.trim().toUpperCase();
             const resultDiv = document.getElementById("contractResult");
             const errorDiv = document.getElementById("errorMsg");
 
-            // Validação simples de exemplo
-            if (inputVal === "026/2026/SESP" || inputVal === "026") {
+            if (!inputVal) {
+                resultDiv.classList.add("hidden");
+                errorDiv.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const response = await fetch(apiUrl(`/api/contracts?numContrato=${encodeURIComponent(normalizarNumeroContrato(inputVal))}`));
+                if (!response.ok) throw new Error('Contrato não encontrado');
+                const contract = await response.json();
                 errorDiv.classList.add("hidden");
                 resultDiv.classList.remove("hidden");
-                
-                // Preencher tabela do extrato
-                const tbody = document.getElementById("extractTableBody");
-                tbody.innerHTML = "";
-
-                mockMovimentacoes.forEach(item => {
-                    const tr = document.createElement("tr");
-                    tr.className = "hover:bg-blue-50/50 transition-colors";
-                    
-                    let corValor = "text-gray-800";
-                    let sinal = "";
-                    if (item.tipoValor === "C") {
-                        corValor = "text-emerald-700 font-bold";
-                        sinal = "+";
-                    } else if (item.tipoValor === "D") {
-                        corValor = "text-red-600 font-bold";
-                    }
-
-                    tr.innerHTML = `
-                        <td class="py-3 px-4 text-xs text-gray-600">${item.data}</td>
-                        <td class="py-3 px-4"><span class="bg-gray-200 text-gray-800 px-2 py-0.5 rounded text-xs font-sans font-semibold">${item.tipo}</span></td>
-                        <td class="py-3 px-4 font-semibold text-gray-700">${item.doc}</td>
-                        <td class="py-3 px-4 text-gray-800 font-sans text-sm">${item.historico}</td>
-                        <td class="py-3 px-4 text-xs text-gray-500">${item.empenho}</td>
-                        <td class="py-3 px-4 text-right ${corValor}">${sinal}${formatarMoeda(item.valor)}</td>
-                        <td class="py-3 px-4 text-right font-bold text-gray-900">${formatarMoeda(item.saldo)}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-
-            } else {
+                preencherExtrato(contract);
+            } catch (error) {
                 resultDiv.classList.add("hidden");
                 errorDiv.classList.remove("hidden");
             }
+        }
+
+        const contratoInicial = new URLSearchParams(window.location.search).get('contrato');
+        if (contratoInicial) {
+            document.getElementById('contractInput').value = contratoInicial;
+            consultarContrato();
         }
     </script>
 </body>
