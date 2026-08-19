@@ -4644,7 +4644,7 @@
                 return;
             }
 
-            content.innerHTML = renderContractDetailsHtml(contract, { includeActions: false });
+            content.innerHTML = renderContractDetailsHtml(contract, { includeActions: true });
             panel.style.display = 'block';
             lucide.createIcons();
         }
