@@ -1290,6 +1290,32 @@
                     </div>
                 </div>
                 <div id="resultadoBuscaEmpenho" class="info-box" style="display:none;"></div>
+                <div id="historicoEmpenhosContrato" style="display:none; margin-top: 1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+                        <div>
+                            <span class="step-badge">HISTÓRICO</span>
+                            <h3 style="margin-top:0.35rem;">Empenhos cadastrados neste contrato</h3>
+                        </div>
+                        <div id="resumoHistoricoEmpenhos" style="color:var(--text-muted); font-size:0.85rem;"></div>
+                    </div>
+                    <div style="overflow-x:auto; border:1px solid var(--border-color); border-radius:6px;">
+                        <table class="doc-table" style="min-width:720px; margin:0;">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Nº do Empenho</th>
+                                    <th>Tipo</th>
+                                    <th>Unidades atendidas</th>
+                                    <th>Valor</th>
+                                    <th>Anexo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyHistoricoEmpenhos">
+                                <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Nenhum empenho cadastrado.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
 
             <section class="step-card" id="painelLancamentoEmpenho" style="opacity: 0.5; pointer-events: none;">
@@ -4147,6 +4173,7 @@
                 res.innerHTML = `<strong>Contrato Localizado:</strong> ${contract.numContrato} | Credor: ${contract.credor} | Valor Global: ${contract.valorGlobal}`;
                 painel.style.opacity = '1';
                 painel.style.pointerEvents = 'all';
+                renderHistoricoEmpenhos(contract);
 
                 containerUnidades.innerHTML = '';
                 if (contract.unidades && contract.unidades.length > 0) {
@@ -4174,7 +4201,46 @@
                 res.innerHTML = `<span style="color:var(--danger)">Contrato ${num} não foi localizado no banco de dados SESP!</span>`;
                 painel.style.opacity = '0.5';
                 painel.style.pointerEvents = 'none';
+                document.getElementById('historicoEmpenhosContrato').style.display = 'none';
             }
+        }
+
+        function renderHistoricoEmpenhos(contract) {
+            const historico = document.getElementById('historicoEmpenhosContrato');
+            const resumo = document.getElementById('resumoHistoricoEmpenhos');
+            const tbody = document.getElementById('tbodyHistoricoEmpenhos');
+            const empenhos = Array.isArray(contract?.empenhos) ? contract.empenhos : [];
+            const totalEmpenhado = empenhos.reduce((total, empenho) => total + parseMoney(empenho?.valorEmpenho), 0);
+
+            historico.style.display = 'block';
+            resumo.textContent = `${empenhos.length} registro(s) | Total empenhado: ${formatMoney(totalEmpenhado)}`;
+            tbody.innerHTML = '';
+
+            if (empenhos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Nenhum empenho cadastrado para este contrato.</td></tr>';
+                return;
+            }
+
+            empenhos.forEach((empenho) => {
+                const tr = document.createElement('tr');
+                const unidades = Array.isArray(empenho?.unidades) && empenho.unidades.length > 0
+                    ? empenho.unidades.join(', ')
+                    : 'Não informado';
+                const anexo = empenho?.arquivoNotaEmpenho
+                    ? `<i data-lucide="paperclip" style="width:14px; vertical-align:middle;"></i> ${escapeHtml(empenho.arquivoNotaEmpenho)}`
+                    : 'Sem anexo';
+
+                tr.innerHTML = `
+                    <td>${escapeHtml(empenho?.dataLancamento || empenho?.data || 'N/A')}</td>
+                    <td><strong>${escapeHtml(empenho?.numEmpenho || 'N/A')}</strong></td>
+                    <td>${escapeHtml(empenho?.tipoEmpenho || 'N/A')}</td>
+                    <td>${escapeHtml(unidades)}</td>
+                    <td style="color:var(--sesp-light-blue); font-weight:700;">${escapeHtml(empenho?.valorEmpenho || 'R$ 0,00')}</td>
+                    <td>${anexo}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
         }
 
         function salvarLancamentoEmpenho() {
