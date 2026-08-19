@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SESP - Sistema de Extrato Financeiro de Contratos</title>
+    <!-- Tailwind CSS para estilização moderna e institucional -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sespBlue: '#0A2540',
+                        sespLightBlue: '#20639B',
+                        sespGray: '#F4F6F8'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-sespGray font-sans text-gray-800 antialiased">
+
+    <!-- CABEÇALHO INSTITUCIONAL -->
+    <header class="bg-sespBlue text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-xs uppercase tracking-wider text-blue-300 font-semibold">Governo do Estado de Mato Grosso</h1>
+                <h2 class="text-lg font-bold">Secretaria de Estado de Segurança Pública — SESP</h2>
+            </div>
+            <div class="mt-2 md:mt-0 text-sm bg-blue-900 px-3 py-1 rounded border border-blue-700">
+                Módulo: <span class="font-semibold text-white">Extrato de Contratos</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        
+        <!-- CAMPO DE PESQUISA -->
+        <section class="bg-white p-6 rounded-lg shadow-sm mb-6 border border-gray-200">
+            <label for="contractInput" class="block text-sm font-bold text-gray-700 mb-2">PESQUISAR CONTRATO</label>
+            <div class="flex gap-2">
+                <input type="text" id="contractInput" placeholder="Ex.: 026/2026/SESP" 
+                    class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sespLightBlue text-lg uppercase font-mono">
+                <button onclick="consultarContrato()" 
+                    class="bg-sespLightBlue hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors flex items-center gap-2">
+                    CONSULTAR
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">Dica: Digite <span class="font-mono font-bold text-gray-700">026/2026/SESP</span> e clique em consultar ou pressione Enter.</p>
+        </section>
+
+        <!-- MENSAGEM DE ERRO / ESTADO VAZIO -->
+        <div id="errorMsg" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg">
+            <p class="text-red-700 font-bold">Contrato não encontrado</p>
+            <p class="text-red-600 text-sm">Não foi localizado nenhum contrato com esse número. Verifique a numeração informada.</p>
+        </div>
+
+        <!-- PAINEL DE DADOS DO CONTRATO (OCULTO ATÉ A BUSCA) -->
+        <div id="contractResult" class="hidden space-y-6">
+            
+            <!-- CABEÇALHO RESUMIDO DO CONTRATO -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 mb-4">
+                    <div>
+                        <span class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-0.5 rounded">ATIVO</span>
+                        <h3 class="text-xl font-bold text-sespBlue mt-1" id="lblContractNum">CONTRATO 026/2026/SESP</h3>
+                    </div>
+                    <div class="text-right mt-2 md:mt-0 text-sm text-gray-600">
+                        <p>Vigência: <span class="font-semibold text-gray-800">01/01/2026 até 31/12/2026</span></p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <p class="text-gray-500">Empresa Contratada:</p>
+                        <p class="font-semibold text-gray-800 text-base" id="lblCompanyName">Empresa Exemplo LTDA</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500">CNPJ:</p>
+                        <p class="font-semibold text-gray-800 font-mono">00.000.000/0001-00</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARDS FINANCEIROS -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-blue-500">
+                    <p class="text-xs text-gray-500 font-semibold uppercase">Valor Inicial</p>
+                    <p class="text-lg font-bold text-gray-800 mt-1" id="cardInitial">R$ 1.000.000,00</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-purple-500">
+                    <p class="text-xs text-gray-500 font-semibold uppercase">Aditivos</p>
+                    <p class="text-lg font-bold text-purple-700 mt-1" id="cardAmendments">R$ 200.000,00</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-indigo-600">
+                    <p class="text-xs text-gray-500 font-semibold uppercase">Global Atualizado</p>
+                    <p class="text-lg font-bold text-indigo-900 mt-1" id="cardGlobal">R$ 1.200.000,00</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-amber-500">
+                    <p class="text-xs text-gray-500 font-semibold uppercase">Total Utilizado</p>
+                    <p class="text-lg font-bold text-amber-700 mt-1" id="cardUsed">R$ 180.000,00</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-emerald-500 sm:col-span-2 lg:col-span-1">
+                    <p class="text-xs text-gray-500 font-semibold uppercase">Saldo Atual</p>
+                    <p class="text-lg font-bold text-emerald-700 mt-1" id="cardBalance">R$ 1.020.000,00</p>
+                </div>
+            </div>
+
+            <!-- EXTRATO FINANCEIRO (TABELA ESTILO BANCÁRIO) -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="font-bold text-sespBlue text-base">EXTRATO FINANCEIRO DO CONTRATO</h3>
+                    <span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded font-mono">Movimentações Cronológicas</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider border-b border-gray-200">
+                                <th class="py-3 px-4">Data</th>
+                                <th class="py-3 px-4">Tipo</th>
+                                <th class="py-3 px-4">Documento</th>
+                                <th class="py-3 px-4">Histórico</th>
+                                <th class="py-3 px-4">Empenho</th>
+                                <th class="py-3 px-4 text-right">Valor R$</th>
+                                <th class="py-3 px-4 text-right">Saldo R$</th>
+                            </tr>
+                        </thead>
+                        <tbody id="extractTableBody" class="divide-y divide-gray-200 text-sm font-mono">
+                            <!-- Inserido dinamicamente via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- SCRIPT DE COMPORTAMENTO -->
+    <script>
+        // Permitir pesquisar pressionando ENTER
+        document.getElementById("contractInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                consultarContrato();
+            }
+        });
+
+        // Mock de dados financeiros do contrato 026/2026/SESP
+        const mockMovimentacoes = [
+            { data: "01/01/2026", tipo: "SALDO", doc: "—", historico: "Saldo inicial do contrato", empenho: "—", valor: 1000000.00, tipoValor: "C", saldo: 1000000.00 },
+            { data: "05/01/2026", tipo: "EMPENHO", doc: "001", historico: "Empenho emitido", empenho: "001/2026", valor: 200000.00, tipoValor: "N", saldo: 1000000.00 },
+            { data: "10/02/2026", tipo: "NOTA", doc: "NF 001", historico: "Nota fiscal lançada", empenho: "001/2026", valor: -50000.00, tipoValor: "D", saldo: 950000.00 },
+            { data: "20/02/2026", tipo: "NOTA", doc: "NF 002", historico: "Nota fiscal lançada", empenho: "001/2026", valor: -30000.00, tipoValor: "D", saldo: 920000.00 },
+            { data: "10/03/2026", tipo: "ADITIVO", doc: "1º TA", historico: "Acréscimo contratual", empenho: "002/2026", valor: 100000.00, tipoValor: "C", saldo: 1020000.00 },
+            { data: "15/03/2026", tipo: "NOTA", doc: "NF 003", historico: "Nota fiscal lançada", empenho: "002/2026", valor: -75000.00, tipoValor: "D", saldo: 945000.00 },
+            { data: "20/04/2026", tipo: "ADITIVO", doc: "2º TA", historico: "Acréscimo contratual", empenho: "003/2026", valor: 100000.00, tipoValor: "C", saldo: 1045000.00 },
+            { data: "25/04/2026", tipo: "NOTA", doc: "NF 004", historico: "Nota fiscal lançada", empenho: "003/2026", valor: -25000.00, tipoValor: "D", saldo: 1020000.00 }
+        ];
+
+        function formatarMoeda(valor) {
+            return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function consultarContrato() {
+            const inputVal = document.getElementById("contractInput").value.trim().toUpperCase();
+            const resultDiv = document.getElementById("contractResult");
+            const errorDiv = document.getElementById("errorMsg");
+
+            // Validação simples de exemplo
+            if (inputVal === "026/2026/SESP" || inputVal === "026") {
+                errorDiv.classList.add("hidden");
+                resultDiv.classList.remove("hidden");
+                
+                // Preencher tabela do extrato
+                const tbody = document.getElementById("extractTableBody");
+                tbody.innerHTML = "";
+
+                mockMovimentacoes.forEach(item => {
+                    const tr = document.createElement("tr");
+                    tr.className = "hover:bg-blue-50/50 transition-colors";
+                    
+                    let corValor = "text-gray-800";
+                    let sinal = "";
+                    if (item.tipoValor === "C") {
+                        corValor = "text-emerald-700 font-bold";
+                        sinal = "+";
+                    } else if (item.tipoValor === "D") {
+                        corValor = "text-red-600 font-bold";
+                    }
+
+                    tr.innerHTML = `
+                        <td class="py-3 px-4 text-xs text-gray-600">${item.data}</td>
+                        <td class="py-3 px-4"><span class="bg-gray-200 text-gray-800 px-2 py-0.5 rounded text-xs font-sans font-semibold">${item.tipo}</span></td>
+                        <td class="py-3 px-4 font-semibold text-gray-700">${item.doc}</td>
+                        <td class="py-3 px-4 text-gray-800 font-sans text-sm">${item.historico}</td>
+                        <td class="py-3 px-4 text-xs text-gray-500">${item.empenho}</td>
+                        <td class="py-3 px-4 text-right ${corValor}">${sinal}${formatarMoeda(item.valor)}</td>
+                        <td class="py-3 px-4 text-right font-bold text-gray-900">${formatarMoeda(item.saldo)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } else {
+                resultDiv.classList.add("hidden");
+                errorDiv.classList.remove("hidden");
+            }
+        }
+    </script>
+</body>
+</html>
