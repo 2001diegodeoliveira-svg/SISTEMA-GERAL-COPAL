@@ -348,6 +348,27 @@
         .dev-activity-item .status-code { font-weight: 700; font-family: monospace; }
         .dev-activity-item .status-ok { color: #10b981; }
         .dev-activity-item .status-err { color: #dc2626; }
+        .dev-docs-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0.9rem; margin-top: 0.75rem; }
+        .dev-doc-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.9rem; display:flex; flex-direction:column; gap: 0.6rem; }
+        .dev-doc-header { display:flex; align-items:center; justify-content:space-between; gap:0.5rem; }
+        .dev-doc-header strong { font-size: 0.93rem; color: var(--sesp-blue); }
+        .dev-doc-meta { font-size: 0.76rem; color: #475569; line-height: 1.5; }
+        .dev-doc-badges { display:flex; flex-wrap:wrap; gap: 0.4rem; }
+        .dev-doc-badge { background:#e2e8f0; color:#334155; font-size:0.68rem; font-weight:700; border-radius:999px; padding: 0.22rem 0.55rem; }
+        .dev-doc-section { font-size: 0.73rem; color:#475569; }
+        .dev-doc-list { margin-top: 0.2rem; display:flex; flex-direction:column; gap: 0.25rem; }
+        .dev-doc-list small { color:#64748b; }
+        .dev-doc-actions { margin-top: auto; display:flex; gap:0.5rem; flex-wrap:wrap; }
+        .dev-doc-btn { border:none; border-radius:6px; font-size:0.72rem; font-weight:700; padding: 0.42rem 0.8rem; cursor:pointer; }
+        .dev-doc-btn.primary { background: var(--sesp-blue); color:#fff; }
+        .dev-doc-btn.secondary { background: #e2e8f0; color:#0f172a; }
+        .dev-doc-btn.warn { background: #f59e0b; color:#fff; }
+        .dev-editor-wrap { width:min(900px, 92vw); background:#fff; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 14px 36px rgba(15,23,42,0.18); overflow:hidden; }
+        .dev-editor-header { display:flex; justify-content:space-between; align-items:center; padding: 0.9rem 1rem; background:#0f172a; color:#fff; }
+        .dev-editor-header strong { font-size:0.9rem; }
+        .dev-editor-body { padding:1rem; }
+        .dev-editor-body textarea { width:100%; min-height: 420px; resize: vertical; border: 1px solid #cbd5e1; border-radius:8px; padding:0.9rem; font-family: Consolas, monospace; font-size:0.77rem; line-height:1.5; }
+        .dev-editor-actions { display:flex; justify-content:flex-end; gap:0.6rem; padding:0 1rem 1rem; }
         @media (max-width: 900px) { .dev-stat-row { grid-template-columns: repeat(2,1fr); } }
     </style>
 </head>
@@ -575,12 +596,32 @@
                 <div class="dev-section-title" style="margin-top:1rem;"><i data-lucide="shield-alert" style="width:14px;"></i> Alertas de Segurança</div>
                 <div id="devAlertsList" style="max-height:300px;overflow-y:auto;"></div>
 
+                <!-- VISUALIZAÇÃO E EDIÇÃO DE DOCUMENTOS -->
+                <div class="dev-section-title" style="margin-top:1rem;"><i data-lucide="file-stack" style="width:14px;"></i> Visualização & Edição de Documentos</div>
+                <div id="devDocumentsList" style="min-height: 120px;"></div>
+
                 <div style="margin-top:0.5rem;text-align:right;">
                     <button class="dev-btn dev-btn-primary" onclick="devRefreshAll()"><i data-lucide="refresh-cw" style="width:13px;vertical-align:middle;"></i> Atualizar Tudo</button>
                     <button class="dev-btn dev-btn-cancel" onclick="devLogout()" style="margin-left:0.4rem;">Sair do Dev</button>
                 </div>
             </div>
         </section>
+
+        <div class="dev-modal-overlay active" id="devDocumentsEditorModal" style="display:none;">
+            <div class="dev-editor-wrap">
+                <div class="dev-editor-header">
+                    <strong id="devEditorTitle">Editar documento</strong>
+                    <button class="dev-btn dev-btn-cancel" onclick="closeDevDocumentEditor()" style="padding:0.35rem 0.7rem;">Fechar</button>
+                </div>
+                <div class="dev-editor-body">
+                    <textarea id="devDocumentEditorJson" spellcheck="false"></textarea>
+                </div>
+                <div class="dev-editor-actions">
+                    <button class="dev-btn dev-btn-cancel" onclick="closeDevDocumentEditor()">Cancelar</button>
+                    <button class="dev-btn dev-btn-primary" onclick="saveDevDocumentEditor()">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
 
         <!-- DEV LOGIN MODAL -->
         <div class="dev-modal-overlay" id="devLoginModal">
@@ -706,7 +747,157 @@
         }
 
         async function devRefreshAll() {
-            await Promise.all([devLoadVisitors(), devLoadDbStatus(), devLoadAlerts()]);
+            await Promise.all([devLoadVisitors(), devLoadDbStatus(), devLoadAlerts(), devLoadDocuments(), devLoadDocuments()]);
+        }
+
+        function openDevDocumentEditor(contract) {
+            const modal = document.getElementById('devDocumentsEditorModal');
+            const editor = document.getElementById('devDocumentEditorJson');
+            const title = document.getElementById('devEditorTitle');
+            if (!modal || !editor || !title) return;
+
+            title.textContent = `Editar contrato ${contract?.numContrato || 'desconhecido'}`;
+            editor.value = JSON.stringify(contract, null, 2);
+            modal.style.display = 'flex';
+        }
+
+        function closeDevDocumentEditor() {
+            const modal = document.getElementById('devDocumentsEditorModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function saveDevDocumentEditor() {
+            const editor = document.getElementById('devDocumentEditorJson');
+            if (!editor) return;
+
+            let parsed;
+            try {
+                parsed = JSON.parse(editor.value);
+            } catch (error) {
+                alert('JSON inválido. Corrija antes de salvar.');
+                return;
+            }
+
+            const token = localStorage.getItem('accessToken') || '';
+            try {
+                const response = await fetch(`${CR_API_BASE}/api/contracts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify(parsed)
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data?.message || 'Erro ao salvar contrato.');
+                }
+
+                alert('Contrato salvo com sucesso pela área do desenvolvedor.');
+                closeDevDocumentEditor();
+                await devLoadDocuments();
+            } catch (error) {
+                alert(error.message || 'Não foi possível salvar.');
+            }
+        }
+
+        function devOpenPdfFromContract(contract) {
+            const attachment = String(contract?.arquivoContrato || '').trim();
+            const base64 = String(contract?.conteudoArquivoBase64 || '').trim();
+
+            if (attachment) {
+                window.open(attachment, '_blank', 'noopener,noreferrer');
+                return;
+            }
+
+            if (base64 && base64 !== '__HAS_PDF__') {
+                try {
+                    const [header, payload] = base64.includes(',') ? base64.split(',', 2) : ['data:application/pdf;base64', base64];
+                    const mime = (header.match(/:(.*?);/) || [])[1] || 'application/pdf';
+                    const bytes = Uint8Array.from(atob(payload), (char) => char.charCodeAt(0));
+                    const blob = new Blob([bytes], { type: mime });
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                    return;
+                } catch (error) {
+                    console.error('Erro ao abrir PDF em base64:', error);
+                }
+            }
+
+            alert('Este registro não possui PDF anexado para abrir.');
+        }
+
+        function renderDevDocumentSummary(contract) {
+            const aditivos = Array.isArray(contract?.aditivos) ? contract.aditivos : [];
+            const empenhos = Array.isArray(contract?.empenhos) ? contract.empenhos : [];
+            const nfList = empenhos
+                .map((empenho) => empenho?.numNF || empenho?.numNf || empenho?.numeroNF || empenho?.numeroNf || empenho?.numeroNotaFiscal || 'NF sem número')
+                .slice(0, 3);
+
+            return `
+                <div class="dev-doc-card">
+                    <div class="dev-doc-header">
+                        <strong>${escapeHtmlDev(contract?.numContrato || '-')}</strong>
+                        <span class="dev-doc-badge">${escapeHtmlDev(contract?.status || 'Ativo')}</span>
+                    </div>
+                    <div class="dev-doc-meta">
+                        Processo: ${escapeHtmlDev(contract?.numProcesso || '-')}<br>
+                        Credor: ${escapeHtmlDev(contract?.credor || contract?.razaoSocial || contract?.nomeFantasia || '-')}
+                    </div>
+                    <div class="dev-doc-badges">
+                        <span class="dev-doc-badge">Aditivos: ${aditivos.length}</span>
+                        <span class="dev-doc-badge">Empenhos: ${empenhos.length}</span>
+                        <span class="dev-doc-badge">NF: ${nfList.length}</span>
+                    </div>
+                    <div class="dev-doc-section">
+                        <strong>Aditivos</strong>
+                        <div class="dev-doc-list">
+                            ${aditivos.length ? aditivos.slice(0, 3).map((item) => `<small>• ${escapeHtmlDev(item?.tipo || item?.descricao || 'Aditivo')}</small>`).join('') : '<small>• Nenhum aditivo registrado</small>'}
+                        </div>
+                    </div>
+                    <div class="dev-doc-section">
+                        <strong>Empenhos / Notas</strong>
+                        <div class="dev-doc-list">
+                            ${empenhos.length ? empenhos.slice(0, 3).map((item) => `<small>• ${escapeHtmlDev(item?.numEmpenho || item?.numNF || item?.numeroNF || item?.numNf || 'Empenho')}</small>`).join('') : '<small>• Nenhum empenho registrado</small>'}
+                        </div>
+                    </div>
+                    <div class="dev-doc-actions">
+                        <button class="dev-doc-btn secondary" onclick="devOpenPdfFromContract(${JSON.stringify(contract).replace(/'/g, "\\'")})">Abrir PDF</button>
+                        <button class="dev-doc-btn primary" onclick="openDevDocumentEditor(${JSON.stringify(contract).replace(/'/g, "\\'")})">Editar dados</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function devLoadDocuments() {
+            const container = document.getElementById('devDocumentsList');
+            if (!container) return;
+
+            container.innerHTML = '<div style="color:#64748b;font-size:0.8rem;">Carregando documentos cadastrados...</div>';
+
+            try {
+                const token = localStorage.getItem('accessToken') || '';
+                const response = await fetch(`${CR_API_BASE}/api/contracts`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
+
+                if (!response.ok) {
+                    throw new Error('Não foi possível carregar os contratos.');
+                }
+
+                const data = await response.json();
+                const contracts = Array.isArray(data?.contracts) ? data.contracts : [];
+
+                if (!contracts.length) {
+                    container.innerHTML = '<div style="color:#64748b;font-size:0.8rem;">Nenhum contrato cadastrado no sistema.</div>';
+                    return;
+                }
+
+                container.innerHTML = `<div class="dev-docs-grid">${contracts.map((contract) => renderDevDocumentSummary(contract)).join('')}</div>`;
+            } catch (error) {
+                container.innerHTML = `<div style="color:#dc2626;font-size:0.8rem;">Erro ao carregar registros: ${escapeHtmlDev(error.message || 'desconhecido')}</div>`;
+            }
         }
 
         async function devLoadVisitors() {
