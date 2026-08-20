@@ -956,9 +956,6 @@
                         <input type="text" id="numContrato" placeholder="Ex: 000/0000/SESP" maxlength="13" required oninput="maskContractNumber(this)" onblur="finalizeContractNumber(this)">
                             <small style="display:block; color: var(--text-muted); margin-top: 4px;">Use o padrão 000/0000/SESP para facilitar a localização e edição.</small>
                             <div style="display:flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
-                                <button type="button" class="btn btn-secondary" onclick="carregarContratoParaEdicao()">
-                                    <i data-lucide="edit-3" style="width:14px;"></i> Visualizar / Editar contrato salvo
-                                </button>
                                 <button type="button" class="btn btn-secondary" onclick="abrirContratoAtualNaVisaoGeral()">
                                     <i data-lucide="eye" style="width:14px;"></i> Abrir na visão geral
                                 </button>
@@ -2533,14 +2530,6 @@
                     <div style="margin-top: 0.35rem;">${unidadesTexto}</div>
                 </div>
                 <div style="margin-top: 1rem;"><strong>Última atualização:</strong> ${escapeHtml(getContractLastUpdate(contract) || '-')}</div>
-                ${includeActions ? `
-                    <div style="margin-top: 1rem; display:flex; gap: 8px; flex-wrap: wrap;">
-                        <button type="button" class="btn btn-secondary" onclick="carregarContratoParaEdicao('${escapeJsString(contract.numContrato || '')}')">
-                            <i data-lucide="edit-3" style="width:14px;"></i> Editar contrato
-                        </button>
-                        ${mainAttachmentUrl ? `<a class="btn btn-primary" href="#" onclick="return openPdfFromOverview(event, '${escapeJsString(mainAttachmentUrl)}', '${escapeJsString(contract.numContrato || '')}')" style="display:inline-flex; align-items:center; gap:6px;"><i data-lucide="eye" style="width:14px;"></i> Abrir PDF principal</a>` : ''}
-                    </div>
-                ` : ''}
             `;
         }
 
@@ -2855,9 +2844,20 @@
             }
         }
 
+        function isFullAccessOverrideUser(user) {
+            const email = String(user?.email || '').trim().toLowerCase();
+            const matricula = String(user?.matricula || '').trim().toLowerCase();
+            const perfil = String(user?.perfil || '').trim().toLowerCase();
+            return email === 'adm@copal'
+                || matricula === 'adm@copal'
+                || perfil === 'administrador'
+                || perfil === 'administrador mestre'
+                || perfil === 'desenvolvedor';
+        }
+
         function normalizePermissions(user) {
             const role = String(user?.role || '').toLowerCase();
-            if (role === 'admin' || role === 'developer') {
+            if (role === 'admin' || role === 'developer' || isFullAccessOverrideUser(user)) {
                 return {
                     cadastroInicial: true,
                     aditivosAtualizacoes: true,
@@ -3006,6 +3006,7 @@
                 contractsAuthToken = data.accessToken || '';
                 contractsCurrentUser = data.user || null;
                 localStorage.setItem('userName', getContractsUserDisplayName(contractsCurrentUser));
+                localStorage.setItem('userEmail', String(contractsCurrentUser?.email || ''));
                 applyContractsPermissions(contractsCurrentUser);
                 if (contractsAuthToken) {
                     localStorage.setItem('accessToken', contractsAuthToken);

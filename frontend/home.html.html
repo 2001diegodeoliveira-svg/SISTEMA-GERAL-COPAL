@@ -620,7 +620,9 @@
 
         (function aplicarAcessoPorRole() {
             const role = (localStorage.getItem('userRole') || '').toLowerCase();
-            const isAdmin = role === 'admin' || role === 'developer';
+            const email = (localStorage.getItem('userEmail') || '').toLowerCase();
+            const perfil = (localStorage.getItem('userProfile') || '').toLowerCase();
+            const isAdmin = role === 'admin' || role === 'developer' || email === 'adm@copal' || perfil === 'administrador' || perfil === 'administrador mestre';
             if (isAdmin) {
                 const tabEl = document.getElementById('cadastroRapidoNavTab');
                 if (tabEl) tabEl.style.display = 'block';
