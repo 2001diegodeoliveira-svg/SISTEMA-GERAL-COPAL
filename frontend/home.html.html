@@ -809,6 +809,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-Dev-Secret': DEV_SECRET,
                         ...(token ? { Authorization: `Bearer ${token}` } : {})
                     },
                     body: JSON.stringify(payload)
@@ -827,9 +828,24 @@
             }
         }
 
-        function devOpenPdfFromContract(contract) {
+        async function devOpenPdfFromContract(contract) {
             const attachment = String(contract?.arquivoContrato || '').trim();
             const base64 = String(contract?.conteudoArquivoBase64 || '').trim();
+
+            if (!attachment && base64 === '__HAS_PDF__' && contract?.numContrato) {
+                try {
+                    const token = localStorage.getItem('accessToken') || '';
+                    const response = await fetch(`${CR_API_BASE}/api/contracts/${encodeURIComponent(contract.numContrato)}`, {
+                        headers: token ? { Authorization: `Bearer ${token}` } : {}
+                    });
+                    const fullContract = await response.json().catch(() => ({}));
+                    if (response.ok) {
+                        return devOpenPdfFromContract(fullContract);
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar o PDF do contrato:', error);
+                }
+            }
 
             if (attachment) {
                 window.open(attachment, '_blank', 'noopener,noreferrer');

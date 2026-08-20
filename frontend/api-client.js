@@ -138,6 +138,7 @@
     if (typeof path !== 'string') return false;
     const trimmed = path.trim();
     if (!trimmed) return false;
+    if (/^https?:\/\//i.test(trimmed)) return false;
 
     try {
       const parsed = new URL(trimmed, window.location.origin);
