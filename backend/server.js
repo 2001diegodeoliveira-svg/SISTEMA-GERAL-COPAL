@@ -1759,7 +1759,11 @@ app.get('/api/contracts', async (req, res) => {
   const { numContrato } = req.query;
   if (numContrato) {
     const normalizedNumContrato = String(numContrato || '').trim();
-    contractsDb.get('SELECT * FROM contracts WHERE lower(trim(numContrato)) = lower(trim(?))', [normalizedNumContrato], (err, row) => {
+    contractsDb.get(`SELECT contracts.*, creator.name AS created_by_name, updater.name AS updated_by_name
+             FROM contracts
+             LEFT JOIN users creator ON creator.id = contracts.created_by
+             LEFT JOIN users updater ON updater.id = contracts.updated_by
+             WHERE lower(trim(contracts.numContrato)) = lower(trim(?))`, [normalizedNumContrato], (err, row) => {
       if (err) return res.status(500).json({ message: 'Erro ao buscar contrato.' });
       if (!row) return res.status(404).json({ message: 'Contrato não encontrado.' });
       return res.json(mapContractRow(row));
@@ -1769,12 +1773,16 @@ app.get('/api/contracts', async (req, res) => {
 
   // Omit conteudoArquivoBase64 from list to avoid 60MB+ responses; fetch it per-contract
   contractsDb.all(
-    `SELECT id, numContrato, numProcesso, credor, razaoSocial, nomeFantasia, cnpj, cep, logradouro, numEndereco, bairro, cidade, uf,
+        `SELECT contracts.id, contracts.numContrato, contracts.numProcesso, contracts.credor, contracts.razaoSocial, contracts.nomeFantasia, contracts.cnpj, contracts.cep, contracts.logradouro, contracts.numEndereco, contracts.bairro, contracts.cidade, contracts.uf,
             telefoneFixo, telefoneWhatsapp, emailEmpresa, valorGlobal, objeto, dtInicial, dtFinal,
             prazoEntrega, formaContagem, tipoEntrega, arquivoContrato,
             CASE WHEN conteudoArquivoBase64 IS NOT NULL AND conteudoArquivoBase64 != '' THEN '__HAS_PDF__' ELSE '' END AS conteudoArquivoBase64,
-            lotes, unidades, aditivos, empenhos, status, created_by, updated_by, created_at, updated_at
-     FROM contracts ORDER BY id DESC`,
+          lotes, unidades, aditivos, empenhos, status, contracts.created_by, contracts.updated_by, contracts.created_at, contracts.updated_at,
+          creator.name AS created_by_name, updater.name AS updated_by_name
+         FROM contracts
+         LEFT JOIN users creator ON creator.id = contracts.created_by
+         LEFT JOIN users updater ON updater.id = contracts.updated_by
+         ORDER BY contracts.id DESC`,
     [],
     (err, rows) => {
       if (err) return res.status(500).json({ message: 'Erro ao buscar contratos.' });
@@ -1787,7 +1795,11 @@ app.get('/api/contracts', async (req, res) => {
 app.get('/api/contracts/:numContrato', async (req, res) => {
   const { numContrato } = req.params;
   const normalizedNumContrato = String(numContrato || '').trim();
-  contractsDb.get('SELECT * FROM contracts WHERE lower(trim(numContrato)) = lower(trim(?))', [normalizedNumContrato], (err, row) => {
+  contractsDb.get(`SELECT contracts.*, creator.name AS created_by_name, updater.name AS updated_by_name
+                   FROM contracts
+                   LEFT JOIN users creator ON creator.id = contracts.created_by
+                   LEFT JOIN users updater ON updater.id = contracts.updated_by
+                   WHERE lower(trim(contracts.numContrato)) = lower(trim(?))`, [normalizedNumContrato], (err, row) => {
     if (err) return res.status(500).json({ message: 'Erro ao buscar contrato.' });
     if (!row) return res.status(404).json({ message: 'Contrato não encontrado.' });
     res.json(mapContractRow(row));
@@ -1850,6 +1862,8 @@ app.post('/api/contracts', authenticateTokenOrDev, async (req, res) => {
   contractsDb.run(
     `INSERT INTO contracts (
         numContrato,
+        created_by,
+        updated_by,
         numProcesso,
         credor,
         razaoSocial,
@@ -1877,7 +1891,7 @@ app.post('/api/contracts', authenticateTokenOrDev, async (req, res) => {
         unidades,
         aditivos,
         empenhos
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?::jsonb)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?::jsonb)
       ON CONFLICT (numContrato)
       DO UPDATE SET
         numProcesso = EXCLUDED.numProcesso,
@@ -1907,9 +1921,13 @@ app.post('/api/contracts', authenticateTokenOrDev, async (req, res) => {
         unidades = EXCLUDED.unidades,
         aditivos = EXCLUDED.aditivos,
         empenhos = EXCLUDED.empenhos,
+        created_by = COALESCE(contracts.created_by, EXCLUDED.created_by),
+        updated_by = EXCLUDED.updated_by,
         updated_at = NOW()`,
     [
       normalizedNumContrato,
+      req.user?.user_id || null,
+      req.user?.user_id || null,
       numProcesso || '',
       credor || '',
       razaoSocial || '',

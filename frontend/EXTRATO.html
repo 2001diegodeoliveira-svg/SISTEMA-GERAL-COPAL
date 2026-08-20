@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SESP - Sistema de Extrato Financeiro de Contratos</title>
+    <title>SESP - Sistema de Extrato de Empenho</title>
     <!-- Tailwind CSS para estilização moderna e institucional -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="api-client.js"></script>
@@ -124,19 +124,18 @@
                 <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200"><p class="text-xs text-gray-500 font-semibold uppercase">Saldo disponível de empenho</p><p class="text-lg font-bold text-gray-800 mt-1" id="cardEmpenhoAvailable">R$ 0,00</p></div>
             </div>
 
-            <!-- EXTRATO FINANCEIRO (TABELA ESTILO BANCÁRIO) -->
+            <!-- EXTRATO DE EMPENHO (TABELA ESTILO BANCÁRIO) -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="font-bold text-sespBlue text-base">EXTRATO FINANCEIRO DO CONTRATO</h3>
+                    <h3 class="font-bold text-sespBlue text-base">EXTRATO DE EMPENHO</h3>
                     <span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded font-mono">Movimentações Cronológicas</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider border-b border-gray-200">
-                                <th class="py-3 px-4">Data</th>
+                                <th class="py-3 px-4">Data de lançamento</th>
                                 <th class="py-3 px-4">Tipo</th>
-                                <th class="py-3 px-4">Documento</th>
                                 <th class="py-3 px-4">Histórico</th>
                                 <th class="py-3 px-4">Empenho</th>
                                 <th class="py-3 px-4">Usuário</th>
@@ -154,7 +153,7 @@
 
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div class="bg-gray-50 px-6 py-4 border-b border-gray-200"><h3 class="font-bold text-sespBlue text-base">HISTÓRICO DE ADITIVOS</h3></div>
-                <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-100 text-gray-600 text-xs uppercase"><th class="py-3 px-4">Tipo</th><th class="py-3 px-4">Data</th><th class="py-3 px-4">Detalhes</th><th class="py-3 px-4">Usuário</th><th class="py-3 px-4">Anexo</th><th class="py-3 px-4">Ação</th></tr></thead><tbody id="amendmentsTableBody"></tbody></table></div>
+                <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-100 text-gray-600 text-xs uppercase"><th class="py-3 px-4">Tipo</th><th class="py-3 px-4">Data de lançamento</th><th class="py-3 px-4">Detalhes</th><th class="py-3 px-4">Usuário</th><th class="py-3 px-4">Anexo</th><th class="py-3 px-4">Ação</th></tr></thead><tbody id="amendmentsTableBody"></tbody></table></div>
             </div>
 
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -226,7 +225,7 @@
             }
 
             function obterNomeUsuario(item, contract) {
-                return [item?.usuarioLancamento, item?.usuario, item?.lancadoPor, contract?.usuarioLancamento, contract?.updated_by_name]
+                return [item?.usuarioLancamento, item?.usuario, item?.lancadoPor, contract?.usuarioLancamento, contract?.created_by_name, contract?.updated_by_name, contract?.createdByName, contract?.userName]
                 .map((value) => String(value || '').trim())
                 .find(Boolean) || 'Usuário não identificado';
             }
@@ -361,7 +360,7 @@
                 const valueClass = isCredit ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold';
                 const signal = isCredit ? '+' : '-';
                 const source = contratoAtual?.aditivos?.find((entry) => entry.obs === item.historico) || contratoAtual?.empenhos?.find((entry) => entry.numEmpenho === item.empenho);
-                return `<tr class="hover:bg-blue-50/50 transition-colors"><td class="py-3 px-4 text-xs text-gray-600">${escaparHtml(formatarData(item.data))}</td><td class="py-3 px-4"><span class="bg-gray-200 text-gray-800 px-2 py-0.5 rounded text-xs font-sans font-semibold">${escaparHtml(item.tipo)}</span></td><td class="py-3 px-4 font-semibold text-gray-700">${escaparHtml(item.doc)}</td><td class="py-3 px-4 text-gray-800 font-sans text-sm">${escaparHtml(item.historico)}</td><td class="py-3 px-4 text-xs text-gray-500">${escaparHtml(item.empenho)}</td><td class="py-3 px-4 text-xs text-gray-500">${escaparHtml(obterNomeUsuario(source, contratoAtual))}</td><td class="py-3 px-4 text-xs text-gray-500">${escaparHtml((source?.unidades || []).join(', ') || 'Todas')}</td><td class="py-3 px-4 text-right ${valueClass}">${signal}${formatarMoeda(Math.abs(item.valor))}</td><td class="py-3 px-4 text-right font-bold text-gray-900">${formatarMoeda(item.saldo)}</td></tr>`;
+                return `<tr class="hover:bg-blue-50/50 transition-colors"><td class="py-3 px-4 text-xs text-gray-600">${escaparHtml(formatarData(item.data))}</td><td class="py-3 px-4"><span class="bg-gray-200 text-gray-800 px-2 py-0.5 rounded text-xs font-sans font-semibold">${escaparHtml(item.tipo)}</span></td><td class="py-3 px-4 text-gray-800 font-sans text-sm">${escaparHtml(item.historico)}</td><td class="py-3 px-4 text-xs text-gray-500">${escaparHtml(item.empenho)}</td><td class="py-3 px-4 text-xs text-gray-500">${escaparHtml(obterNomeUsuario(source, contratoAtual))}</td><td class="py-3 px-4 text-xs text-gray-500">${escaparHtml((source?.unidades || []).join(', ') || 'Todas')}</td><td class="py-3 px-4 text-right ${valueClass}">${signal}${formatarMoeda(Math.abs(item.valor))}</td><td class="py-3 px-4 text-right font-bold text-gray-900">${formatarMoeda(item.saldo)}</td></tr>`;
             }).join('');
             renderHistoricos(contratoAtual, unidade);
         }
