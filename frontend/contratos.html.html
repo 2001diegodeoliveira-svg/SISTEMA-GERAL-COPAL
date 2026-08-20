@@ -960,6 +960,17 @@
                                     <i data-lucide="eye" style="width:14px;"></i> Abrir na visão geral
                                 </button>
                             </div>
+                            <div class="info-box" style="margin-top: 12px; padding: 12px; border-left: 4px solid var(--sesp-light-blue);">
+                                <strong style="display:block; margin-bottom: 6px;">Edição de dados</strong>
+                                <span style="display:block; color: var(--text-muted); font-size: 0.82rem; margin-bottom: 8px;">Informe o número de um contrato já registrado para carregar todos os dados nesta tela.</span>
+                                <div style="display:flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                    <input type="text" id="numeroContratoEdicao" placeholder="Ex: 123/2026/SESP" maxlength="13" style="flex: 1; min-width: 190px;" oninput="maskContractNumber(this)" onkeydown="if(event.key === 'Enter') carregarContratoDaAbaInicial()">
+                                    <button type="button" class="btn btn-secondary" onclick="carregarContratoDaAbaInicial()">
+                                        <i data-lucide="search" style="width:14px;"></i> Carregar dados
+                                    </button>
+                                </div>
+                                <div id="statusEdicaoContratoInicial" style="display:none; margin-top: 8px; font-size: 0.82rem;"></div>
+                            </div>
                     <div class="form-group">
                         <label for="numProcesso">Nº do Processo Aquisitivo *</label>
                         <input type="text" id="numProcesso" placeholder="Ex: SESP-PRO-2026/00123" required>
@@ -2690,6 +2701,7 @@
             };
 
             setValue('numContrato', contract.numContrato || '');
+            setValue('numeroContratoEdicao', contract.numContrato || '');
             setValue('numProcesso', contract.numProcesso || '');
             setValue('credor', contract.credor || '');
             setValue('razaoSocial', contract.razaoSocial || '');
@@ -2752,6 +2764,44 @@
 
             fillContractForm(contract);
             updateLocalContractCache(contract);
+        }
+
+        async function carregarContratoDaAbaInicial() {
+            const lookupInput = document.getElementById('numeroContratoEdicao');
+            const status = document.getElementById('statusEdicaoContratoInicial');
+            const candidate = normalizeContractNumber(lookupInput?.value || '');
+
+            if (!candidate) {
+                if (status) {
+                    status.style.display = 'block';
+                    status.style.color = 'var(--danger)';
+                    status.textContent = 'Informe o número do contrato para carregar os dados.';
+                }
+                lookupInput?.focus();
+                return;
+            }
+
+            if (status) {
+                status.style.display = 'block';
+                status.style.color = 'var(--text-muted)';
+                status.textContent = 'Localizando contrato...';
+            }
+
+            const contract = DB_CONTRATOS[candidate] || await fetchContract(candidate);
+            if (!contract) {
+                if (status) {
+                    status.style.color = 'var(--danger)';
+                    status.textContent = `Contrato ${candidate} não foi localizado.`;
+                }
+                return;
+            }
+
+            fillContractForm(contract);
+            updateLocalContractCache(contract);
+            if (status) {
+                status.style.color = 'var(--success)';
+                status.textContent = `Contrato ${contract.numContrato || candidate} carregado. Edite os campos abaixo e clique em "Salvar e Avançar".`;
+            }
         }
 
         async function abrirContratoAtualNaVisaoGeral() {
