@@ -1354,7 +1354,9 @@
 
                     <div class="req-field-group col-span-1">
                         <label>Contrato Nº</label>
-                        <input type="text" id="reqContractNum" placeholder="Ex: 085/2025/SESP" required>
+                        <select id="reqContractNum" required>
+                            <option value="">Selecione o contrato da unidade</option>
+                        </select>
                     </div>
 
                     <div class="req-field-group col-span-1">
@@ -1397,11 +1399,11 @@
                             </thead>
                             <tbody id="reqItemsBody">
                                 <tr>
-                                    <td><input type="text" class="item-lote" placeholder="01"></td>
-                                    <td><input type="text" class="item-num" placeholder="01"></td>
+                                    <td><select class="item-contract-index" required><option value="">Selecione</option></select></td>
+                                    <td><input type="text" class="item-num" placeholder="01" readonly></td>
                                     <td><input type="number" class="item-qty" value="1" min="1" onchange="calculateTotals()"></td>
-                                    <td><input type="text" class="item-desc" placeholder="Descrição do material ou serviço..."></td>
-                                    <td><input type="number" step="0.01" class="item-price" placeholder="0.00" onchange="calculateTotals()"></td>
+                                    <td><input type="text" class="item-desc" placeholder="Selecione um item do contrato" readonly></td>
+                                    <td><input type="number" step="0.01" class="item-price" placeholder="0.00" readonly></td>
                                     <td><input type="text" class="item-total" value="R$ 0,00" readonly></td>
                                     <td>
                                         <button type="button" class="btn-table-action" onclick="removeReqRow(this)">
@@ -1458,9 +1460,11 @@
                         <input type="email" id="reqRequesterEmail" placeholder="seu.email@empresa.com" required>
                     </div>
                     <div class="req-field-group col-span-2" style="display:flex; flex-direction:column; gap: 0.35rem;">
-                        <label>Código Temporário</label>
-                        <input type="text" id="reqVerificationCode" placeholder="000000" style="width: 180px;">
-                        <small id="reqCodeHelp" style="color: #334155;">Após clicar em Emitir Requisição, um código será enviado ao e-mail do servidor.</small>
+                        <label>Código do Google Authenticator</label>
+                        <input type="text" id="reqTotpCode" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="000000" style="width: 180px;" required>
+                        <small id="reqTotpHelp" style="color: #334155;">Use o código atual da unidade no aplicativo Google Authenticator.</small>
+                        <button type="button" class="btn-add-row" id="btnSetupTotp" style="width: fit-content;">Configurar Google Authenticator (ADM)</button>
+                        <div id="totpSetupResult" style="display:none; font-size:0.75rem; color:#334155;"></div>
                     </div>
 
                     <!-- INSTRUÇÕES DE PREENCHIMENTO -->
@@ -1733,6 +1737,50 @@
 
         function getContractsByUnit(unitCode) {
             return contractsCache.filter(contract => contractMatchesUnit(contract, unitCode));
+        }
+
+        function getRequisitionItems() {
+            const contractNumber = document.getElementById('reqContractNum').value;
+            const contract = contractsCache.find(item => item.numContrato === contractNumber);
+            return contract ? (getUnitDataFromContract(contract, activeUnitCode)?.itensDetalhados || []) : [];
+        }
+
+        function renderRequisitionContracts() {
+            const select = document.getElementById('reqContractNum');
+            const current = select.value;
+            select.innerHTML = '<option value="">Selecione o contrato da unidade</option>';
+            getContractsByUnit(activeUnitCode).forEach(contract => {
+                const option = document.createElement('option');
+                option.value = contract.numContrato || '';
+                option.textContent = `${contract.numContrato || '-'} - ${contract.credor || 'Fornecedor'}`;
+                select.appendChild(option);
+            });
+            if ([...select.options].some(option => option.value === current)) select.value = current;
+        }
+
+        function populateRequisitionItems() {
+            const items = getRequisitionItems();
+            const tbody = document.getElementById('reqItemsBody');
+            tbody.innerHTML = '';
+            if (!items.length) {
+                addReqRow();
+                return;
+            }
+            items.forEach((item, index) => {
+                const row = document.createElement('tr');
+                const available = Number(item.quantidade || 0);
+                row.innerHTML = `
+                    <td><select class="item-contract-index" required><option value="${index}">${item.loteNome || `Item ${index + 1}`}</option></select></td>
+                    <td><input type="text" class="item-num" value="${index + 1}" readonly></td>
+                    <td><input type="number" class="item-qty" value="0" min="0" max="${available}" step="1" onchange="calculateTotals()"></td>
+                    <td><input type="text" class="item-desc" value="${item.loteNome || `Item ${index + 1}`}" readonly></td>
+                    <td><input type="number" class="item-price" value="${parseMoneyValue(item.valorTotal) / Math.max(available, 1)}" readonly></td>
+                    <td><input type="text" class="item-total" value="R$ 0,00" readonly></td>
+                    <td><button type="button" class="btn-table-action" onclick="removeReqRow(this)"><i data-lucide="trash-2" style="width: 16px;"></i></button></td>`;
+                tbody.appendChild(row);
+            });
+            lucide.createIcons();
+            calculateTotals();
         }
 
         async function loadContracts() {
@@ -2019,6 +2067,8 @@
             const unitDemandField = document.getElementById('reqUnitDemand');
             if (activeUnitCode) {
                 unitDemandField.value = activeUnitCode;
+                renderRequisitionContracts();
+                populateRequisitionItems();
             }
         });
 
@@ -2035,11 +2085,11 @@
             const newRow = document.createElement('tr');
             
             newRow.innerHTML = `
-                <td><input type="text" class="item-lote" placeholder="01"></td>
-                <td><input type="text" class="item-num" value="${String(rowCount).padStart(2, '0')}"></td>
-                <td><input type="number" class="item-qty" value="1" min="1" onchange="calculateTotals()"></td>
-                <td><input type="text" class="item-desc" placeholder="Descrição do material ou serviço..."></td>
-                <td><input type="number" step="0.01" class="item-price" placeholder="0.00" onchange="calculateTotals()"></td>
+                <td><select class="item-contract-index" required><option value="">Selecione um contrato primeiro</option></select></td>
+                <td><input type="text" class="item-num" value="${String(rowCount).padStart(2, '0')}" readonly></td>
+                <td><input type="number" class="item-qty" value="0" min="0" onchange="calculateTotals()"></td>
+                <td><input type="text" class="item-desc" placeholder="Selecione um item do contrato" readonly></td>
+                <td><input type="number" step="0.01" class="item-price" placeholder="0.00" readonly></td>
                 <td><input type="text" class="item-total" value="R$ 0,00" readonly></td>
                 <td>
                     <button type="button" class="btn-table-action" onclick="removeReqRow(this)">
@@ -2077,51 +2127,58 @@
             document.getElementById('reqTotalSum').innerText = grandTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
+        function collectRequisitionItems() {
+            return [...document.querySelectorAll('#reqItemsBody tr')].map(row => ({
+                itemIndex: Number(row.querySelector('.item-contract-index')?.value),
+                quantity: Number(row.querySelector('.item-qty')?.value || 0),
+            })).filter(item => Number.isInteger(item.itemIndex) && item.quantity > 0);
+        }
+
+        document.getElementById('reqContractNum').addEventListener('change', populateRequisitionItems);
+
+        document.getElementById('btnSetupTotp').addEventListener('click', async () => {
+            if (!activeUnitCode || !authToken) {
+                alert('Somente um administrador autenticado pode configurar o Google Authenticator desta unidade.');
+                return;
+            }
+            try {
+                const res = await fetch(`/api/units/${encodeURIComponent(activeUnitCode)}/totp`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.message || 'Não foi possível configurar o autenticador.');
+                    return;
+                }
+                const result = document.getElementById('totpSetupResult');
+                result.style.display = 'block';
+                result.innerHTML = `Escaneie o QR Code no Google Authenticator e guarde a chave: <strong>${data.secret}</strong><br><img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(data.otpauthUrl)}" alt="QR Code do Google Authenticator" style="margin-top:0.5rem; width:180px; height:180px;">`;
+            } catch (error) {
+                alert('Erro de conexão ao configurar o autenticador.');
+            }
+        });
+
         document.getElementById('reqForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const requesterName = document.getElementById('reqRequesterName').value.trim();
             const requesterMatricula = document.getElementById('reqRequesterMatricula').value.trim();
             const requesterEmail = document.getElementById('reqRequesterEmail').value.trim();
-            const verificationCode = document.getElementById('reqVerificationCode').value.trim();
+            const totpCode = document.getElementById('reqTotpCode').value.trim();
+            const requisitionItems = collectRequisitionItems();
 
             if (!requesterName || !requesterMatricula || !requesterEmail) {
                 alert('Preencha o nome, matrícula e e-mail do servidor solicitante antes de prosseguir.');
                 return;
             }
 
-            if (!verificationCode || verificationCode.length !== 6) {
-                try {
-                    const res = await fetch('/api/request-requisition-code', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            requesterName,
-                            requesterMatricula,
-                            requesterEmail,
-                        })
-                    });
-
-                    const data = await res.json();
-                    if (!res.ok) {
-                        alert(data.message || 'Não foi possível enviar o código temporário. Verifique o e-mail do servidor.');
-                        return;
-                    }
-
-                    pendingRequisitionCode = true;
-                    currentRequesterEmail = requesterEmail;
-                    currentRequesterMatricula = requesterMatricula;
-                    document.getElementById('reqCodeHelp').innerText = 'Código temporário enviado ao e-mail do servidor. Digite-o acima e clique novamente em Emitir Requisição para validar e enviar o documento.';
-                    alert('Código temporário enviado. Confira seu e-mail e digite o código no campo correspondente.');
-                } catch (error) {
-                    console.error('Erro ao solicitar código temporário:', error);
-                    alert('Erro de conexão ao servidor ao solicitar o código temporário.');
-                }
+            if (!/^\d{6}$/.test(totpCode)) {
+                alert('Informe o código de 6 dígitos do Google Authenticator.');
                 return;
             }
-
-            if (!pendingRequisitionCode || currentRequesterEmail !== requesterEmail || currentRequesterMatricula !== requesterMatricula) {
-                alert('Solicite o código temporário primeiro.');
+            if (!document.getElementById('reqContractNum').value || !requisitionItems.length) {
+                alert('Selecione um contrato e ao menos um item com quantidade maior que zero.');
                 return;
             }
 
@@ -2143,7 +2200,8 @@
             formData.append('reqRequesterName', requesterName);
             formData.append('reqRequesterMatricula', requesterMatricula);
             formData.append('reqRequesterEmail', requesterEmail);
-            formData.append('reqVerificationCode', verificationCode);
+            formData.append('reqTotpCode', totpCode);
+            formData.append('reqItems', JSON.stringify(requisitionItems));
             if (pdfFile) {
                 formData.append('pdfAttachment', pdfFile);
             }
@@ -2170,11 +2228,13 @@
 
         function resetReqForm() {
             document.getElementById('reqForm').reset();
+            document.getElementById('reqItemsBody').innerHTML = '';
+            addReqRow();
             calculateTotals();
             pendingRequisitionCode = null;
             currentRequesterEmail = '';
             currentRequesterMatricula = '';
-            document.getElementById('reqCodeHelp').innerText = 'Após clicar em Emitir Requisição, um código será enviado ao e-mail do servidor.';
+            document.getElementById('reqTotpHelp').innerText = 'Use o código atual da unidade no aplicativo Google Authenticator.';
         }
 
         function getAuthHeaders(isJson = true) {

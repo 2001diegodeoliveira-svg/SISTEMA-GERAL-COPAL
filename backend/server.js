@@ -67,6 +67,62 @@ function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+function base32Encode(buffer) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = 0;
+  let value = 0;
+  let output = '';
+  for (const byte of buffer) {
+    value = (value << 8) | byte;
+    bits += 8;
+    while (bits >= 5) {
+      output += alphabet[(value >>> (bits - 5)) & 31];
+      bits -= 5;
+    }
+  }
+  if (bits > 0) output += alphabet[(value << (5 - bits)) & 31];
+  return output;
+}
+
+function base32Decode(value) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = 0;
+  let buffer = 0;
+  const output = [];
+  for (const char of String(value || '').toUpperCase().replace(/[^A-Z2-7]/g, '')) {
+    const index = alphabet.indexOf(char);
+    if (index < 0) continue;
+    buffer = (buffer << 5) | index;
+    bits += 5;
+    if (bits >= 8) {
+      output.push((buffer >>> (bits - 8)) & 255);
+      bits -= 8;
+    }
+  }
+  return Buffer.from(output);
+}
+
+function generateTotpCode(secret, timestamp = Date.now()) {
+  const counter = Math.floor(timestamp / 30000);
+  const counterBuffer = Buffer.alloc(8);
+  counterBuffer.writeBigInt64BE(BigInt(counter));
+  const digest = crypto.createHmac('sha1', base32Decode(secret)).update(counterBuffer).digest();
+  const offset = digest[digest.length - 1] & 15;
+  const binary = ((digest[offset] & 127) << 24) | (digest[offset + 1] << 16) | (digest[offset + 2] << 8) | digest[offset + 3];
+  return String(binary % 1000000).padStart(6, '0');
+}
+
+function verifyTotpCode(secret, code) {
+  const normalizedCode = String(code || '').replace(/\D/g, '');
+  if (!secret || normalizedCode.length !== 6) return false;
+  const now = Date.now();
+  return [-1, 0, 1].some((offset) => generateTotpCode(secret, now + offset * 30000) === normalizedCode);
+}
+
+function normalizeUnitCodeServer(value) {
+  return String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
 const requisitionCodeStore = {};
 
 function createMailTransporter() {
@@ -853,19 +909,59 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     reqRequesterMatricula,
     reqRequesterEmail,
     reqVerificationCode,
+    reqTotpCode,
+    reqItems,
   } = req.body;
 
-  if (!reqRequesterName || !reqRequesterMatricula || !reqRequesterEmail || !reqVerificationCode) {
-    return res.status(400).json({ message: 'Dados do servidor e código de validação são obrigatórios.' });
+  if (!reqRequesterName || !reqRequesterMatricula || !reqRequesterEmail) {
+    return res.status(400).json({ message: 'Dados do servidor são obrigatórios.' });
   }
 
-  const stored = await getQuery(
+  let parsedItems;
+  try {
+    parsedItems = JSON.parse(reqItems || '[]');
+  } catch (error) {
+    return res.status(400).json({ message: 'Itens da requisição inválidos.' });
+  }
+  if (!Array.isArray(parsedItems) || !parsedItems.length) {
+    return res.status(400).json({ message: 'Selecione ao menos um item do contrato.' });
+  }
+
+  const unit = await getQuery(db, 'SELECT code, totp_secret FROM units WHERE lower(trim(code)) = lower(trim(?))', [reqUnitDemand || '']);
+  if (!unit?.totp_secret || !verifyTotpCode(unit.totp_secret, reqTotpCode)) {
+    return res.status(400).json({ message: 'Código do Google Authenticator inválido ou unidade sem autenticação configurada.' });
+  }
+
+  const contract = await getQuery(contractsDb, 'SELECT numContrato, unidades FROM contracts WHERE lower(trim(numContrato)) = lower(trim(?))', [reqContractNum || '']);
+  if (!contract) return res.status(404).json({ message: 'Contrato não encontrado.' });
+  const contractUnits = safeJsonParse(contract.unidades, []);
+  const unitData = contractUnits.find((entry) => normalizeUnitCodeServer(entry?.unidade || entry) === normalizeUnitCodeServer(reqUnitDemand));
+  const allocatedItems = Array.isArray(unitData?.itensDetalhados) ? unitData.itensDetalhados : [];
+  if (!unitData || !allocatedItems.length) return res.status(400).json({ message: 'A unidade não possui itens disponíveis neste contrato.' });
+
+  const previousRows = await db.all('SELECT req_items, req_unit_demand FROM requisitions WHERE lower(trim(req_contract_num)) = lower(trim(?))', [reqContractNum || '']);
+  const consumed = {};
+  for (const row of previousRows || []) {
+    if (normalizeUnitCodeServer(row.req_unit_demand) !== normalizeUnitCodeServer(reqUnitDemand)) continue;
+    for (const item of safeJsonParse(row.req_items, [])) consumed[item.itemIndex] = (consumed[item.itemIndex] || 0) + Number(item.quantity || 0);
+  }
+  for (const item of parsedItems) {
+    const index = Number(item.itemIndex);
+    const quantity = Number(item.quantity);
+    const allocation = allocatedItems[index];
+    const available = Number(allocation?.quantidade || 0) - (consumed[index] || 0);
+    if (!Number.isInteger(index) || !allocation || !Number.isFinite(quantity) || quantity <= 0 || quantity > available) {
+      return res.status(400).json({ message: `Quantidade inválida ou acima do saldo disponível para ${allocation?.loteNome || `item ${index + 1}`}. Saldo: ${Math.max(0, available)}.` });
+    }
+  }
+
+  const stored = reqVerificationCode ? await getQuery(
     db,
     'SELECT * FROM requisition_codes WHERE requester_email = ? ORDER BY id DESC LIMIT 1',
     [reqRequesterEmail.toLowerCase()]
-  );
+  ) : null;
 
-  if (!stored || stored.code !== reqVerificationCode || stored.used_at || Date.now() > stored.expires_at) {
+  if (reqVerificationCode && (!stored || stored.code !== reqVerificationCode || stored.used_at || Date.now() > stored.expires_at)) {
     return res.status(400).json({ message: 'Código de validação inválido ou expirado.' });
   }
 
@@ -890,7 +986,8 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     `Fiscal do Contrato: ${reqFiscalName || 'N/A'}\n` +
     `Telefone do Fiscal: ${reqFiscalPhone || 'N/A'}\n` +
     `Servidor Solicitante: ${reqRequesterName} (Matrícula: ${reqRequesterMatricula})\n` +
-    `Validação por código temporário: ${reqVerificationCode}\n`;
+    `Validação por Google Authenticator: realizada\n` +
+    `Itens solicitados: ${JSON.stringify(parsedItems)}\n`;
 
   const emailHtml = `
     <h2>Requisição de Materiais e/ou Serviços</h2>
@@ -907,7 +1004,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     <p><strong>Fiscal do Contrato:</strong> ${reqFiscalName || 'N/A'}</p>
     <p><strong>Telefone do Fiscal:</strong> ${reqFiscalPhone || 'N/A'}</p>
     <p><strong>Servidor Solicitante:</strong> ${reqRequesterName} (Matrícula: ${reqRequesterMatricula})</p>
-    <p><strong>Código de validação:</strong> ${reqVerificationCode}</p>
+    <p><strong>Validação por Google Authenticator:</strong> realizada</p>
   `;
 
   const attachments = [];
@@ -948,8 +1045,9 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
         email_status,
         email_error,
         created_at,
-        code_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
+        code_id,
+        req_items
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb)` ,
       [
         reqNumberYear || '',
         reqUnitDemand || '',
@@ -967,7 +1065,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
         reqRequesterName,
         reqRequesterMatricula,
         reqRequesterEmail,
-        reqVerificationCode,
+        reqTotpCode || reqVerificationCode || '',
         pdfAttachmentName,
         pdfAttachmentPath,
         `Requisição ${reqNumberYear || ''} - ${reqCompany}`,
@@ -976,7 +1074,8 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
         'pending',
         '',
         Date.now(),
-        stored.id,
+        stored?.id || null,
+        JSON.stringify(parsedItems),
       ]
     );
     requisitionRecordId = requisitionInsert.lastID;
@@ -990,7 +1089,9 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     });
 
     await runQuery(db, 'UPDATE requisitions SET email_status = ?, sent_at = ?, email_error = ? WHERE id = ?', ['sent', Date.now(), '', requisitionRecordId]);
-    await runQuery(db, 'UPDATE requisition_codes SET used_at = ? WHERE id = ?', [Date.now(), stored.id]);
+    if (stored?.id) {
+      await runQuery(db, 'UPDATE requisition_codes SET used_at = ? WHERE id = ?', [Date.now(), stored.id]);
+    }
 
     writeAuditLog(req.user?.user_id, 'requisition_submit', 'requisition', requisitionRecordId, { reqNumberYear: reqNumberYear || '', reqCompany: reqCompany || '', reqRequesterName });
     return res.json({ message: 'Requisição validada e enviada para o e-mail da empresa contratada.' });
@@ -1301,9 +1402,22 @@ app.delete('/api/patrimonio/:rp', async (req, res) => {
 });
 
 app.get('/api/units', async (req, res) => {
-  db.all('SELECT * FROM units ORDER BY id DESC', [], (err, rows) => {
+  db.all('SELECT id, code, name, location, responsible, status, created_at, updated_at FROM units ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ message: 'Erro ao buscar unidades.' });
     res.json({ units: rows });
+  });
+});
+
+app.post('/api/units/:unitCode/totp', authenticateToken, authorizeAdmin, async (req, res) => {
+  const unitCode = String(req.params.unitCode || '').trim();
+  if (!unitCode) return res.status(400).json({ message: 'Código da unidade é obrigatório.' });
+  const secret = base32Encode(crypto.randomBytes(20));
+  db.run('UPDATE units SET totp_secret = ?, updated_at = NOW() WHERE code = ?', [secret, unitCode], function (err) {
+    if (err) return res.status(500).json({ message: 'Erro ao configurar o Google Authenticator.' });
+    if (!this.changes) return res.status(404).json({ message: 'Unidade não encontrada.' });
+    const label = encodeURIComponent(`COPAL SESP:${unitCode}`);
+    const issuer = encodeURIComponent('COPAL SESP');
+    res.json({ secret, otpauthUrl: `otpauth://totp/${label}?secret=${secret}&issuer=${issuer}` });
   });
 });
 

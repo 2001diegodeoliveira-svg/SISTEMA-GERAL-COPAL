@@ -98,6 +98,7 @@ CREATE TABLE IF NOT EXISTS units (
 
 CREATE INDEX IF NOT EXISTS idx_units_code ON units (code);
 CREATE INDEX IF NOT EXISTS idx_units_status ON units (status);
+ALTER TABLE units ADD COLUMN IF NOT EXISTS totp_secret TEXT;
 
 CREATE TABLE IF NOT EXISTS unit_users (
   id BIGSERIAL PRIMARY KEY,
@@ -161,6 +162,8 @@ CREATE TABLE IF NOT EXISTS requisitions (
   sent_at BIGINT,
   code_id BIGINT REFERENCES requisition_codes(id) ON DELETE SET NULL
 );
+
+ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS req_items JSONB NOT NULL DEFAULT '[]'::jsonb;
 
 CREATE INDEX IF NOT EXISTS idx_requisitions_contract_num ON requisitions (req_contract_num);
 CREATE INDEX IF NOT EXISTS idx_requisitions_requester_email ON requisitions (requester_email);
