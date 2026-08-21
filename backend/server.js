@@ -1444,10 +1444,18 @@ app.get('/api/units', async (req, res) => {
 app.post('/api/units/:unitCode/totp', authenticateToken, authorizeAdmin, async (req, res) => {
   const unitCode = String(req.params.unitCode || '').trim();
   if (!unitCode) return res.status(400).json({ message: 'Código da unidade é obrigatório.' });
-  const secret = base32Encode(crypto.randomBytes(20));
-  db.run('UPDATE units SET totp_secret = ?, updated_at = NOW() WHERE code = ?', [secret, unitCode], function (err) {
+  const unit = await getQuery(db, 'SELECT code, totp_secret FROM units WHERE lower(trim(code)) = lower(trim(?))', [unitCode]);
+  if (!unit) return res.status(404).json({ message: 'Unidade não encontrada.' });
+
+  const secret = unit.totp_secret || base32Encode(crypto.randomBytes(20));
+  if (unit.totp_secret) {
+    const label = encodeURIComponent(`COPAL SESP:${unit.code}`);
+    const issuer = encodeURIComponent('COPAL SESP');
+    return res.json({ secret, otpauthUrl: `otpauth://totp/${label}?secret=${secret}&issuer=${issuer}` });
+  }
+
+  db.run('UPDATE units SET totp_secret = ?, updated_at = NOW() WHERE lower(trim(code)) = lower(trim(?))', [secret, unitCode], function (err) {
     if (err) return res.status(500).json({ message: 'Erro ao configurar o Google Authenticator.' });
-    if (!this.changes) return res.status(404).json({ message: 'Unidade não encontrada.' });
     const label = encodeURIComponent(`COPAL SESP:${unitCode}`);
     const issuer = encodeURIComponent('COPAL SESP');
     res.json({ secret, otpauthUrl: `otpauth://totp/${label}?secret=${secret}&issuer=${issuer}` });
