@@ -441,6 +441,43 @@
             gap: 0.8rem;
         }
 
+        .contract-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.55rem;
+            margin-top: 0.8rem;
+        }
+
+        .contract-summary-metric {
+            padding: 0.55rem 0.65rem;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+        }
+
+        .contract-summary-metric label {
+            display: block;
+            color: #64748b;
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .contract-summary-metric span {
+            display: block;
+            margin-top: 0.2rem;
+            color: var(--sesp-dark-blue);
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        .contract-validity {
+            margin-top: 0.75rem;
+            color: #475569;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
         .contract-item-card {
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -1290,6 +1327,10 @@
                         <label>Objeto do Contrato</label>
                         <span id="detObjeto">Manutenção preventiva e corretiva de viaturas operacionais.</span>
                     </div>
+                    <div class="data-row">
+                        <label>Vigência</label>
+                        <span id="detVigencia">-</span>
+                    </div>
                 </div>
 
                 <div class="info-box-card">
@@ -1649,6 +1690,7 @@
         let unitsCache = [];
         let unitUsersCache = {};
         let contractsCache = [];
+        let requisitionConsumptionCache = [];
 
         const OFFLINE_UNITS_KEY = 'COPAL_OFFLINE_UNITS';
         const OFFLINE_UNIT_USERS_KEY = 'COPAL_OFFLINE_UNIT_USERS';
@@ -1741,6 +1783,61 @@
             return contractsCache.filter(contract => contractMatchesUnit(contract, unitCode));
         }
 
+        function getContractConsumption(contractNumber, unitCode) {
+            const consumed = {};
+            requisitionConsumptionCache
+                .filter(entry => normalizeUnitCode(entry.unitCode) === normalizeUnitCode(unitCode)
+                    && String(entry.contractNumber || '').trim().toLowerCase() === String(contractNumber || '').trim().toLowerCase())
+                .forEach(entry => {
+                    (Array.isArray(entry.items) ? entry.items : []).forEach(item => {
+                        const index = Number(item.itemIndex);
+                        if (Number.isInteger(index)) consumed[index] = (consumed[index] || 0) + Number(item.quantity || 0);
+                    });
+                });
+            return consumed;
+        }
+
+        function parseContractDate(value) {
+            if (!value) return null;
+            const text = String(value).trim();
+            const brDate = text.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            const date = brDate ? new Date(Number(brDate[3]), Number(brDate[2]) - 1, Number(brDate[1])) : new Date(text);
+            return Number.isNaN(date.getTime()) ? null : date;
+        }
+
+        function getContractValidity(contract) {
+            const start = parseContractDate(contract.dtInicial);
+            const end = parseContractDate(contract.dtFinal);
+            if (!start || !end) return `${contract.dtInicial || '-'} até ${contract.dtFinal || '-'}`;
+            const today = new Date();
+            const status = today < start ? 'Ainda não iniciado' : today <= end ? 'Vigente' : 'Encerrado';
+            const days = Math.max(0, Math.ceil((end - today) / 86400000));
+            const remaining = status === 'Vigente' ? ` • ${days} dia${days === 1 ? '' : 's'} restante${days === 1 ? '' : 's'}` : '';
+            return `${start.toLocaleDateString('pt-BR')} até ${end.toLocaleDateString('pt-BR')} • ${status}${remaining}`;
+        }
+
+        function getContractUnitSummary(contract, unitCode) {
+            const unitData = getUnitDataFromContract(contract, unitCode) || {};
+            const items = Array.isArray(unitData.itensDetalhados) ? unitData.itensDetalhados : [];
+            const consumed = getContractConsumption(contract.numContrato, unitCode);
+            const allocatedItems = items.reduce((total, item) => total + Number(item.quantidade || 0), 0);
+            const usedItems = items.reduce((total, item, index) => total + Math.min(Number(item.quantidade || 0), consumed[index] || 0), 0);
+            const allocatedValue = items.reduce((total, item) => total + parseMoneyValue(item.valorTotal), 0) || parseMoneyValue(unitData.valor || contract.valorGlobal);
+            const usedValue = items.reduce((total, item, index) => {
+                const quantity = Math.min(Number(item.quantidade || 0), consumed[index] || 0);
+                const unitValue = Number(item.quantidade || 0) > 0 ? parseMoneyValue(item.valorTotal) / Number(item.quantidade) : 0;
+                return total + quantity * unitValue;
+            }, 0);
+            return {
+                allocatedValue,
+                usedValue,
+                availableValue: Math.max(0, allocatedValue - usedValue),
+                allocatedItems,
+                usedItems,
+                availableItems: Math.max(0, allocatedItems - usedItems),
+            };
+        }
+
         function getRequisitionItems() {
             const contractNumber = document.getElementById('reqContractNum').value;
             const contract = contractsCache.find(item => item.numContrato === contractNumber);
@@ -1796,6 +1893,16 @@
                 console.error('Falha ao carregar contratos:', error);
                 contractsCache = loadOfflineContracts();
             }
+
+            try {
+                const res = await fetch('/api/requisition-consumption');
+                if (!res.ok) throw new Error(`Backend respondeu HTTP ${res.status}.`);
+                const data = await res.json();
+                requisitionConsumptionCache = Array.isArray(data.requisitions) ? data.requisitions : [];
+            } catch (error) {
+                console.error('Falha ao carregar consumo das requisições:', error);
+                requisitionConsumptionCache = [];
+            }
         }
 
         function getUnitUpdates(contract, unitCode) {
@@ -1848,6 +1955,7 @@
 
             contracts.forEach(contract => {
                 const updatesCount = (contract.aditivos || []).length + (contract.empenhos || []).length;
+                const summary = getContractUnitSummary(contract, unitCode);
                 const item = document.createElement('div');
                 item.className = 'unit-card';
                 item.style.cursor = 'pointer';
@@ -1862,8 +1970,14 @@
                     <div class="unit-card-body">
                         <ul class="unit-info-list">
                             <li><i data-lucide="folder" style="width: 14px;"></i> Processo: ${contract.numProcesso || '-'}</li>
-                            <li><i data-lucide="calendar" style="width: 14px;"></i> Vigência: ${contract.dtInicial || '-'} até ${contract.dtFinal || '-'}</li>
+                            <li><i data-lucide="calendar" style="width: 14px;"></i> Vigência: ${getContractValidity(contract)}</li>
                         </ul>
+                        <div class="contract-summary-grid">
+                            <div class="contract-summary-metric"><label>Valor total</label><span>${formatMoneyValue(summary.allocatedValue)}</span></div>
+                            <div class="contract-summary-metric"><label>Saldo usado</label><span>${formatMoneyValue(summary.usedValue)}</span></div>
+                            <div class="contract-summary-metric"><label>Saldo disponível</label><span>${formatMoneyValue(summary.availableValue)}</span></div>
+                            <div class="contract-summary-metric"><label>Itens</label><span>${summary.allocatedItems} total • ${summary.usedItems} usados • ${summary.availableItems} disp.</span></div>
+                        </div>
                         <div class="unit-stats">
                             <div class="stat-item"><label>Atualizações</label><span>${updatesCount}</span></div>
                             <div class="stat-item"><label>Empenhos</label><span>${(contract.empenhos || []).length}</span></div>
@@ -1893,6 +2007,7 @@
             document.getElementById('detRazaoSocial').innerText = contract.razaoSocial || contract.credor || '-';
             document.getElementById('detCredorCnpj').innerText = `${contract.credor || '-'}${contract.cnpj ? ` - CNPJ: ${contract.cnpj}` : ''}`;
             document.getElementById('detObjeto').innerText = contract.objeto || '-';
+            document.getElementById('detVigencia').innerText = getContractValidity(contract);
 
             const empenhado = (contract.empenhos || []).reduce((total, emp) => {
                 const unidadeEmpenho = Array.isArray(emp.unidades) ? emp.unidades.some(u => normalizeUnitCode(getUnitCode(u)) === normalizeUnitCode(unitCode)) : false;
@@ -1915,12 +2030,15 @@
                     </tr>
                 `;
             } else {
+                const consumed = getContractConsumption(contract.numContrato, unitCode);
                 unitItems.forEach(item => {
+                    const itemIndex = unitItems.indexOf(item);
                     const allocated = Number(item.quantidade || 0);
-                    const used = 0;
+                    const used = Math.min(allocated, consumed[itemIndex] || 0);
                     const available = Math.max(0, allocated - used);
                     const totalItemValue = parseMoneyValue(item.valorTotal);
                     const unitPrice = allocated > 0 ? totalItemValue / allocated : 0;
+                    const remainingValue = Math.max(0, totalItemValue - (used * unitPrice));
                     tbody.insertAdjacentHTML('beforeend', `
                         <tr>
                             <td>${item.loteNome || '-'}</td>
@@ -1928,7 +2046,7 @@
                             <td>${used}</td>
                             <td>${available}</td>
                             <td>${formatMoneyValue(unitPrice)}</td>
-                            <td>${item.valorTotal || '-'}</td>
+                            <td>${formatMoneyValue(remainingValue)}</td>
                         </tr>
                     `);
                 });

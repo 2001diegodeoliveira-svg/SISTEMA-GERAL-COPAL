@@ -467,6 +467,24 @@ app.get('/login.html.html', (req, res) => {
   res.sendFile(path.join(FRONTEND_DIR, 'cadastrouser.html.html'));
 });
 
+app.get('/api/requisition-consumption', async (req, res) => {
+  try {
+    const rows = await db.all(
+      'SELECT req_contract_num, req_unit_demand, req_items FROM requisitions ORDER BY id ASC'
+    );
+    res.json({
+      requisitions: (rows || []).map((row) => ({
+        contractNumber: row.req_contract_num || '',
+        unitCode: row.req_unit_demand || '',
+        items: safeJsonParse(row.req_items, []),
+      })),
+    });
+  } catch (error) {
+    console.error('Falha ao carregar consumo das requisições:', error);
+    res.status(500).json({ message: 'Não foi possível carregar o consumo dos contratos.' });
+  }
+});
+
 const upload = multer({
   dest: UPLOAD_DIR,
   limits: { fileSize: 5 * 1024 * 1024 },
