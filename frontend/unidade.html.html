@@ -2153,10 +2153,20 @@
         document.getElementById('reqContractNum').addEventListener('change', populateRequisitionItems);
 
         document.getElementById('btnSetupTotp').addEventListener('click', async () => {
-            if (!activeUnitCode || !authToken) {
-                alert('Somente um administrador autenticado pode configurar o Google Authenticator desta unidade.');
+            if (!activeUnitCode) {
+                alert('Selecione uma unidade antes de configurar o Google Authenticator.');
                 return;
             }
+            if (!authToken) {
+                pendingAdminAction = 'setup-totp';
+                clearAdminLoginForm();
+                adminLoginModal.classList.add('active');
+                return;
+            }
+            await setupUnitTotp();
+        });
+
+        async function setupUnitTotp() {
             try {
                 const res = await fetch(`/api/units/${encodeURIComponent(activeUnitCode)}/totp`, {
                     method: 'POST',
@@ -2173,7 +2183,7 @@
             } catch (error) {
                 alert('Erro de conexão ao configurar o autenticador.');
             }
-        });
+        }
 
         document.getElementById('reqForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -2431,6 +2441,30 @@
                 } catch (error) {
                     console.error('Erro ao autenticar administrador:', error);
                     alert('Erro de conexão ao servidor. Tente novamente.');
+                    return;
+                }
+            }
+
+            if (pendingAdminAction === 'setup-totp') {
+                try {
+                    const res = await fetch('/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    const data = await res.json();
+                    const role = String(data.user?.role || '').toLowerCase();
+                    if (!res.ok || (role !== 'admin' && role !== 'developer')) {
+                        alert(data.message || 'Somente administradores podem configurar o Google Authenticator.');
+                        return;
+                    }
+                    authToken = data.accessToken || '';
+                    closeAdminLoginModal();
+                    await setupUnitTotp();
+                    return;
+                } catch (error) {
+                    console.error('Erro ao autenticar para configurar TOTP:', error);
+                    alert('Erro de conexão ao autenticar o administrador.');
                     return;
                 }
             }
