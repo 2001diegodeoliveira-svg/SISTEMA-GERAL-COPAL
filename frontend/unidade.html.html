@@ -2152,11 +2152,7 @@
 
         document.getElementById('reqContractNum').addEventListener('change', populateRequisitionItems);
 
-        document.getElementById('btnSetupTotp').addEventListener('click', async () => {
-            if (!activeUnitCode || !authToken) {
-                alert('Somente um administrador autenticado pode configurar o Google Authenticator desta unidade.');
-                return;
-            }
+        async function configureUnitTotp() {
             try {
                 const res = await fetch(`/api/units/${encodeURIComponent(activeUnitCode)}/totp`, {
                     method: 'POST',
@@ -2173,6 +2169,20 @@
             } catch (error) {
                 alert('Erro de conexão ao configurar o autenticador.');
             }
+        }
+
+        document.getElementById('btnSetupTotp').addEventListener('click', async () => {
+            if (!activeUnitCode) {
+                alert('Selecione uma unidade antes de configurar o Google Authenticator.');
+                return;
+            }
+            if (!authToken) {
+                pendingAdminAction = 'setup-totp';
+                clearAdminLoginForm();
+                adminLoginModal.classList.add('active');
+                return;
+            }
+            await configureUnitTotp();
         });
 
         document.getElementById('reqForm').addEventListener('submit', async (e) => {
@@ -2403,7 +2413,7 @@
                 return;
             }
 
-            if (pendingAdminAction === 'add-unit') {
+            if (pendingAdminAction === 'add-unit' || pendingAdminAction === 'setup-totp') {
                 try {
                     const res = await fetch('/auth/login', {
                         method: 'POST',
@@ -2419,13 +2429,18 @@
 
                     const role = String(data.user?.role || '').toLowerCase();
                     if (role !== 'admin' && role !== 'developer') {
-                        alert('Apenas administradores podem cadastrar novas unidades.');
+                        alert('Apenas administradores podem configurar o Google Authenticator ou cadastrar novas unidades.');
                         return;
                     }
 
                     authToken = data.accessToken || '';
+                    const adminAction = pendingAdminAction;
 
                     closeAdminLoginModal();
+                    if (adminAction === 'setup-totp') {
+                        await configureUnitTotp();
+                        return;
+                    }
                     modal.classList.add('active');
                     return;
                 } catch (error) {
