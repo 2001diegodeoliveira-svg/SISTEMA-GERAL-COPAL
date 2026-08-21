@@ -920,6 +920,9 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     reqVerificationCode,
     reqTotpCode,
     reqItems,
+    reqLatitude,
+    reqLongitude,
+    reqLocationAccuracy,
   } = req.body;
 
   if (!reqRequesterName || !reqRequesterMatricula || !reqRequesterEmail) {
@@ -934,6 +937,13 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
   }
   if (!Array.isArray(parsedItems) || !parsedItems.length) {
     return res.status(400).json({ message: 'Selecione ao menos um item do contrato.' });
+  }
+
+  const latitude = Number(reqLatitude);
+  const longitude = Number(reqLongitude);
+  const locationAccuracy = String(reqLocationAccuracy || '').trim() ? Number(reqLocationAccuracy) : null;
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    return res.status(400).json({ message: 'A localização do assinante é obrigatória para emitir a requisição.' });
   }
 
   const unit = await getQuery(db, 'SELECT code, totp_secret FROM units WHERE lower(trim(code)) = lower(trim(?))', [reqUnitDemand || '']);
@@ -1000,6 +1010,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     `Telefone do Fiscal: ${reqFiscalPhone || 'N/A'}\n` +
     `Servidor Solicitante: ${reqRequesterName} (Matrícula: ${reqRequesterMatricula})\n` +
     `Validação por Google Authenticator: realizada\n` +
+    `Localização da assinatura: ${latitude.toFixed(7)}, ${longitude.toFixed(7)} (precisão aproximada: ${Number.isFinite(locationAccuracy) ? `${Math.round(locationAccuracy)} m` : 'não informada'})\n` +
     `Itens solicitados: ${JSON.stringify(parsedItems)}\n`;
 
   const emailHtml = `
@@ -1018,6 +1029,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     <p><strong>Telefone do Fiscal:</strong> ${reqFiscalPhone || 'N/A'}</p>
     <p><strong>Servidor Solicitante:</strong> ${reqRequesterName} (Matrícula: ${reqRequesterMatricula})</p>
     <p><strong>Validação por Google Authenticator:</strong> realizada</p>
+    <p><strong>Localização da assinatura:</strong> ${latitude.toFixed(7)}, ${longitude.toFixed(7)}${Number.isFinite(locationAccuracy) ? ` (precisão aproximada: ${Math.round(locationAccuracy)} m)` : ''}</p>
   `;
 
   const attachments = [];
@@ -1059,8 +1071,12 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
         email_error,
         created_at,
         code_id,
-        req_items
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb)` ,
+        req_items,
+        signer_latitude,
+        signer_longitude,
+        signer_accuracy,
+        signer_location_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?)` ,
       [
         reqNumberYear || '',
         reqUnitDemand || '',
@@ -1089,6 +1105,10 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
         Date.now(),
         stored?.id || null,
         JSON.stringify(parsedItems),
+        latitude,
+        longitude,
+        Number.isFinite(locationAccuracy) ? locationAccuracy : null,
+        Date.now(),
       ]
     );
     requisitionRecordId = requisitionInsert.lastID;

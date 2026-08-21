@@ -164,6 +164,10 @@ CREATE TABLE IF NOT EXISTS requisitions (
 );
 
 ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS req_items JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS signer_latitude NUMERIC(10, 7);
+ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS signer_longitude NUMERIC(10, 7);
+ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS signer_accuracy NUMERIC(10, 2);
+ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS signer_location_at BIGINT;
 
 CREATE INDEX IF NOT EXISTS idx_requisitions_contract_num ON requisitions (req_contract_num);
 CREATE INDEX IF NOT EXISTS idx_requisitions_requester_email ON requisitions (requester_email);

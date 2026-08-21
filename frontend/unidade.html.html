@@ -1464,6 +1464,7 @@
                         <label>Código do Google Authenticator</label>
                         <input type="text" id="reqTotpCode" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="000000" style="width: 180px;" required>
                         <small id="reqTotpHelp" style="color: #334155;">Use o código atual da unidade no aplicativo Google Authenticator.</small>
+                        <small id="reqLocationHelp" style="color: #334155;">A localização será solicitada ao clicar em Emitir Requisição.</small>
                         <button type="button" class="btn-add-row" id="btnSetupTotp" style="width: fit-content;">Configurar Google Authenticator (ADM)</button>
                         <div id="totpSetupResult" style="display:none; font-size:0.75rem; color:#334155;"></div>
                     </div>
@@ -2135,6 +2136,20 @@
             })).filter(item => Number.isInteger(item.itemIndex) && item.quantity > 0);
         }
 
+        function requestSignerLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('Este navegador não oferece geolocalização.'));
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    (position) => resolve(position.coords),
+                    () => reject(new Error('Permissão de localização negada ou indisponível.')),
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                );
+            });
+        }
+
         document.getElementById('reqContractNum').addEventListener('change', populateRequisitionItems);
 
         document.getElementById('btnSetupTotp').addEventListener('click', async () => {
@@ -2183,6 +2198,17 @@
                 return;
             }
 
+            let signerLocation;
+            try {
+                document.getElementById('reqLocationHelp').innerText = 'Solicitando sua localização para confirmar a assinatura...';
+                signerLocation = await requestSignerLocation();
+                document.getElementById('reqLocationHelp').innerText = 'Localização capturada e vinculada à assinatura.';
+            } catch (error) {
+                document.getElementById('reqLocationHelp').innerText = 'A localização é obrigatória para emitir a requisição.';
+                alert(error.message);
+                return;
+            }
+
             const pdfFile = document.getElementById('reqPdfAttachment').files[0];
             const formData = new FormData();
             formData.append('reqNumberYear', document.getElementById('reqNumberYear').value.trim());
@@ -2203,6 +2229,9 @@
             formData.append('reqRequesterEmail', requesterEmail);
             formData.append('reqTotpCode', totpCode);
             formData.append('reqItems', JSON.stringify(requisitionItems));
+            formData.append('reqLatitude', String(signerLocation.latitude));
+            formData.append('reqLongitude', String(signerLocation.longitude));
+            formData.append('reqLocationAccuracy', String(signerLocation.accuracy || ''));
             if (pdfFile) {
                 formData.append('pdfAttachment', pdfFile);
             }
@@ -2236,6 +2265,7 @@
             currentRequesterEmail = '';
             currentRequesterMatricula = '';
             document.getElementById('reqTotpHelp').innerText = 'Use o código atual da unidade no aplicativo Google Authenticator.';
+            document.getElementById('reqLocationHelp').innerText = 'A localização será solicitada ao clicar em Emitir Requisição.';
         }
 
         function getAuthHeaders(isJson = true) {
