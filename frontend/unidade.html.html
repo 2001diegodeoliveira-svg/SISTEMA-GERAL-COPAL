@@ -1463,9 +1463,9 @@
                     <div class="req-field-group col-span-2" style="display:flex; flex-direction:column; gap: 0.35rem;">
                         <label>Código do Google Authenticator</label>
                         <input type="text" id="reqTotpCode" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="000000" style="width: 180px;" required>
-                        <small id="reqTotpHelp" style="color: #334155;">Use o código atual da unidade no aplicativo Google Authenticator.</small>
+                        <small id="reqTotpHelp" style="color: #334155;">Escaneie o QR Code da unidade no Google Authenticator e informe o código atual.</small>
                         <small id="reqLocationHelp" style="color: #334155;">A localização será solicitada ao clicar em Emitir Requisição.</small>
-                        <button type="button" class="btn-add-row" id="btnSetupTotp" style="width: fit-content;">Configurar Google Authenticator (ADM)</button>
+                        <button type="button" class="btn-add-row" id="btnSetupTotp" style="width: fit-content;">Gerar QR Code do Google Authenticator (ADM)</button>
                         <div id="totpSetupResult" style="display:none; font-size:0.75rem; color:#334155;"></div>
                     </div>
 
@@ -2169,7 +2169,7 @@
                 }
                 const result = document.getElementById('totpSetupResult');
                 result.style.display = 'block';
-                result.innerHTML = `Escaneie o QR Code no Google Authenticator e guarde a chave: <strong>${data.secret}</strong><br><img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(data.otpauthUrl)}" alt="QR Code do Google Authenticator" style="margin-top:0.5rem; width:180px; height:180px;">`;
+                result.innerHTML = `<strong>QR Code da unidade</strong><br>Escaneie com o Google Authenticator. Depois, informe o código de 6 dígitos acima e permita a localização ao emitir.<br><img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data.otpauthUrl)}" alt="QR Code de configuração do Google Authenticator" style="margin-top:0.5rem; width:220px; height:220px; display:block;"><span style="display:block; margin-top:0.4rem;">Chave de recuperação: <strong>${data.secret}</strong></span>`;
             } catch (error) {
                 alert('Erro de conexão ao configurar o autenticador.');
             }
@@ -2264,7 +2264,7 @@
             pendingRequisitionCode = null;
             currentRequesterEmail = '';
             currentRequesterMatricula = '';
-            document.getElementById('reqTotpHelp').innerText = 'Use o código atual da unidade no aplicativo Google Authenticator.';
+            document.getElementById('reqTotpHelp').innerText = 'Escaneie o QR Code da unidade no Google Authenticator e informe o código atual.';
             document.getElementById('reqLocationHelp').innerText = 'A localização será solicitada ao clicar em Emitir Requisição.';
         }
 
