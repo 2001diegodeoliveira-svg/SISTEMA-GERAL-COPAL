@@ -1760,11 +1760,9 @@ app.get('/api/contracts', async (req, res) => {
   const { numContrato } = req.query;
   if (numContrato) {
     const normalizedNumContrato = String(numContrato || '').trim();
-    contractsDb.get(`SELECT contracts.*, creator.name AS created_by_name, updater.name AS updated_by_name
-             FROM contracts
-             LEFT JOIN users creator ON creator.id = contracts.created_by
-             LEFT JOIN users updater ON updater.id = contracts.updated_by
-             WHERE lower(trim(contracts.numContrato)) = lower(trim(?))`, [normalizedNumContrato], (err, row) => {
+    contractsDb.get(`SELECT contracts.*
+         FROM contracts
+         WHERE lower(trim(contracts.numContrato)) = lower(trim(?))`, [normalizedNumContrato], (err, row) => {
       if (err) return res.status(500).json({ message: 'Erro ao buscar contrato.' });
       if (!row) return res.status(404).json({ message: 'Contrato não encontrado.' });
       return res.json(mapContractRow(row));
@@ -1779,10 +1777,8 @@ app.get('/api/contracts', async (req, res) => {
             prazoEntrega, formaContagem, tipoEntrega, arquivoContrato,
             CASE WHEN conteudoArquivoBase64 IS NOT NULL AND conteudoArquivoBase64 != '' THEN '__HAS_PDF__' ELSE '' END AS conteudoArquivoBase64,
           lotes, unidades, aditivos, empenhos, status, contracts.created_by, contracts.updated_by, contracts.created_at, contracts.updated_at,
-          creator.name AS created_by_name, updater.name AS updated_by_name
+          NULL AS created_by_name, NULL AS updated_by_name
          FROM contracts
-         LEFT JOIN users creator ON creator.id = contracts.created_by
-         LEFT JOIN users updater ON updater.id = contracts.updated_by
          ORDER BY contracts.id DESC`,
     [],
     (err, rows) => {
@@ -1796,10 +1792,8 @@ app.get('/api/contracts', async (req, res) => {
 app.get('/api/contracts/:numContrato', async (req, res) => {
   const { numContrato } = req.params;
   const normalizedNumContrato = String(numContrato || '').trim();
-  contractsDb.get(`SELECT contracts.*, creator.name AS created_by_name, updater.name AS updated_by_name
+  contractsDb.get(`SELECT contracts.*
                    FROM contracts
-                   LEFT JOIN users creator ON creator.id = contracts.created_by
-                   LEFT JOIN users updater ON updater.id = contracts.updated_by
                    WHERE lower(trim(contracts.numContrato)) = lower(trim(?))`, [normalizedNumContrato], (err, row) => {
     if (err) return res.status(500).json({ message: 'Erro ao buscar contrato.' });
     if (!row) return res.status(404).json({ message: 'Contrato não encontrado.' });
