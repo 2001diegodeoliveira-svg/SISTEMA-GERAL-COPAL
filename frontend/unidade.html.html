@@ -478,6 +478,57 @@
             font-weight: 600;
         }
 
+        .contract-reminders {
+            display: none;
+            padding: 0.9rem 1rem;
+            border: 1px solid #fbbf24;
+            border-left: 4px solid #f59e0b;
+            border-radius: 6px;
+            background: #fffbeb;
+        }
+
+        .contract-reminders h4 {
+            color: #92400e;
+            font-size: 0.85rem;
+            margin-bottom: 0.55rem;
+        }
+
+        .contract-reminder-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .contract-reminder {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            color: #78350f;
+            font-size: 0.75rem;
+        }
+
+        .contract-reminder strong { font-weight: 800; }
+
+        .contract-reminder button {
+            flex-shrink: 0;
+            border: 0;
+            border-radius: 4px;
+            padding: 0.4rem 0.65rem;
+            background: #b45309;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .contract-reminder button:hover { background: #92400e; }
+
+        @media (max-width: 760px) {
+            .contract-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .contract-reminder { align-items: flex-start; flex-direction: column; }
+        }
+
         .contract-item-card {
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -1278,6 +1329,11 @@
                     </div>
                 </div>
 
+                <div class="contract-reminders" id="contractReminders" role="status" aria-live="polite">
+                    <h4><i data-lucide="bell-ring" style="width: 15px; vertical-align: -2px;"></i> Lembretes de vigência</h4>
+                    <div class="contract-reminder-list" id="contractReminderList"></div>
+                </div>
+
                 <div class="contract-list" id="contractListContainer">
                     <!-- Gerado via JS -->
                 </div>
@@ -1816,6 +1872,52 @@
             return `${start.toLocaleDateString('pt-BR')} até ${end.toLocaleDateString('pt-BR')} • ${status}${remaining}`;
         }
 
+        function getContractReminder(contract) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const start = parseContractDate(contract.dtInicial);
+            const end = parseContractDate(contract.dtFinal);
+            if (!end) return null;
+            end.setHours(0, 0, 0, 0);
+            const daysToEnd = Math.ceil((end - today) / 86400000);
+            if (daysToEnd < 0) return { priority: 0, message: `Contrato vencido há ${Math.abs(daysToEnd)} dia${Math.abs(daysToEnd) === 1 ? '' : 's'}.` };
+            if (daysToEnd <= 60) return { priority: daysToEnd <= 15 ? 1 : 2, message: `Vencimento em ${daysToEnd} dia${daysToEnd === 1 ? '' : 's'} (${end.toLocaleDateString('pt-BR')}).` };
+            if (start) {
+                start.setHours(0, 0, 0, 0);
+                const daysToStart = Math.ceil((start - today) / 86400000);
+                if (daysToStart >= 0 && daysToStart <= 15) return { priority: 3, message: `Vigência inicia em ${daysToStart} dia${daysToStart === 1 ? '' : 's'} (${start.toLocaleDateString('pt-BR')}).` };
+            }
+            return null;
+        }
+
+        function renderContractReminders(unitCode) {
+            const panel = document.getElementById('contractReminders');
+            const list = document.getElementById('contractReminderList');
+            const reminders = getContractsByUnit(unitCode)
+                .map(contract => ({ contract, reminder: getContractReminder(contract) }))
+                .filter(entry => entry.reminder)
+                .sort((a, b) => a.reminder.priority - b.reminder.priority);
+            list.innerHTML = '';
+            panel.style.display = reminders.length ? 'block' : 'none';
+            reminders.forEach(({ contract, reminder }) => {
+                const row = document.createElement('div');
+                row.className = 'contract-reminder';
+                row.innerHTML = `<span><strong>${contract.numContrato || 'Contrato sem número'}:</strong> ${reminder.message} Faça a requisição dentro do prazo.</span><button type="button">Abrir requisição</button>`;
+                row.querySelector('button').addEventListener('click', () => openContractRequisition(contract.numContrato));
+                list.appendChild(row);
+            });
+            lucide.createIcons();
+        }
+
+        function openContractRequisition(contractNumber) {
+            document.getElementById('btnOpenRequisition').click();
+            const select = document.getElementById('reqContractNum');
+            if ([...select.options].some(option => option.value === contractNumber)) {
+                select.value = contractNumber;
+                select.dispatchEvent(new Event('change'));
+            }
+        }
+
         function getContractUnitSummary(contract, unitCode) {
             const unitData = getUnitDataFromContract(contract, unitCode) || {};
             const items = Array.isArray(unitData.itensDetalhados) ? unitData.itensDetalhados : [];
@@ -1942,6 +2044,7 @@
         function renderContractsForUnit(unitCode) {
             const container = document.getElementById('contractListContainer');
             const searchTerm = (document.getElementById('contractSearch').value || '').trim().toLowerCase();
+            renderContractReminders(unitCode);
             const contracts = getContractsByUnit(unitCode).filter(contract => {
                 const text = [contract.numContrato, contract.credor, contract.objeto, contract.numProcesso].join(' ').toLowerCase();
                 return !searchTerm || text.includes(searchTerm);
