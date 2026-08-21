@@ -157,6 +157,15 @@ function sendEmail(mailOptions) {
   return emailTransporter.sendMail({ from: fromAddress, ...mailOptions });
 }
 
+function parseEmailRecipients(value) {
+  const recipients = String(value || '')
+    .split(/[;,\s]+/)
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return [...new Set(recipients)].filter((email) => validEmail.test(email));
+}
+
 function runQuery(database, sql, params = []) {
   return new Promise((resolve, reject) => {
     database.run(sql, params, function (err) {
@@ -965,8 +974,12 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     return res.status(400).json({ message: 'Código de validação inválido ou expirado.' });
   }
 
-  if (!reqCompanyEmail) {
+  const companyRecipients = parseEmailRecipients(reqCompanyEmail);
+  if (!companyRecipients.length) {
     return res.status(400).json({ message: 'E-mail da empresa contratada é obrigatório.' });
+  }
+  if (companyRecipients.join(';') !== String(reqCompanyEmail || '').split(/[;,\s]+/).map((email) => email.trim().toLowerCase()).filter(Boolean).join(';')) {
+    return res.status(400).json({ message: 'Informe somente e-mails válidos, separados por vírgula ou ponto e vírgula.' });
   }
 
   const pdfAttachmentName = req.file ? req.file.originalname : '';
@@ -1081,7 +1094,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     requisitionRecordId = requisitionInsert.lastID;
 
     await sendEmail({
-      to: reqCompanyEmail,
+      to: companyRecipients,
       subject: `Requisição ${reqNumberYear || ''} - ${reqCompany}`,
       text: requisitionBody,
       html: emailHtml,
