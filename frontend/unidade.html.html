@@ -1704,6 +1704,10 @@
             return aliases[cleaned] || cleaned;
         }
 
+        function getUnitCode(value) {
+            return typeof value === 'string' ? value : value?.unidade;
+        }
+
         function parseMoneyValue(value) {
             if (!value) return 0;
             return parseFloat(String(value).replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
@@ -1716,16 +1720,14 @@
         function contractMatchesUnit(contract, unitCode) {
             const target = normalizeUnitCode(unitCode);
             return (contract.unidades || []).some((entry) => {
-                const value = typeof entry === 'string' ? entry : entry?.unidade;
-                return normalizeUnitCode(value) === target;
+                return normalizeUnitCode(getUnitCode(entry)) === target;
             });
         }
 
         function getUnitDataFromContract(contract, unitCode) {
             const target = normalizeUnitCode(unitCode);
             return (contract.unidades || []).find((entry) => {
-                const value = typeof entry === 'string' ? entry : entry?.unidade;
-                return normalizeUnitCode(value) === target;
+                return normalizeUnitCode(getUnitCode(entry)) === target;
             }) || null;
         }
 
@@ -1736,6 +1738,7 @@
         async function loadContracts() {
             try {
                 const res = await fetch('/api/contracts');
+                if (!res.ok) throw new Error(`Backend respondeu HTTP ${res.status}.`);
                 const data = await res.json();
                 contractsCache = Array.isArray(data.contracts) ? data.contracts : [];
                 saveOfflineContracts(contractsCache);
@@ -1756,7 +1759,7 @@
             });
 
             (contract.empenhos || []).forEach(emp => {
-                const unidadeEmpenho = Array.isArray(emp.unidades) ? emp.unidades.some(u => normalizeUnitCode(u) === normalizeUnitCode(unitCode)) : false;
+                const unidadeEmpenho = Array.isArray(emp.unidades) ? emp.unidades.some(u => normalizeUnitCode(getUnitCode(u)) === normalizeUnitCode(unitCode)) : false;
                 if (!unidadeEmpenho) return;
                 updates.push({
                     data: emp.dataLancamento || '-',
@@ -1842,7 +1845,7 @@
             document.getElementById('detObjeto').innerText = contract.objeto || '-';
 
             const empenhado = (contract.empenhos || []).reduce((total, emp) => {
-                const unidadeEmpenho = Array.isArray(emp.unidades) ? emp.unidades.some(u => normalizeUnitCode(u) === normalizeUnitCode(unitCode)) : false;
+                const unidadeEmpenho = Array.isArray(emp.unidades) ? emp.unidades.some(u => normalizeUnitCode(getUnitCode(u)) === normalizeUnitCode(unitCode)) : false;
                 return unidadeEmpenho ? total + parseMoneyValue(emp.valorEmpenho) : total;
             }, 0);
 
@@ -1916,6 +1919,7 @@
         async function loadUnits() {
             try {
                 const res = await fetch('/api/units');
+                if (!res.ok) throw new Error(`Backend respondeu HTTP ${res.status}.`);
                 const data = await res.json();
                 unitsCache = data.units || [];
                 saveOfflineUnits(unitsCache);
