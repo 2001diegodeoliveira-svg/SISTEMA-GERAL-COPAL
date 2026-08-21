@@ -49,7 +49,7 @@ Quando o frontend está publicado no GitHub Pages, a API precisa estar em uma UR
 
 ## Configuração para Vercel
 
-Este repositório também pode publicar apenas o frontend no Vercel. A raiz do site aponta para [frontend/home.html.html](frontend/home.html.html) e as demais páginas continuam funcionando como arquivos estáticos.
+Este repositório também pode publicar apenas o frontend no Vercel. A raiz do site aponta para [frontend/introdução.html.html](frontend/introdução.html.html); a introdução leva à tela de integr&#234;ncia e a aba COPAL abre [frontend/home.html.html](frontend/home.html.html). As demais páginas continuam funcionando como arquivos estáticos.
 
 Passos:
 
