@@ -101,7 +101,7 @@ function createMailTransporter() {
 const emailTransporter = createMailTransporter();
 
 function sendEmail(mailOptions) {
-  const fromAddress = process.env.SMTP_FROM || 'no-reply@copal.mt.gov.br';
+  const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@copal.mt.gov.br';
   return emailTransporter.sendMail({ from: fromAddress, ...mailOptions });
 }
 
