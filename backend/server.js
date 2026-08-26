@@ -67,58 +67,6 @@ function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-function base32Encode(buffer) {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = 0;
-  let value = 0;
-  let output = '';
-  for (const byte of buffer) {
-    value = (value << 8) | byte;
-    bits += 8;
-    while (bits >= 5) {
-      output += alphabet[(value >>> (bits - 5)) & 31];
-      bits -= 5;
-    }
-  }
-  if (bits > 0) output += alphabet[(value << (5 - bits)) & 31];
-  return output;
-}
-
-function base32Decode(value) {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = 0;
-  let buffer = 0;
-  const output = [];
-  for (const char of String(value || '').toUpperCase().replace(/[^A-Z2-7]/g, '')) {
-    const index = alphabet.indexOf(char);
-    if (index < 0) continue;
-    buffer = (buffer << 5) | index;
-    bits += 5;
-    if (bits >= 8) {
-      output.push((buffer >>> (bits - 8)) & 255);
-      bits -= 8;
-    }
-  }
-  return Buffer.from(output);
-}
-
-function generateTotpCode(secret, timestamp = Date.now()) {
-  const counter = Math.floor(timestamp / 30000);
-  const counterBuffer = Buffer.alloc(8);
-  counterBuffer.writeBigInt64BE(BigInt(counter));
-  const digest = crypto.createHmac('sha1', base32Decode(secret)).update(counterBuffer).digest();
-  const offset = digest[digest.length - 1] & 15;
-  const binary = ((digest[offset] & 127) << 24) | (digest[offset + 1] << 16) | (digest[offset + 2] << 8) | digest[offset + 3];
-  return String(binary % 1000000).padStart(6, '0');
-}
-
-function verifyTotpCode(secret, code) {
-  const normalizedCode = String(code || '').replace(/\D/g, '');
-  if (!secret || normalizedCode.length !== 6) return false;
-  const now = Date.now();
-  return [-1, 0, 1].some((offset) => generateTotpCode(secret, now + offset * 30000) === normalizedCode);
-}
-
 function normalizeUnitCodeServer(value) {
   return String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 }
@@ -1051,7 +999,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     `Fiscal do Contrato: ${reqFiscalName || 'N/A'}\n` +
     `Telefone do Fiscal: ${reqFiscalPhone || 'N/A'}\n` +
     `Servidor Solicitante: ${reqRequesterName} (Matrícula: ${reqRequesterMatricula})\n` +
-    `Validação por Google Authenticator: realizada\n` +
+    `Validação por código enviado ao e-mail do servidor: realizada\n` +
     `Localização da assinatura: ${latitude.toFixed(7)}, ${longitude.toFixed(7)} (precisão aproximada: ${Number.isFinite(locationAccuracy) ? `${Math.round(locationAccuracy)} m` : 'não informada'})\n` +
     `Itens solicitados: ${JSON.stringify(parsedItems)}\n`;
 
@@ -1070,7 +1018,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     <p><strong>Fiscal do Contrato:</strong> ${reqFiscalName || 'N/A'}</p>
     <p><strong>Telefone do Fiscal:</strong> ${reqFiscalPhone || 'N/A'}</p>
     <p><strong>Servidor Solicitante:</strong> ${reqRequesterName} (Matrícula: ${reqRequesterMatricula})</p>
-    <p><strong>Validação por Google Authenticator:</strong> realizada</p>
+    <p><strong>Validação por código enviado ao e-mail do servidor:</strong> realizada</p>
     <p><strong>Localização da assinatura:</strong> ${latitude.toFixed(7)}, ${longitude.toFixed(7)}${Number.isFinite(locationAccuracy) ? ` (precisão aproximada: ${Math.round(locationAccuracy)} m)` : ''}</p>
   `;
 
@@ -1480,27 +1428,6 @@ app.get('/api/units', async (req, res) => {
   db.all('SELECT id, code, name, location, responsible, status, created_at, updated_at FROM units ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ message: 'Erro ao buscar unidades.' });
     res.json({ units: rows });
-  });
-});
-
-app.post('/api/units/:unitCode/totp', authenticateToken, authorizeAdmin, async (req, res) => {
-  const unitCode = String(req.params.unitCode || '').trim();
-  if (!unitCode) return res.status(400).json({ message: 'Código da unidade é obrigatório.' });
-  const unit = await getQuery(db, 'SELECT code, totp_secret FROM units WHERE lower(trim(code)) = lower(trim(?))', [unitCode]);
-  if (!unit) return res.status(404).json({ message: 'Unidade não encontrada.' });
-
-  const secret = unit.totp_secret || base32Encode(crypto.randomBytes(20));
-  if (unit.totp_secret) {
-    const label = encodeURIComponent(`COPAL SESP:${unit.code}`);
-    const issuer = encodeURIComponent('COPAL SESP');
-    return res.json({ secret, otpauthUrl: `otpauth://totp/${label}?secret=${secret}&issuer=${issuer}` });
-  }
-
-  db.run('UPDATE units SET totp_secret = ?, updated_at = NOW() WHERE lower(trim(code)) = lower(trim(?))', [secret, unitCode], function (err) {
-    if (err) return res.status(500).json({ message: 'Erro ao configurar o Google Authenticator.' });
-    const label = encodeURIComponent(`COPAL SESP:${unitCode}`);
-    const issuer = encodeURIComponent('COPAL SESP');
-    res.json({ secret, otpauthUrl: `otpauth://totp/${label}?secret=${secret}&issuer=${issuer}` });
   });
 });
 
