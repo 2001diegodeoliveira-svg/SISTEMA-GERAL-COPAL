@@ -52,6 +52,40 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        .menu-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 30px;
+            padding: 0;
+            color: var(--sesp-blue);
+            background: transparent;
+            border: 1px solid #bfdbfe;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .menu-toggle:hover,
+        .menu-toggle:focus-visible {
+            background-color: #eff6ff;
+            outline: 2px solid var(--sesp-accent);
+            outline-offset: 2px;
+        }
+
+        .menu-bar {
+            background-color: var(--white);
+            padding: 0.45rem 2rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+        }
+
+        .top-gov-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
         .top-gov-bar a {
             color: #d1d5db;
             text-decoration: none;
@@ -119,6 +153,10 @@
             display: flex;
             align-items: center;
             justify-content: flex-start;
+        }
+
+        nav.main-nav[hidden] {
+            display: none;
         }
 
         .nav-links {
@@ -376,8 +414,10 @@
 
     <!-- BARRA SUPERIOR INSTITUCIONAL (ATUALIZADA) -->
     <div class="top-gov-bar">
-        <a href="#">CONTATOS</a>
-        <a href="#">MAPA DE DISTRIBUIÇÃO</a>
+        <div class="top-gov-links">
+            <a href="#">CONTATOS</a>
+            <a href="#">MAPA DE DISTRIBUIÇÃO</a>
+        </div>
     </div>
 
     <!-- CABEÇALHO DO SISTEMA / SESP -->
@@ -396,7 +436,12 @@
     </header>
 
     <!-- NAVEGAÇÃO PRINCIPAL (ATUALIZADA) -->
-    <nav class="main-nav">
+    <div class="menu-bar">
+        <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="mainNavigation" onclick="event.stopPropagation(); toggleMainMenu()">
+            <i data-lucide="menu" style="width: 20px; height: 20px;"></i>
+        </button>
+    </div>
+    <nav class="main-nav" id="mainNavigation" hidden>
         <ul class="nav-links">
             <li><a href="#" class="active"><i data-lucide="layout-dashboard" style="width: 15px;"></i> Painel Geral</a></li>
             <li><a href="login contratos.html.html"><i data-lucide="file-text" style="width: 15px;"></i> Contratos</a></li>
@@ -658,6 +703,31 @@
 
     <script>
         lucide.createIcons();
+
+        function toggleMainMenu(forceOpen) {
+            const menu = document.getElementById('mainNavigation');
+            const toggle = document.querySelector('.menu-toggle');
+            if (!menu || !toggle) return;
+
+            const isOpen = forceOpen ?? menu.hidden;
+            menu.hidden = !isOpen;
+            toggle.setAttribute('aria-expanded', String(isOpen));
+            toggle.setAttribute('aria-label', isOpen ? 'Fechar menu' : 'Abrir menu');
+            toggle.innerHTML = `<i data-lucide="${isOpen ? 'x' : 'menu'}" style="width: 20px; height: 20px;"></i>`;
+            lucide.createIcons();
+        }
+
+        document.addEventListener('click', (event) => {
+            const menu = document.getElementById('mainNavigation');
+            const toggle = document.querySelector('.menu-toggle');
+            if (menu && !menu.hidden && !menu.contains(event.target) && !toggle.contains(event.target)) {
+                toggleMainMenu(false);
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') toggleMainMenu(false);
+        });
 
         function resolveFrontendPath(relativePath) {
             if ((window.location.hostname || '').toLowerCase().includes('vercel.app')) {
