@@ -3013,7 +3013,7 @@
             const option = document.querySelector(`#contractTabSelector option[value="${tabId}"]`);
             const shouldShow = tabId === 'tab-empenho' || isVisible;
 
-            if (content) content.style.display = shouldShow ? '' : 'none';
+if (content) content.style.display = shouldShow ? '' : 'none';
             if (btn) btn.style.display = shouldShow ? '' : 'none';
             if (option) option.hidden = !shouldShow;
         }
