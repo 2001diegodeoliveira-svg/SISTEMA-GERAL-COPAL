@@ -617,6 +617,8 @@
         .chat-message p { color: #334155; font-size: 0.8rem; margin-top: 0.2rem; }
         .chat-compose { display: flex; gap: 0.5rem; border-top: 1px solid #e2e8f0; padding: 0.7rem; }
         .chat-compose input { flex: 1; }
+        .chat-recipient { border-top: 1px solid #e2e8f0; padding: 0.65rem 0.7rem 0; }
+        .chat-recipient select { width: 100%; }
         .task-list { display: grid; gap: 0.6rem; }
         .task-item { display: flex; justify-content: space-between; gap: 0.75rem; align-items: center; border: 1px solid #e2e8f0; border-left: 4px solid #f59e0b; border-radius: 4px; padding: 0.7rem; }
         .task-item.done { border-left-color: #10b981; opacity: 0.75; }
@@ -1064,7 +1066,7 @@
                         <div>
                             <div class="work-card"><div class="work-card-header"><h3>Meu perfil</h3><span>Dados editáveis</span></div><form id="perfilForm"><div class="form-row"><div class="form-group"><label for="perfilNome">Nome completo</label><input type="text" id="perfilNome" required></div><div class="form-group"><label for="perfilCargo">Cargo</label><input type="text" id="perfilCargo" placeholder="Ex.: Analista administrativo"></div></div><div class="form-row"><div class="form-group"><label for="perfilTelefone">Telefone de contato</label><input type="tel" id="perfilTelefone" placeholder="(65) 00000-0000"></div><div class="form-group"><label for="perfilEmail">E-mail</label><input type="email" id="perfilEmail" readonly></div></div><div class="profile-form-actions"><button class="btn-submit" type="submit"><i data-lucide="save" style="width: 15px;"></i> Salvar perfil</button></div></form></div>
                             <div class="work-card"><div class="work-card-header"><h3>Feed de trabalho</h3><span>Atualizações da equipe</span></div><form class="feed-form" id="feedForm"><div class="form-group"><label for="feedText">Compartilhe o andamento do seu trabalho</label><textarea id="feedText" placeholder="Ex.: Concluí a análise do processo 123/2026." required></textarea></div><div class="profile-form-actions"><button class="btn-submit" type="submit"><i data-lucide="send" style="width: 15px;"></i> Publicar atualização</button></div></form><div id="feedList" style="margin-top: 1rem;"></div></div>
-                            <div class="work-card"><div class="work-card-header"><h3>Chat interno</h3><span>Histórico desta sessão</span></div><div class="chat-layout"><div class="chat-channels" id="chatChannels"></div><div class="chat-main"><div class="chat-messages" id="chatMessages"></div><form class="chat-compose" id="chatForm"><input id="chatText" placeholder="Escreva uma mensagem..." autocomplete="off" required><button class="btn-submit" type="submit" title="Enviar mensagem"><i data-lucide="send" style="width: 15px;"></i></button></form></div></div></div>
+                            <div class="work-card"><div class="work-card-header"><h3>Chat interno</h3><span>Histórico desta sessão</span></div><div class="chat-layout"><div class="chat-channels" id="chatChannels"></div><div class="chat-main"><div class="chat-messages" id="chatMessages"></div><div class="chat-recipient"><label for="chatRecipient">Enviar mensagem para</label><select id="chatRecipient"><option value="general">Canal geral</option></select></div><form class="chat-compose" id="chatForm"><input id="chatText" placeholder="Escreva uma mensagem..." autocomplete="off" required><button class="btn-submit" type="submit" title="Enviar mensagem"><i data-lucide="send" style="width: 15px;"></i></button></form></div></div></div>
                         </div>
                         <div>
                             <div class="work-card" id="taskManagementCard"><div class="work-card-header"><h3>Minhas tarefas</h3><span id="taskAccessLabel">Designação e acompanhamento</span></div><form id="taskForm"><div class="form-group"><label for="taskTitle">Nova tarefa</label><input id="taskTitle" placeholder="Título da tarefa" required></div><div class="form-row" style="margin-top: 0.8rem;"><div class="form-group"><label for="taskAssignee">Responsável</label><input id="taskAssignee" placeholder="Nome do colaborador" required></div><div class="form-group"><label for="taskStatus">Status</label><select id="taskStatus"><option value="Pendente">Pendente</option><option value="Em andamento">Em andamento</option></select></div></div><div class="profile-form-actions"><button class="btn-submit" type="submit"><i data-lucide="clipboard-plus" style="width: 15px;"></i> Designar tarefa</button></div></form><div class="task-list" id="taskList" style="margin-top: 1rem;"></div></div>
@@ -1698,6 +1700,7 @@
                 localStorage.setItem('userCargo', profileSessionUser.cargo || '');
                 localStorage.setItem('userPhone', profileSessionUser.phone || '');
                 applyProfilePermissions(profileSessionUser);
+                await loadChatUsers();
                 closeProfileModal();
                 switchTab('perfil');
                 registerWorkAudit('Entrou na aba Perfil');
@@ -1779,6 +1782,8 @@
 
         const workChannels = ['Geral', 'Avisos', 'Direto: Equipe'];
         let selectedWorkChannel = localStorage.getItem('workChannel') || workChannels[0];
+        let workUsers = [];
+        let selectedChatRecipient = localStorage.getItem('chatRecipient') || 'general';
 
         function getWorkUserName() {
             return localStorage.getItem('userName') || document.getElementById('perfilNome')?.value || 'Usuário não identificado';
@@ -1823,6 +1828,7 @@
             if (profileSessionUser) applyProfilePermissions(profileSessionUser);
             renderWorkFeed();
             renderChatChannels();
+            renderChatRecipients();
             renderChatMessages();
             renderWorkTasks();
             renderWorkAudit();
@@ -1839,9 +1845,47 @@
             document.querySelectorAll('.chat-channel').forEach(button => button.addEventListener('click', () => { selectedWorkChannel = button.dataset.channel; localStorage.setItem('workChannel', selectedWorkChannel); renderChatChannels(); renderChatMessages(); registerWorkAudit(`Acessou o canal ${selectedWorkChannel}`); }));
         }
 
+        async function loadChatUsers() {
+            if (!authToken) return;
+            try {
+                const response = await fetch('/api/work-users', { headers: getAuthHeaders(false) });
+                const data = await response.json();
+                if (response.ok) {
+                    const currentEmail = String(profileSessionUser?.email || localStorage.getItem('userEmail') || '').toLowerCase();
+                    workUsers = (data.users || []).filter(user => String(user.email || '').toLowerCase() !== currentEmail);
+                    renderChatRecipients();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar destinatários do chat:', error);
+            }
+        }
+
+        function renderChatRecipients() {
+            const select = document.getElementById('chatRecipient');
+            if (!select) return;
+            const options = ['<option value="general">Canal geral</option>']
+                .concat(workUsers.map(user => `<option value="user:${escapeWorkHtml(user.id)}">${escapeWorkHtml(user.name || user.email || user.matricula || 'Usuário')}</option>`));
+            select.innerHTML = options.join('');
+            if (!options.some(option => option.includes(`value="${selectedChatRecipient}"`))) selectedChatRecipient = 'general';
+            select.value = selectedChatRecipient;
+            select.onchange = () => {
+                selectedChatRecipient = select.value;
+                localStorage.setItem('chatRecipient', selectedChatRecipient);
+                renderChatMessages();
+                registerWorkAudit(`Selecionou destinatário ${getChatRecipientLabel()}`);
+            };
+        }
+
+        function getChatRecipientLabel() {
+            if (selectedChatRecipient === 'general') return 'canal geral';
+            const userId = selectedChatRecipient.replace('user:', '');
+            const user = workUsers.find(item => String(item.id) === userId);
+            return user?.name || user?.email || 'usuário selecionado';
+        }
+
         function renderChatMessages() {
             const target = document.getElementById('chatMessages');
-            const messages = workStorage('workChatMessages', []).filter(message => message.channel === selectedWorkChannel);
+            const messages = workStorage('workChatMessages', []).filter(message => message.channel === selectedWorkChannel && (message.recipientId || 'general') === selectedChatRecipient);
             target.innerHTML = messages.length ? messages.map(message => `<div class="chat-message"><strong>${escapeWorkHtml(message.user)}</strong><time>${new Date(message.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</time><p>${escapeWorkHtml(message.text)}</p></div>`).join('') : '<p style="font-size: 0.8rem; color: #64748b;">Nenhuma mensagem neste canal.</p>';
             target.scrollTop = target.scrollHeight;
         }
@@ -1859,7 +1903,7 @@
             document.getElementById('perfilForm').addEventListener('submit', event => { event.preventDefault(); localStorage.setItem('userName', document.getElementById('perfilNome').value.trim()); localStorage.setItem('userCargo', document.getElementById('perfilCargo').value.trim()); localStorage.setItem('userPhone', document.getElementById('perfilTelefone').value.trim()); fillPerfilTab(); registerWorkAudit('Alterou dados do perfil'); alert('Perfil atualizado com sucesso.'); });
             document.getElementById('perfilFotoInput').addEventListener('change', event => { const file = event.target.files[0]; if (!file || !file.type.startsWith('image/')) return; const reader = new FileReader(); reader.onload = () => { localStorage.setItem('userProfilePhoto', reader.result); fillPerfilTab(); registerWorkAudit('Alterou a foto de perfil'); }; reader.readAsDataURL(file); });
             document.getElementById('feedForm').addEventListener('submit', event => { event.preventDefault(); const text = document.getElementById('feedText').value.trim(); if (!text) return; const posts = workStorage('workFeedPosts', []); posts.unshift({ user: getWorkUserName(), text, timestamp: new Date().toISOString() }); saveWorkStorage('workFeedPosts', posts.slice(0, 50)); document.getElementById('feedText').value = ''; renderWorkFeed(); registerWorkAudit('Publicou uma atualização no feed'); });
-            document.getElementById('chatForm').addEventListener('submit', event => { event.preventDefault(); const input = document.getElementById('chatText'); const text = input.value.trim(); if (!text) return; const messages = workStorage('workChatMessages', []); messages.push({ user: getWorkUserName(), text, channel: selectedWorkChannel, timestamp: new Date().toISOString() }); saveWorkStorage('workChatMessages', messages.slice(-200)); input.value = ''; renderChatMessages(); registerWorkAudit(`Enviou mensagem no canal ${selectedWorkChannel}`); });
+            document.getElementById('chatForm').addEventListener('submit', event => { event.preventDefault(); const input = document.getElementById('chatText'); const text = input.value.trim(); if (!text) return; const messages = workStorage('workChatMessages', []); messages.push({ user: getWorkUserName(), text, channel: selectedWorkChannel, recipientId: selectedChatRecipient, recipientName: getChatRecipientLabel(), timestamp: new Date().toISOString() }); saveWorkStorage('workChatMessages', messages.slice(-200)); input.value = ''; renderChatMessages(); registerWorkAudit(`Enviou mensagem para ${getChatRecipientLabel()}`); });
             document.getElementById('taskForm').addEventListener('submit', event => { event.preventDefault(); const tasks = workStorage('workTasks', []); tasks.unshift({ id: `${Date.now()}`, title: document.getElementById('taskTitle').value.trim(), assignee: document.getElementById('taskAssignee').value.trim(), status: document.getElementById('taskStatus').value, timestamp: new Date().toISOString() }); saveWorkStorage('workTasks', tasks.slice(0, 100)); event.target.reset(); renderWorkTasks(); registerWorkAudit('Designou uma nova tarefa'); });
         }
 

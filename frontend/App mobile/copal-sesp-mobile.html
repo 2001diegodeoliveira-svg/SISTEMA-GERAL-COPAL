@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>COPAL SESP Mobile — Protótipo (Consulta)</title>
+<title>COPAL SESP Mobile — Consulta</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -154,7 +154,8 @@
 
   .search-bar{ display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.92); border:1px solid rgba(99,95,255,0.18); border-radius:14px; padding:12px 14px; margin-bottom:18px; box-shadow: inset 0 1px 2px rgba(22,31,70,0.04); }
   .search-bar svg{ width:15px; height:15px; stroke:var(--text-2); flex-shrink:0; }
-  .search-bar span{ font-size:12.5px; color:var(--text-2); }
+  .search-bar input{ flex:1; min-width:0; border:0; outline:0; background:transparent; color:var(--text-1); font:inherit; font-size:12.5px; }
+  .search-bar input::placeholder{ color:var(--text-2); }
 
   .filter-row{ display:flex; gap:10px; margin-bottom:16px; overflow-x:auto; }
   .filter-chip{ font-size:11px; font-weight:700; padding:7px 14px; border-radius:999px; background:rgba(255,255,255,0.92); border:1px solid rgba(99,95,255,0.15); color:var(--text-2); white-space:nowrap; }
@@ -228,7 +229,7 @@
   .search-bar span{ font-size:12.5px; color:var(--text-2); }
 
   .filter-row{ display:flex; gap:8px; margin-bottom:14px; overflow-x:auto; }
-  .filter-chip{ font-size:11px; font-weight:700; padding:6px 12px; border-radius:20px; background:var(--card); border:1px solid var(--border); color:var(--text-2); white-space:nowrap; }
+  .filter-chip{ font-family:inherit; font-size:11px; font-weight:700; padding:6px 12px; border-radius:20px; background:var(--card); border:1px solid var(--border); color:var(--text-2); white-space:nowrap; cursor:pointer; }
   .filter-chip.active{ background:var(--navy-2); color:#fff; border-color:var(--navy-2); }
 
   /* ---------- DETAIL VIEW ---------- */
@@ -268,11 +269,11 @@
 <body>
 
 <div class="stage">
-  <div class="stage-label">Protótipo · App COPAL SESP Mobile</div>
-  <div class="stage-sub">Somente consulta — dashboard, contratos e unidades. Toque nos elementos para navegar.</div>
+  <div class="stage-label">App COPAL SESP Mobile</div>
+  <div class="stage-sub">Somente visualização — contratos e unidades do sistema.</div>
   <div class="stage-actions">
     <div class="download-card">
-      <img id="downloadQr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://localhost:3000/App%20mobile/download.html" alt="QR code para baixar o app" />
+      <img id="downloadQr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Fsistema-geral-copal.vercel.app%2Ffrontend%2FApp%2520mobile%2Fdownload.html" alt="QR code para baixar o app" />
       <div class="download-card-content">
         <div class="download-card-title">Baixe o app COPAL SESP</div>
         <div class="download-card-text">Escaneie o QR code para abrir a página de download do app mobile.</div>
@@ -295,10 +296,10 @@
         <div class="scroll">
           <div class="section-title">Visão geral</div>
           <div class="kpi-grid">
-            <div class="kpi-card"><div class="kpi-label">CONTRATOS ATIVOS</div><div class="kpi-value">114</div><div class="kpi-delta">+6 este mês</div></div>
-            <div class="kpi-card"><div class="kpi-label">PROCESSOS EM ANDAMENTO</div><div class="kpi-value">25</div><div class="kpi-delta">3 em análise</div></div>
-            <div class="kpi-card"><div class="kpi-label">UNIDADES VINCULADAS</div><div class="kpi-value">08</div><div class="kpi-delta">Todas ativas</div></div>
-            <div class="kpi-card"><div class="kpi-label">VALOR TOTAL CONTRATADO</div><div class="kpi-value">R$ 42,8M</div><div class="kpi-delta">Exercício 2026</div></div>
+            <div class="kpi-card"><div class="kpi-label">CONTRATOS ATIVOS</div><div class="kpi-value" id="mobileActiveContracts">0</div><div class="kpi-delta">Dados atualizados</div></div>
+            <div class="kpi-card"><div class="kpi-label">PROCESSOS EM ANDAMENTO</div><div class="kpi-value" id="mobileActiveProcesses">0</div><div class="kpi-delta">Consulta mobile</div></div>
+            <div class="kpi-card"><div class="kpi-label">UNIDADES VINCULADAS</div><div class="kpi-value" id="mobileUnitCount">0</div><div class="kpi-delta">Todas consultáveis</div></div>
+            <div class="kpi-card"><div class="kpi-label">VALOR TOTAL CONTRATADO</div><div class="kpi-value" id="mobileContractValue">R$ 0</div><div class="kpi-delta">Base contratual</div></div>
           </div>
 
           <div class="section-title">Contratos por unidade</div>
@@ -324,14 +325,15 @@
         <div class="scroll">
           <div class="search-bar">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-            <span>Buscar por número, unidade ou credor...</span>
+            <input id="contractSearch" type="search" placeholder="Buscar por número, unidade ou credor..." aria-label="Buscar contratos">
           </div>
           <div class="filter-row">
-            <div class="filter-chip active">Todos</div>
-            <div class="filter-chip">Ativos</div>
-            <div class="filter-chip">Em análise</div>
-            <div class="filter-chip">Encerrados</div>
+            <button type="button" class="filter-chip active" data-status="todos">Todos</button>
+            <button type="button" class="filter-chip" data-status="ativo">Ativos</button>
+            <button type="button" class="filter-chip" data-status="analise">Em análise</button>
+            <button type="button" class="filter-chip" data-status="encerrado">Encerrados</button>
           </div>
+          <div id="mobileDataStatus" class="info-note" style="margin-bottom:12px;">Carregando dados atualizados...</div>
           <div id="contratos-list"></div>
         </div>
       </div>
@@ -384,20 +386,20 @@
           <div class="detail-block">
             <div class="db-title">Identificação</div>
             <div class="field-row"><span class="f-label">Processo aquisitivo</span><span class="f-val" id="det-processo">SESP-PRO-2026/00045</span></div>
-            <div class="field-row"><span class="f-label">Unidade</span><span class="f-val" id="det-unidade">PM-MT</span></div>
-            <div class="field-row"><span class="f-label">Status</span><span class="f-val" id="det-status">Ativo</span></div>
+            <div class="field-row"><span class="f-label">Unidade</span><span class="f-val" id="det-unidade">-</span></div>
+            <div class="field-row"><span class="f-label">Status</span><span class="f-val" id="det-status">-</span></div>
           </div>
           <div class="detail-block">
             <div class="db-title">Contratada</div>
-            <div class="field-row"><span class="f-label">Credor</span><span class="f-val" id="det-credor">Tech Suprimentos Ltda</span></div>
-            <div class="field-row"><span class="f-label">CNPJ</span><span class="f-val" id="det-cnpj">12.345.678/0001-90</span></div>
-            <div class="field-row"><span class="f-label">Cidade / UF</span><span class="f-val">Cuiabá / MT</span></div>
+            <div class="field-row"><span class="f-label">Credor</span><span class="f-val" id="det-credor">-</span></div>
+            <div class="field-row"><span class="f-label">CNPJ</span><span class="f-val" id="det-cnpj">-</span></div>
+            <div class="field-row"><span class="f-label">Cidade / UF</span><span class="f-val" id="det-cidade">-</span></div>
           </div>
           <div class="detail-block">
             <div class="db-title">Execução</div>
-            <div class="field-row"><span class="f-label">Assinatura</span><span class="f-val" id="det-data">14/02/2026</span></div>
-            <div class="field-row"><span class="f-label">Vigência</span><span class="f-val">12 meses</span></div>
-            <div class="field-row"><span class="f-label">Valor total</span><span class="f-val" id="det-valor">R$ 1.250.000,00</span></div>
+            <div class="field-row"><span class="f-label">Início da vigência</span><span class="f-val" id="det-data">-</span></div>
+            <div class="field-row"><span class="f-label">Fim da vigência</span><span class="f-val" id="det-vigencia">-</span></div>
+            <div class="field-row"><span class="f-label">Valor total</span><span class="f-val" id="det-valor">R$ 0,00</span></div>
           </div>
         </div>
       </div>
@@ -427,7 +429,7 @@
 </div>
 
 <script>
-const contratos = [
+let contratos = [
   { num:'045/2026/SESP', processo:'SESP-PRO-2026/00045', unidade:'PM-MT', credor:'Tech Suprimentos Ltda', cnpj:'12.345.678/0001-90', data:'14/02/2026', valor:'R$ 1.250.000,00', status:'ativo' },
   { num:'032/2026/SESP', processo:'SESP-PRO-2026/00032', unidade:'CBM-MT', credor:'Equipa Proteção EPI Ltda', cnpj:'22.456.789/0001-11', data:'02/03/2026', valor:'R$ 480.000,00', status:'ativo' },
   { num:'067/2026/SESP', processo:'SESP-PRO-2026/00067', unidade:'GEFRON', credor:'Fronteira Veículos S.A.', cnpj:'33.567.890/0001-22', data:'19/04/2026', valor:'R$ 690.000,00', status:'ativo' },
@@ -436,7 +438,7 @@ const contratos = [
   { num:'091/2026/SESP', processo:'SESP-PRO-2026/00091', unidade:'CIOPAER', credor:'Aero Manutenção Ltda', cnpj:'66.890.123/0001-55', data:'05/05/2026', valor:'R$ 2.100.000,00', status:'ativo' },
 ];
 
-const unidades = [
+let unidades = [
   { sigla:'CBM-MT', nome:'CORPO DE BOMBEIROS MILITAR', resp:'Ten. Cel. Silva', contratos:24, processos:6, color:'#f2711c' },
   { sigla:'PM-MT', nome:'POLÍCIA MILITAR', resp:'Maj. Oliveira', contratos:52, processos:12, color:'#16294f' },
   { sigla:'PJC-MT', nome:'POLÍCIA JUDICIÁRIA CIVIL', resp:'Dr. Santos', contratos:38, processos:7, color:'#374151' },
@@ -498,15 +500,102 @@ function renderUnidades(){
   `).join('');
 }
 
-renderContratos(contratos, 'contratos-list');
-renderContratos(contratos.slice(0,3), 'dash-recent');
+let mobileStatusFilter = 'todos';
+
+function mobileApiBase(){
+  if (/localhost|127\.0\.0\.1/i.test(window.location.hostname)) return 'http://localhost:3000';
+  return 'https://sistema-geral-copal-4.onrender.com';
+}
+
+function mobileNormalizeContract(contract){
+  const status = String(contract.status || 'ativo').toLowerCase();
+  const normalizedStatus = status.includes('encerr') ? 'encerrado' : (status.includes('an') ? 'analise' : 'ativo');
+  const unitNames = Array.isArray(contract.unidades) ? contract.unidades.map(unit => unit.unidade || unit).filter(Boolean) : [];
+  return {
+    ...contract,
+    num: contract.numContrato || contract.num || '-',
+    processo: contract.numProcesso || contract.processo || '-',
+    unidade: unitNames.join(', ') || contract.unidade || 'Não informada',
+    credor: contract.credor || contract.razaoSocial || contract.nomeFantasia || '-',
+    cnpj: contract.cnpj || '-',
+    data: contract.dtInicial ? new Date(contract.dtInicial).toLocaleDateString('pt-BR') : (contract.data || '-'),
+    valor: contract.valorGlobal || contract.valor || 'R$ 0,00',
+    status: normalizedStatus
+  };
+}
+
+function filterMobileContracts(){
+  const query = String(document.getElementById('contractSearch')?.value || '').trim().toLowerCase();
+  return contratos.filter(contract => {
+    const searchable = [contract.num, contract.unidade, contract.credor, contract.processo].join(' ').toLowerCase();
+    return (mobileStatusFilter === 'todos' || contract.status === mobileStatusFilter) && (!query || searchable.includes(query));
+  });
+}
+
+function renderMobileContractViews(){
+  const filtered = filterMobileContracts();
+  renderContratos(filtered, 'contratos-list');
+  renderContratos(filtered.slice(0, 3), 'dash-recent');
+  const status = document.getElementById('mobileDataStatus');
+  if (status) status.textContent = `${filtered.length} contrato(s) encontrado(s).`;
+  document.querySelector('.view#view-contratos .ro-badge').textContent = `${filtered.length} registros`;
+  const activeContracts = contratos.filter(contract => contract.status === 'ativo').length;
+  const activeProcesses = contratos.filter(contract => contract.status === 'analise').length;
+  const totalValue = contratos.reduce((total, contract) => total + Number(String(contract.valor || '').replace(/[^0-9,]/g, '').replace(/\./g, '').replace(',', '.')) || 0, 0);
+  document.getElementById('mobileActiveContracts').textContent = activeContracts;
+  document.getElementById('mobileActiveProcesses').textContent = activeProcesses;
+  document.getElementById('mobileUnitCount').textContent = unidades.length;
+  document.getElementById('mobileContractValue').textContent = totalValue ? `R$ ${(totalValue / 1000000).toFixed(1).replace('.', ',')}M` : 'R$ 0';
+}
+
+async function loadMobileData(){
+  const status = document.getElementById('mobileDataStatus');
+  try {
+    const base = mobileApiBase();
+    const [contractsResponse, unitsResponse] = await Promise.all([
+      fetch(`${base}/api/contracts`),
+      fetch(`${base}/api/units`)
+    ]);
+    if (!contractsResponse.ok || !unitsResponse.ok) throw new Error('Consulta indisponível');
+    const contractsData = await contractsResponse.json();
+    const unitsData = await unitsResponse.json();
+    if (Array.isArray(contractsData.contracts)) contratos = contractsData.contracts.map(mobileNormalizeContract);
+    if (Array.isArray(unitsData.units) && unitsData.units.length) {
+      unidades = unitsData.units.map(unit => ({
+        sigla: unit.code || unit.sigla || '-',
+        nome: unit.name || unit.nome || 'Unidade administrativa',
+        resp: unit.responsible || 'Não informado',
+        contratos: contratos.filter(contract => contract.unidade.includes(unit.code || unit.sigla || '')).length,
+        processos: 0,
+        color: '#1e3a5f'
+      }));
+    }
+    renderMobileContractViews();
+    renderUnidades();
+    if (status) status.textContent = `${contratos.length} contrato(s) carregado(s) do sistema.`;
+  } catch (error) {
+    renderMobileContractViews();
+    renderUnidades();
+    if (status) status.textContent = 'Modo offline: exibindo dados salvos no aplicativo.';
+  }
+}
+
+document.getElementById('contractSearch')?.addEventListener('input', renderMobileContractViews);
+document.querySelectorAll('.filter-chip').forEach(chip => chip.addEventListener('click', () => {
+  mobileStatusFilter = chip.dataset.status;
+  document.querySelectorAll('.filter-chip').forEach(item => item.classList.toggle('active', item === chip));
+  renderMobileContractViews();
+}));
+
+renderMobileContractViews();
 renderUnidades();
+loadMobileData();
 
 (function updateDownloadQr() {
   const qr = document.getElementById('downloadQr');
   if (!qr) return;
 
-  const origin = window.location.origin || '';
+  const origin = window.location.origin && window.location.protocol !== 'file:' ? window.location.origin : 'https://sistema-geral-copal.vercel.app';
   const downloadUrl = `${origin}/frontend/App%20mobile/download.html`;
   qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(downloadUrl)}`;
 })();
@@ -520,13 +609,16 @@ function showTab(name){
 
 function openDetail(index){
   const c = contratos[index];
+  if (!c) return;
   document.getElementById('det-numero').textContent = 'Contrato ' + c.num;
   document.getElementById('det-processo').textContent = c.processo;
   document.getElementById('det-unidade').textContent = c.unidade;
   document.getElementById('det-status').textContent = statusMeta[c.status].label;
   document.getElementById('det-credor').textContent = c.credor;
   document.getElementById('det-cnpj').textContent = c.cnpj;
+  document.getElementById('det-cidade').textContent = [c.cidade, c.uf].filter(Boolean).join(' / ') || '-';
   document.getElementById('det-data').textContent = c.data;
+  document.getElementById('det-vigencia').textContent = c.dtFinal ? new Date(c.dtFinal).toLocaleDateString('pt-BR') : '-';
   document.getElementById('det-valor').textContent = c.valor;
   document.getElementById('view-detalhe').classList.add('active');
 }

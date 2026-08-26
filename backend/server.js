@@ -1211,6 +1211,23 @@ app.get('/auth/users', async (req, res) => {
   );
 });
 
+app.get('/api/work-users', authenticateToken, async (req, res) => {
+  db.all(
+    `SELECT id, name, email, matricula, role, cargo, unidade
+     FROM users
+     WHERE lower(coalesce(account_status, 'ativo')) = 'ativo'
+       AND lower(coalesce(status, 'aprovado')) = 'aprovado'
+     ORDER BY name COLLATE NOCASE ASC`,
+    [],
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({ message: 'Erro ao buscar usuários do chat.' });
+      }
+      return res.json({ users: rows || [] });
+    }
+  );
+});
+
 app.put('/auth/users/:id/revoke-access', authenticateToken, authorizeAdmin, async (req, res) => {
   const { id } = req.params;
 

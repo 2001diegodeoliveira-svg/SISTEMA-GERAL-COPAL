@@ -13,14 +13,20 @@
   .button{ display:inline-flex; align-items:center; justify-content:center; gap:8px; text-decoration:none; background:#1d4ed8; color:#fff; padding:14px 20px; border-radius:999px; font-weight:700; box-shadow:0 12px 24px rgba(30,64,175,0.18); }
   .button:hover{ background:#1e40af; }
   .note{ margin-top:18px; color:#0f766e; font-size:13px; }
+  .qr{ width:170px; height:170px; margin:4px auto 22px; display:block; border-radius:14px; border:1px solid #dbeafe; }
 </style>
 </head>
 <body>
   <div class="container">
     <h1>Baixar App COPAL SESP</h1>
     <p>Abra este link no celular para acessar a versão mobile de consulta de contratos cadastrados no sistema COPAL SESP.</p>
+    <img class="qr" id="downloadQr" alt="QR Code do aplicativo COPAL SESP">
     <a href="copal-sesp-mobile.html" class="button">Abrir App Mobile</a>
-    <p class="note">Se quiser, substitua este link por um APK ou pacote de instalação quando o app estiver disponível.</p>
+    <p class="note">Aplicativo web somente para visualização. Não permite editar ou excluir dados.</p>
   </div>
+  <script>
+    const appUrl = window.location.protocol === 'file:' ? 'https://sistema-geral-copal.vercel.app/frontend/App%20mobile/copal-sesp-mobile.html' : `${window.location.origin}/frontend/App%20mobile/copal-sesp-mobile.html`;
+    document.getElementById('downloadQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(appUrl)}`;
+  </script>
 </body>
 </html>
