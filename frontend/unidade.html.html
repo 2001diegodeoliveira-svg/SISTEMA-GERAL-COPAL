@@ -1346,12 +1346,17 @@
                         <h3 id="detContractNumber" style="color: var(--sesp-dark-blue); font-weight: 800; font-size: 1.1rem;">Nº DO CONTRATO</h3>
                         <p style="font-size: 0.8rem; color: #64748b;">Detalhamento Completo do Contrato e Saldos da Unidade</p>
                     </div>
-                    <button class="btn-back" id="btnBackToContractList" style="font-size: 0.75rem; padding: 0.4rem 0.8rem;">
-                        <i data-lucide="x" style="width: 14px;"></i> Fechar Detalhes
-                    </button>
+                    <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+                        <button class="btn-req-tab active" id="btnDetailContractTab" type="button">Detalhes</button>
+                        <button class="btn-req-tab" id="btnContractHistoryTab" type="button">Histórico de Requisições</button>
+                        <button class="btn-back" id="btnBackToContractList" style="font-size: 0.75rem; padding: 0.4rem 0.8rem;">
+                            <i data-lucide="x" style="width: 14px;"></i> Fechar Detalhes
+                        </button>
+                    </div>
                 </div>
 
-                <div class="section-grid-2">
+                <div id="contractDetailMainSection">
+                    <div class="section-grid-2">
                     <div class="info-box-card">
                         <h4><i data-lucide="folder" style="width: 16px;"></i> Processo & Licitação</h4>
                         <div class="data-row">
@@ -1408,20 +1413,43 @@
                     </table>
                 </div>
 
-                <div class="info-box-card">
-                    <h4><i data-lucide="history" style="width: 16px;"></i> Histórico de Atualizações da Unidade</h4>
-                    <table class="balance-table">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Tipo</th>
-                                <th>Detalhes</th>
-                            </tr>
-                        </thead>
-                        <tbody id="detUpdatesBody">
-                            <tr><td colspan="3" style="text-align:center; color:#64748b;">Nenhuma atualização registrada.</td></tr>
-                        </tbody>
-                    </table>
+                    <div class="info-box-card">
+                        <h4><i data-lucide="history" style="width: 16px;"></i> Histórico de Atualizações da Unidade</h4>
+                        <table class="balance-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Tipo</th>
+                                    <th>Detalhes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detUpdatesBody">
+                                <tr><td colspan="3" style="text-align:center; color:#64748b;">Nenhuma atualização registrada.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="contractHistorySection" style="display:none; margin-top: 1rem;">
+                    <div class="info-box-card">
+                        <h4><i data-lucide="clipboard-list" style="width: 16px;"></i> Histórico de Requisições do Contrato</h4>
+                        <div style="overflow-x:auto;">
+                            <table class="balance-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nº Requisição</th>
+                                        <th>Data</th>
+                                        <th>Unidade</th>
+                                        <th>Solicitante</th>
+                                        <th>Matrícula</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="contractHistoryBody">
+                                    <tr><td colspan="6" style="text-align:center; color:#64748b;">Nenhuma requisição registrada para este contrato.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2148,6 +2176,7 @@
 
             document.getElementById('contractsListSection').style.display = 'none';
             document.getElementById('contractFullDetailView').style.display = 'block';
+            setContractDetailTab('details');
 
             document.getElementById('detContractNumber').innerText = contract.numContrato || '-';
             document.getElementById('detProcNum').innerText = contract.numProcesso || '-';
@@ -2214,6 +2243,65 @@
                         </tr>
                     `);
                 });
+            }
+
+            renderContractHistory(contract.numContrato, unitCode);
+        }
+
+        function setContractDetailTab(tabName) {
+            const mainSection = document.getElementById('contractDetailMainSection');
+            const historySection = document.getElementById('contractHistorySection');
+            const detailsBtn = document.getElementById('btnDetailContractTab');
+            const historyBtn = document.getElementById('btnContractHistoryTab');
+
+            const isHistory = tabName === 'history';
+            if (mainSection) mainSection.style.display = isHistory ? 'none' : 'block';
+            if (historySection) historySection.style.display = isHistory ? 'block' : 'none';
+            if (detailsBtn) detailsBtn.classList.toggle('active', !isHistory);
+            if (historyBtn) historyBtn.classList.toggle('active', isHistory);
+        }
+
+        async function renderContractHistory(contractNumber, unitCode) {
+            const tbody = document.getElementById('contractHistoryBody');
+            if (!tbody) return;
+
+            if (!contractNumber) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Nenhuma requisição registrada para este contrato.</td></tr>';
+                return;
+            }
+
+            try {
+                const query = new URLSearchParams({
+                    contract: contractNumber,
+                    unit: unitCode || ''
+                }).toString();
+                const response = await fetch(`/api/requisition-history?${query}`);
+                const data = await response.json();
+                const entries = Array.isArray(data?.requisitions) ? data.requisitions : [];
+
+                if (!entries.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Nenhuma requisição registrada para este contrato.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = entries.map((entry) => {
+                    const issueDate = entry.issueDate ? new Date(entry.issueDate).toLocaleDateString('pt-BR') : '-';
+                    const status = String(entry.status || 'pendente').toLowerCase();
+                    const statusLabel = status === 'sent' || status === 'enviado' || status === 'approved' ? 'Enviada' : status === 'pending' ? 'Pendente' : status === 'error' ? 'Erro' : 'Pendente';
+                    return `
+                        <tr>
+                            <td>${entry.number || '-'}</td>
+                            <td>${issueDate}</td>
+                            <td>${entry.unit || '-'}</td>
+                            <td>${entry.requester || '-'}</td>
+                            <td>${entry.matricula || '-'}</td>
+                            <td>${statusLabel}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Erro ao carregar histórico de requisições:', error);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">Não foi possível carregar o histórico desta requisição.</td></tr>';
             }
         }
 

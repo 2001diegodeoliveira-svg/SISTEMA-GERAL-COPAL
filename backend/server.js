@@ -433,6 +433,52 @@ app.get('/api/requisition-consumption', async (req, res) => {
   }
 });
 
+app.get('/api/requisition-history', async (req, res) => {
+  try {
+    const contractNumber = String(req.query.contract || '').trim();
+    const requestedUnit = String(req.query.unit || '').trim();
+
+    if (!contractNumber) {
+      return res.status(400).json({ message: 'Contrato obrigatório para consultar o histórico.' });
+    }
+
+    let sql = `
+      SELECT id, req_number_year, req_issue_date, req_unit_demand, requester_name, requester_matricula,
+             requester_email, req_contract_num, req_items, email_status, created_at
+      FROM requisitions
+      WHERE lower(trim(req_contract_num)) = lower(trim(?))
+    `;
+    const params = [contractNumber];
+
+    if (requestedUnit) {
+      sql += ' AND lower(trim(req_unit_demand)) = lower(trim(?))';
+      params.push(requestedUnit);
+    }
+
+    sql += ' ORDER BY created_at DESC';
+
+    const rows = await db.all(sql, params);
+
+    res.json({
+      requisitions: (rows || []).map((row) => ({
+        id: row.id,
+        number: row.req_number_year || '-',
+        issueDate: row.req_issue_date || '',
+        unit: row.req_unit_demand || '-',
+        requester: row.requester_name || '-',
+        matricula: row.requester_matricula || '-',
+        email: row.requester_email || '-',
+        status: row.email_status || 'pendente',
+        items: safeJsonParse(row.req_items, []),
+        createdAt: row.created_at || null,
+      })),
+    });
+  } catch (error) {
+    console.error('Falha ao carregar histórico de requisições:', error);
+    res.status(500).json({ message: 'Não foi possível carregar o histórico de requisições.' });
+  }
+});
+
 const upload = multer({
   dest: UPLOAD_DIR,
   limits: { fileSize: 5 * 1024 * 1024 },
