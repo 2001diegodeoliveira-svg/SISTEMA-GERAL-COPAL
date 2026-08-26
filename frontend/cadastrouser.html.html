@@ -742,7 +742,7 @@
                 </button>
             </li>
             <li>
-                <button id="tabBtnPerfil" onclick="switchTab('perfil')">
+                <button id="tabBtnPerfil" onclick="requestProfileAccess()">
                     <i data-lucide="user-circle" style="width: 15px;"></i> Perfil
                 </button>
             </li>
@@ -1067,7 +1067,7 @@
                             <div class="work-card"><div class="work-card-header"><h3>Chat interno</h3><span>Histórico desta sessão</span></div><div class="chat-layout"><div class="chat-channels" id="chatChannels"></div><div class="chat-main"><div class="chat-messages" id="chatMessages"></div><form class="chat-compose" id="chatForm"><input id="chatText" placeholder="Escreva uma mensagem..." autocomplete="off" required><button class="btn-submit" type="submit" title="Enviar mensagem"><i data-lucide="send" style="width: 15px;"></i></button></form></div></div></div>
                         </div>
                         <div>
-                            <div class="work-card"><div class="work-card-header"><h3>Minhas tarefas</h3><span>Designação e acompanhamento</span></div><form id="taskForm"><div class="form-group"><label for="taskTitle">Nova tarefa</label><input id="taskTitle" placeholder="Título da tarefa" required></div><div class="form-row" style="margin-top: 0.8rem;"><div class="form-group"><label for="taskAssignee">Responsável</label><input id="taskAssignee" placeholder="Nome do colaborador" required></div><div class="form-group"><label for="taskStatus">Status</label><select id="taskStatus"><option value="Pendente">Pendente</option><option value="Em andamento">Em andamento</option></select></div></div><div class="profile-form-actions"><button class="btn-submit" type="submit"><i data-lucide="clipboard-plus" style="width: 15px;"></i> Designar tarefa</button></div></form><div class="task-list" id="taskList" style="margin-top: 1rem;"></div></div>
+                            <div class="work-card" id="taskManagementCard"><div class="work-card-header"><h3>Minhas tarefas</h3><span id="taskAccessLabel">Designação e acompanhamento</span></div><form id="taskForm"><div class="form-group"><label for="taskTitle">Nova tarefa</label><input id="taskTitle" placeholder="Título da tarefa" required></div><div class="form-row" style="margin-top: 0.8rem;"><div class="form-group"><label for="taskAssignee">Responsável</label><input id="taskAssignee" placeholder="Nome do colaborador" required></div><div class="form-group"><label for="taskStatus">Status</label><select id="taskStatus"><option value="Pendente">Pendente</option><option value="Em andamento">Em andamento</option></select></div></div><div class="profile-form-actions"><button class="btn-submit" type="submit"><i data-lucide="clipboard-plus" style="width: 15px;"></i> Designar tarefa</button></div></form><div class="task-list" id="taskList" style="margin-top: 1rem;"></div></div>
                             <div class="work-card"><div class="work-card-header"><h3>Histórico de movimentação</h3><span>Auditoria local</span></div><div class="audit-table"><table class="system-table"><thead><tr><th>Usuário</th><th>Ação</th><th>Data / Hora</th></tr></thead><tbody id="auditList"></tbody></table></div></div>
                         </div>
                     </div>
@@ -1148,6 +1148,18 @@
         </div>
 
     </main>
+
+    <div class="modal-overlay" id="profileAuthModal">
+        <div class="modal-card">
+            <h3><i data-lucide="user-lock" style="width: 20px;"></i> Acesso ao Perfil</h3>
+            <p>Use o mesmo login e senha do sistema para acessar seu perfil e a rede de trabalho.</p>
+            <form id="profileAuthForm" autocomplete="off">
+                <div class="form-group" style="margin-bottom: 1rem;"><label for="profileLogin">Matrícula ou e-mail</label><input type="text" id="profileLogin" autocomplete="username" required></div>
+                <div class="form-group" style="margin-bottom: 1rem;"><label for="profilePassword">Senha do sistema</label><input type="password" id="profilePassword" autocomplete="current-password" required></div>
+                <div class="modal-actions"><button type="button" class="btn-secondary" onclick="closeProfileModal()">Cancelar</button><button type="submit" class="btn-submit">Entrar</button></div>
+            </form>
+        </div>
+    </div>
 
     <!-- MODAL DE AUTENTICACAO ADMINISTRATIVA -->
     <div class="modal-overlay" id="adminAuthModal">
@@ -1619,6 +1631,84 @@
             document.getElementById('adminAuthModal').classList.add('active');
         }
 
+        let profileSessionUser = null;
+        let canAssignWorkTasks = false;
+
+        function requestProfileAccess() {
+            if (profileSessionUser) {
+                switchTab('perfil');
+                return;
+            }
+            document.getElementById('profileLogin').value = '';
+            document.getElementById('profilePassword').value = '';
+            document.getElementById('profileAuthModal').classList.add('active');
+            document.getElementById('profileLogin').focus();
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileAuthModal').classList.remove('active');
+        }
+
+        function applyProfilePermissions(user) {
+            const normalizedRole = String(user.role || '').toLowerCase();
+            const normalizedProfile = String(user.perfil || '').toLowerCase();
+            const canAssignTasks = ['admin', 'developer', 'gestor', 'gerente'].includes(normalizedRole)
+                || normalizedProfile.includes('admin') || normalizedProfile.includes('gestor');
+            canAssignWorkTasks = canAssignTasks;
+            const taskCard = document.getElementById('taskManagementCard');
+            const taskLabel = document.getElementById('taskAccessLabel');
+            if (!canAssignTasks) {
+                taskCard.querySelector('form').style.display = 'none';
+                taskLabel.textContent = 'Tarefas atribuídas a você';
+            } else {
+                taskCard.querySelector('form').style.display = 'block';
+                taskLabel.textContent = 'Designação e acompanhamento';
+            }
+        }
+
+        document.getElementById('profileAuthForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const login = document.getElementById('profileLogin').value.trim();
+            const password = document.getElementById('profilePassword').value;
+            if (!login || !password) return;
+
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: login, matricula: login, password })
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    alert(data.message || 'Login ou senha inválidos.');
+                    return;
+                }
+
+                profileSessionUser = data.user || {};
+                authToken = data.accessToken;
+                localStorage.setItem('accessToken', authToken);
+                localStorage.setItem('userName', profileSessionUser.name || '');
+                localStorage.setItem('userEmail', profileSessionUser.email || '');
+                localStorage.setItem('userRole', profileSessionUser.role || 'user');
+                localStorage.setItem('userPerfil', profileSessionUser.perfil || '');
+                localStorage.setItem('userUnidade', profileSessionUser.unidade || '');
+                localStorage.setItem('userStatus', profileSessionUser.status || profileSessionUser.accountStatus || 'Ativo');
+                localStorage.setItem('userCargo', profileSessionUser.cargo || '');
+                localStorage.setItem('userPhone', profileSessionUser.phone || '');
+                applyProfilePermissions(profileSessionUser);
+                closeProfileModal();
+                switchTab('perfil');
+                registerWorkAudit('Entrou na aba Perfil');
+            } catch (error) {
+                console.error('Erro ao autenticar o perfil:', error);
+                alert('Não foi possível conectar ao servidor de autenticação.');
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+
         function closeAdminModal() {
             document.getElementById('adminUser').value = '';
             document.getElementById('adminPass').value = '';
@@ -1730,6 +1820,7 @@
             document.getElementById('perfilCargoDisplay').textContent = localStorage.getItem('userCargo') || 'Cargo não informado';
             document.getElementById('perfilTelefoneDisplay').textContent = localStorage.getItem('userPhone') || 'Telefone não informado';
             document.getElementById('perfilFoto').src = photo;
+            if (profileSessionUser) applyProfilePermissions(profileSessionUser);
             renderWorkFeed();
             renderChatChannels();
             renderChatMessages();
@@ -1757,7 +1848,9 @@
 
         function renderWorkTasks() {
             const target = document.getElementById('taskList');
-            const tasks = workStorage('workTasks', []);
+            const allTasks = workStorage('workTasks', []);
+            const currentUser = getWorkUserName().toLowerCase();
+            const tasks = canAssignWorkTasks ? allTasks : allTasks.filter(task => String(task.assignee || '').toLowerCase() === currentUser);
             target.innerHTML = tasks.length ? tasks.map(task => `<div class="task-item ${task.status === 'Concluída' ? 'done' : ''}"><div><strong>${escapeWorkHtml(task.title)}</strong><small>Responsável: ${escapeWorkHtml(task.assignee)} | ${new Date(task.timestamp).toLocaleDateString('pt-BR')}</small></div><select class="task-status-select" data-task-id="${task.id}"><option ${task.status === 'Pendente' ? 'selected' : ''}>Pendente</option><option ${task.status === 'Em andamento' ? 'selected' : ''}>Em andamento</option><option ${task.status === 'Concluída' ? 'selected' : ''}>Concluída</option></select></div>`).join('') : '<p style="font-size: 0.8rem; color: #64748b;">Nenhuma tarefa designada.</p>';
             document.querySelectorAll('.task-status-select').forEach(select => select.addEventListener('change', () => { const updated = workStorage('workTasks', []).map(task => task.id === select.dataset.taskId ? { ...task, status: select.value } : task); saveWorkStorage('workTasks', updated); renderWorkTasks(); registerWorkAudit(`Atualizou tarefa para ${select.value}`); }));
         }
@@ -1778,6 +1871,10 @@
                 document.getElementById('tabBtnCadastro').classList.add('active');
                 document.getElementById('tabCadastro').classList.add('active');
             } else if (tab === 'perfil') {
+                if (!profileSessionUser) {
+                    requestProfileAccess();
+                    return;
+                }
                 document.getElementById('tabBtnPerfil').classList.add('active');
                 document.getElementById('tabPerfil').classList.add('active');
                 fillPerfilTab();
