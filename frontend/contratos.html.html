@@ -2042,7 +2042,7 @@
         const DEFAULT_PERMISSIONS = {
             cadastroInicial: true,
             aditivosAtualizacoes: true,
-            empenho: false,
+            empenho: true,
             visaoGeral: false,
             unidade: true,
             questionarioDocs: false
@@ -2954,7 +2954,7 @@
 
             permissions.cadastroInicial = !!(hasExplicitPermissions ? raw.cadastroInicial : permissions.cadastroInicial);
             permissions.aditivosAtualizacoes = !!(hasExplicitPermissions ? raw.aditivosAtualizacoes : permissions.aditivosAtualizacoes);
-            permissions.empenho = !!(hasExplicitPermissions ? raw.empenho : permissions.empenho);
+            permissions.empenho = !!(hasExplicitPermissions ? (raw.empenho ?? raw.execucaoPagamento ?? true) : permissions.empenho);
             permissions.unidade = !!(hasExplicitPermissions ? raw.unidade : permissions.unidade);
             permissions.questionarioDocs = !!(hasExplicitPermissions ? raw.questionarioDocs : permissions.questionarioDocs);
             permissions.visaoGeral = !!(user?.canViewOverview || raw.visaoGeral || permissions.visaoGeral);
