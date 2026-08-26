@@ -922,7 +922,7 @@
             </li>
             <li>
                 <button id="btn-tab-questionario" onclick="switchTab(event, 'tab-questionario')">
-                    <i data-lucide="clipboard-check" style="width: 15px;"></i> ABA 04: QUESTIONÁRIO, DOCS & EXECUÇÃO / PAGAMENTO
+                    <i data-lucide="clipboard-check" style="width: 15px;"></i> ABA 04: CONFORMIDADE
                 </button>
             </li>
             <li>
@@ -1595,6 +1595,81 @@
         <div id="tab-questionario" class="tab-content">
             <section class="step-card">
                 <div class="step-header">
+                    <span class="step-badge">EXECUÇÃO & PAGAMENTO</span>
+                    <h2 class="step-title">Lançamento de Processos de Pagamento e Nota Fiscal</h2>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="execUnidade">Unidade Administrativa *</label>
+                        <select id="execUnidade">
+                            <option value="PMMT">PMMT</option>
+                            <option value="CBMMT">CBMMT</option>
+                            <option value="CIOPAER">CIOPAER</option>
+                            <option value="PCJ">PCJ</option>
+                            <option value="POLITEC">POLITEC</option>
+                            <option value="SESP">SESP</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="dtRequisicao">Data de Requisição *</label>
+                        <input type="date" id="dtRequisicao" onchange="calcPrazoExecucao()">
+                    </div>
+                    <div class="form-group">
+                        <label for="dtEntregaEfetiva">Data de Entrega *</label>
+                        <input type="date" id="dtEntregaEfetiva" onchange="calcPrazoExecucao()">
+                    </div>
+                    <div class="form-group">
+                        <label>Prazo de Execução (Calculado)</label>
+                        <input type="text" id="prazoExecCalculado" readonly placeholder="Total em dias">
+                    </div>
+
+                    <div class="form-group full-width" style="border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px;">
+                        <strong style="color: var(--text-dark);">DADOS DA NOTA FISCAL E LIQUIDAÇÃO</strong>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="numNF">Nº da Nota Fiscal *</label>
+                        <input type="text" id="numNF">
+                    </div>
+                    <div class="form-group">
+                        <label for="dtEmissaoNF">Data de Emissão NF *</label>
+                        <input type="date" id="dtEmissaoNF">
+                    </div>
+                    <div class="form-group">
+                        <label for="valorNF">Valor Bruto da NF (R$) *</label>
+                        <input type="text" id="valorNF" oninput="maskMoney(this); calcLiquidoNF();" placeholder="R$ 0,00">
+                    </div>
+                    <div class="form-group">
+                        <label for="valorDeducao">Dedução (Glosas/Multas) (R$)</label>
+                        <input type="text" id="valorDeducao" oninput="maskMoney(this); calcLiquidoNF();" placeholder="R$ 0,00">
+                    </div>
+                    <div class="form-group">
+                        <label>Valor Líquido a Pagar</label>
+                        <input type="text" id="valorLiquidoNF" readonly placeholder="R$ 0,00" style="font-weight: 700; color: var(--sesp-light-blue);">
+                    </div>
+                    <div class="form-group">
+                        <label for="numEmpenho">Nº do Empenho *</label>
+                        <input type="text" id="numEmpenho" placeholder="Ex: 2026NE00123">
+                    </div>
+                    <div class="form-group">
+                        <label for="dtConformidade">Data de Conformidade *</label>
+                        <input type="date" id="dtConformidade">
+                    </div>
+                    <div class="form-group">
+                        <label for="dtEnvioGefin">Data de Envio à GEFIN *</label>
+                        <input type="date" id="dtEnvioGefin">
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="salvarPagamento()">
+                        <i data-lucide="send" style="width:16px;"></i> Registrar Liquidação / Enviar GEFIN
+                    </button>
+                </div>
+            </section>
+
+            <section class="step-card">
+                <div class="step-header">
                     <span class="step-badge">QUESTIONÁRIO</span>
                     <h2 class="step-title">Informações Complementares e Conformidade</h2>
                 </div>
@@ -1811,80 +1886,6 @@
                 </div>
             </section>
 
-            <section class="step-card">
-                <div class="step-header">
-                    <span class="step-badge">EXECUÇÃO & PAGAMENTO</span>
-                    <h2 class="step-title">Lançamento de Processos de Pagamento e Nota Fiscal</h2>
-                </div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="execUnidade">Unidade Administrativa *</label>
-                        <select id="execUnidade">
-                            <option value="PMMT">PMMT</option>
-                            <option value="CBMMT">CBMMT</option>
-                            <option value="CIOPAER">CIOPAER</option>
-                            <option value="PCJ">PCJ</option>
-                            <option value="POLITEC">POLITEC</option>
-                            <option value="SESP">SESP</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="dtRequisicao">Data de Requisição *</label>
-                        <input type="date" id="dtRequisicao" onchange="calcPrazoExecucao()">
-                    </div>
-                    <div class="form-group">
-                        <label for="dtEntregaEfetiva">Data de Entrega *</label>
-                        <input type="date" id="dtEntregaEfetiva" onchange="calcPrazoExecucao()">
-                    </div>
-                    <div class="form-group">
-                        <label>Prazo de Execução (Calculado)</label>
-                        <input type="text" id="prazoExecCalculado" readonly placeholder="Total em dias">
-                    </div>
-
-                    <div class="form-group full-width" style="border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px;">
-                        <strong style="color: var(--text-dark);">DADOS DA NOTA FISCAL E LIQUIDAÇÃO</strong>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="numNF">Nº da Nota Fiscal *</label>
-                        <input type="text" id="numNF">
-                    </div>
-                    <div class="form-group">
-                        <label for="dtEmissaoNF">Data de Emissão NF *</label>
-                        <input type="date" id="dtEmissaoNF">
-                    </div>
-                    <div class="form-group">
-                        <label for="valorNF">Valor Bruto da NF (R$) *</label>
-                        <input type="text" id="valorNF" oninput="maskMoney(this); calcLiquidoNF();" placeholder="R$ 0,00">
-                    </div>
-                    <div class="form-group">
-                        <label for="valorDeducao">Dedução (Glosas/Multas) (R$)</label>
-                        <input type="text" id="valorDeducao" oninput="maskMoney(this); calcLiquidoNF();" placeholder="R$ 0,00">
-                    </div>
-                    <div class="form-group">
-                        <label>Valor Líquido a Pagar</label>
-                        <input type="text" id="valorLiquidoNF" readonly placeholder="R$ 0,00" style="font-weight: 700; color: var(--sesp-light-blue);">
-                    </div>
-                    <div class="form-group">
-                        <label for="numEmpenho">Nº do Empenho *</label>
-                        <input type="text" id="numEmpenho" placeholder="Ex: 2026NE00123">
-                    </div>
-                    <div class="form-group">
-                        <label for="dtConformidade">Data de Conformidade *</label>
-                        <input type="date" id="dtConformidade">
-                    </div>
-                    <div class="form-group">
-                        <label for="dtEnvioGefin">Data de Envio à GEFIN *</label>
-                        <input type="date" id="dtEnvioGefin">
-                    </div>
-                </div>
-
-                <div class="action-bar">
-                    <button class="btn btn-primary" onclick="salvarPagamento()">
-                        <i data-lucide="send" style="width:16px;"></i> Registrar Liquidação / Enviar GEFIN
-                    </button>
-                </div>
-            </section>
         </div>
 
         <!-- ABA IMPORTAÇÃO EM MASSA DE PDFs -->
