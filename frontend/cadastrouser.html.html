@@ -584,6 +584,55 @@
             color: #334155;
         }
 
+        /* --- PERFIL E REDE DE TRABALHO --- */
+        .profile-hero { display: flex; align-items: center; gap: 1rem; padding-bottom: 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid #e2e8f0; }
+        .profile-avatar { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; background: #dbeafe; border: 3px solid #bfdbfe; }
+        .profile-hero h2 { color: var(--sesp-dark-blue); font-size: 1.15rem; }
+        .profile-hero p { color: #64748b; font-size: 0.8rem; margin-top: 0.25rem; }
+        .profile-hero .profile-actions { margin-left: auto; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .profile-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr); gap: 1.25rem; }
+        .work-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; background: #fff; }
+        .work-card + .work-card { margin-top: 1.25rem; }
+        .work-card-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.9rem; }
+        .work-card-header h3 { color: var(--sesp-blue); font-size: 0.9rem; }
+        .work-card-header span { color: #64748b; font-size: 0.72rem; }
+        .profile-form-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 0.8rem; }
+        .avatar-upload { display: flex; align-items: center; gap: 0.5rem; }
+        .avatar-upload input { display: none; }
+        .outline-button { background: #fff; border: 1px solid #93c5fd; color: #1d4ed8; padding: 0.55rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+        .feed-form textarea { min-height: 82px; resize: vertical; }
+        .feed-post { border-top: 1px solid #e2e8f0; padding: 0.9rem 0; }
+        .feed-post:first-child { border-top: 0; padding-top: 0; }
+        .feed-meta { display: flex; justify-content: space-between; color: #64748b; font-size: 0.72rem; margin-bottom: 0.45rem; }
+        .feed-post p { color: #334155; font-size: 0.82rem; line-height: 1.5; white-space: pre-wrap; }
+        .chat-layout { display: grid; grid-template-columns: 180px minmax(0, 1fr); min-height: 320px; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; }
+        .chat-channels { background: #f8fafc; border-right: 1px solid #e2e8f0; padding: 0.6rem; }
+        .chat-channel { width: 100%; border: 0; background: transparent; color: #475569; padding: 0.65rem; text-align: left; border-radius: 4px; cursor: pointer; font-size: 0.78rem; }
+        .chat-channel.active, .chat-channel:hover { background: #dbeafe; color: #1e3a8a; font-weight: 700; }
+        .chat-main { display: flex; flex-direction: column; min-width: 0; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 0.8rem; max-height: 250px; }
+        .chat-message { margin-bottom: 0.7rem; }
+        .chat-message strong { color: var(--sesp-blue); font-size: 0.75rem; }
+        .chat-message time { color: #94a3b8; font-size: 0.68rem; margin-left: 0.4rem; }
+        .chat-message p { color: #334155; font-size: 0.8rem; margin-top: 0.2rem; }
+        .chat-compose { display: flex; gap: 0.5rem; border-top: 1px solid #e2e8f0; padding: 0.7rem; }
+        .chat-compose input { flex: 1; }
+        .task-list { display: grid; gap: 0.6rem; }
+        .task-item { display: flex; justify-content: space-between; gap: 0.75rem; align-items: center; border: 1px solid #e2e8f0; border-left: 4px solid #f59e0b; border-radius: 4px; padding: 0.7rem; }
+        .task-item.done { border-left-color: #10b981; opacity: 0.75; }
+        .task-item strong { color: #334155; font-size: 0.8rem; }
+        .task-item small { display: block; color: #64748b; font-size: 0.7rem; margin-top: 0.25rem; }
+        .task-item select { width: auto; padding: 0.4rem; font-size: 0.72rem; }
+        .audit-table { max-height: 280px; overflow: auto; }
+        .audit-table .system-table { min-width: 520px; }
+        @media (max-width: 760px) {
+            .profile-grid, .chat-layout { grid-template-columns: 1fr; }
+            .chat-channels { border-right: 0; border-bottom: 1px solid #e2e8f0; display: flex; gap: 0.3rem; overflow-x: auto; }
+            .chat-channel { white-space: nowrap; width: auto; }
+            .profile-hero { align-items: flex-start; flex-wrap: wrap; }
+            .profile-hero .profile-actions { width: 100%; margin-left: 0; }
+        }
+
         /* --- MODAL DE AUTENTICACAO --- */
         .modal-overlay {
             position: fixed;
@@ -690,6 +739,11 @@
             <li>
                 <button class="active" id="tabBtnCadastro" onclick="switchTab('cadastro')">
                     <i data-lucide="user-plus" style="width: 15px;"></i> Cadastro de Usuário
+                </button>
+            </li>
+            <li>
+                <button id="tabBtnPerfil" onclick="switchTab('perfil')">
+                    <i data-lucide="user-circle" style="width: 15px;"></i> Perfil
                 </button>
             </li>
             <li>
@@ -989,7 +1043,39 @@
             </div>
         </div>
 
-        <!-- ABA 2: PAINEL ADMINISTRADOR -->
+        <!-- ABA 2: PERFIL E REDE DE TRABALHO -->
+        <div class="tab-content" id="tabPerfil">
+            <div class="system-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i data-lucide="user-circle" style="width: 18px;"></i>
+                        Perfil e Rede de Trabalho
+                    </div>
+                    <span style="font-size: 0.75rem; color: #93c5fd;">Intranet COPAL</span>
+                </div>
+
+                <div class="panel-body">
+                    <div class="profile-hero">
+                        <img class="profile-avatar" id="perfilFoto" alt="Foto de perfil">
+                        <div><h2 id="perfilNomeDisplay">Usuário não identificado</h2><p id="perfilCargoDisplay">Cargo não informado</p><p id="perfilTelefoneDisplay">Telefone não informado</p></div>
+                        <div class="profile-actions"><label class="outline-button avatar-upload" for="perfilFotoInput"><i data-lucide="camera" style="width: 15px;"></i> Alterar foto</label><input type="file" id="perfilFotoInput" accept="image/*"></div>
+                    </div>
+                    <div class="profile-grid">
+                        <div>
+                            <div class="work-card"><div class="work-card-header"><h3>Meu perfil</h3><span>Dados editáveis</span></div><form id="perfilForm"><div class="form-row"><div class="form-group"><label for="perfilNome">Nome completo</label><input type="text" id="perfilNome" required></div><div class="form-group"><label for="perfilCargo">Cargo</label><input type="text" id="perfilCargo" placeholder="Ex.: Analista administrativo"></div></div><div class="form-row"><div class="form-group"><label for="perfilTelefone">Telefone de contato</label><input type="tel" id="perfilTelefone" placeholder="(65) 00000-0000"></div><div class="form-group"><label for="perfilEmail">E-mail</label><input type="email" id="perfilEmail" readonly></div></div><div class="profile-form-actions"><button class="btn-submit" type="submit"><i data-lucide="save" style="width: 15px;"></i> Salvar perfil</button></div></form></div>
+                            <div class="work-card"><div class="work-card-header"><h3>Feed de trabalho</h3><span>Atualizações da equipe</span></div><form class="feed-form" id="feedForm"><div class="form-group"><label for="feedText">Compartilhe o andamento do seu trabalho</label><textarea id="feedText" placeholder="Ex.: Concluí a análise do processo 123/2026." required></textarea></div><div class="profile-form-actions"><button class="btn-submit" type="submit"><i data-lucide="send" style="width: 15px;"></i> Publicar atualização</button></div></form><div id="feedList" style="margin-top: 1rem;"></div></div>
+                            <div class="work-card"><div class="work-card-header"><h3>Chat interno</h3><span>Histórico desta sessão</span></div><div class="chat-layout"><div class="chat-channels" id="chatChannels"></div><div class="chat-main"><div class="chat-messages" id="chatMessages"></div><form class="chat-compose" id="chatForm"><input id="chatText" placeholder="Escreva uma mensagem..." autocomplete="off" required><button class="btn-submit" type="submit" title="Enviar mensagem"><i data-lucide="send" style="width: 15px;"></i></button></form></div></div></div>
+                        </div>
+                        <div>
+                            <div class="work-card"><div class="work-card-header"><h3>Minhas tarefas</h3><span>Designação e acompanhamento</span></div><form id="taskForm"><div class="form-group"><label for="taskTitle">Nova tarefa</label><input id="taskTitle" placeholder="Título da tarefa" required></div><div class="form-row" style="margin-top: 0.8rem;"><div class="form-group"><label for="taskAssignee">Responsável</label><input id="taskAssignee" placeholder="Nome do colaborador" required></div><div class="form-group"><label for="taskStatus">Status</label><select id="taskStatus"><option value="Pendente">Pendente</option><option value="Em andamento">Em andamento</option></select></div></div><div class="profile-form-actions"><button class="btn-submit" type="submit"><i data-lucide="clipboard-plus" style="width: 15px;"></i> Designar tarefa</button></div></form><div class="task-list" id="taskList" style="margin-top: 1rem;"></div></div>
+                            <div class="work-card"><div class="work-card-header"><h3>Histórico de movimentação</h3><span>Auditoria local</span></div><div class="audit-table"><table class="system-table"><thead><tr><th>Usuário</th><th>Ação</th><th>Data / Hora</th></tr></thead><tbody id="auditList"></tbody></table></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA 3: PAINEL ADMINISTRADOR -->
         <div class="tab-content" id="tabAdmin">
             <div class="system-panel">
                 <div class="panel-header">
@@ -1601,6 +1687,89 @@
             }
         });
 
+        const workChannels = ['Geral', 'Avisos', 'Direto: Equipe'];
+        let selectedWorkChannel = localStorage.getItem('workChannel') || workChannels[0];
+
+        function getWorkUserName() {
+            return localStorage.getItem('userName') || document.getElementById('perfilNome')?.value || 'Usuário não identificado';
+        }
+
+        function escapeWorkHtml(value) {
+            return String(value || '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
+        }
+
+        function workStorage(key, fallback) {
+            try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (error) { return fallback; }
+        }
+
+        function saveWorkStorage(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+
+        function registerWorkAudit(action) {
+            const logs = workStorage('workAuditLogs', []);
+            logs.unshift({ user: getWorkUserName(), action, timestamp: new Date().toISOString() });
+            saveWorkStorage('workAuditLogs', logs.slice(0, 100));
+            renderWorkAudit();
+        }
+
+        function renderWorkAudit() {
+            const target = document.getElementById('auditList');
+            if (!target) return;
+            const logs = workStorage('workAuditLogs', []);
+            target.innerHTML = logs.length ? logs.map(log => `<tr><td>${escapeWorkHtml(log.user)}</td><td>${escapeWorkHtml(log.action)}</td><td>${new Date(log.timestamp).toLocaleString('pt-BR')}</td></tr>`).join('') : '<tr><td colspan="3">Nenhuma movimentação registrada.</td></tr>';
+        }
+
+        function fillPerfilTab() {
+            const name = localStorage.getItem('userName') || 'Usuário não identificado';
+            const email = localStorage.getItem('userEmail') || '';
+            const photo = localStorage.getItem('userProfilePhoto') || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="76" height="76" viewBox="0 0 76 76"%3E%3Crect width="76" height="76" fill="%23dbeafe"/%3E%3Ccircle cx="38" cy="29" r="13" fill="%2360a5fa"/%3E%3Cpath d="M14 70c2-17 12-24 24-24s22 7 24 24" fill="%2360a5fa"/%3E%3C/svg%3E';
+            document.getElementById('perfilNome').value = name;
+            document.getElementById('perfilEmail').value = email;
+            document.getElementById('perfilCargo').value = localStorage.getItem('userCargo') || '';
+            document.getElementById('perfilTelefone').value = localStorage.getItem('userPhone') || '';
+            document.getElementById('perfilNomeDisplay').textContent = name;
+            document.getElementById('perfilCargoDisplay').textContent = localStorage.getItem('userCargo') || 'Cargo não informado';
+            document.getElementById('perfilTelefoneDisplay').textContent = localStorage.getItem('userPhone') || 'Telefone não informado';
+            document.getElementById('perfilFoto').src = photo;
+            renderWorkFeed();
+            renderChatChannels();
+            renderChatMessages();
+            renderWorkTasks();
+            renderWorkAudit();
+        }
+
+        function renderWorkFeed() {
+            const target = document.getElementById('feedList');
+            const posts = workStorage('workFeedPosts', []);
+            target.innerHTML = posts.length ? posts.map(post => `<article class="feed-post"><div class="feed-meta"><strong>${escapeWorkHtml(post.user)}</strong><time>${new Date(post.timestamp).toLocaleString('pt-BR')}</time></div><p>${escapeWorkHtml(post.text)}</p></article>`).join('') : '<p style="font-size: 0.8rem; color: #64748b;">Ainda não há atualizações no mural.</p>';
+        }
+
+        function renderChatChannels() {
+            document.getElementById('chatChannels').innerHTML = workChannels.map(channel => `<button type="button" class="chat-channel ${channel === selectedWorkChannel ? 'active' : ''}" data-channel="${escapeWorkHtml(channel)}">${escapeWorkHtml(channel)}</button>`).join('');
+            document.querySelectorAll('.chat-channel').forEach(button => button.addEventListener('click', () => { selectedWorkChannel = button.dataset.channel; localStorage.setItem('workChannel', selectedWorkChannel); renderChatChannels(); renderChatMessages(); registerWorkAudit(`Acessou o canal ${selectedWorkChannel}`); }));
+        }
+
+        function renderChatMessages() {
+            const target = document.getElementById('chatMessages');
+            const messages = workStorage('workChatMessages', []).filter(message => message.channel === selectedWorkChannel);
+            target.innerHTML = messages.length ? messages.map(message => `<div class="chat-message"><strong>${escapeWorkHtml(message.user)}</strong><time>${new Date(message.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</time><p>${escapeWorkHtml(message.text)}</p></div>`).join('') : '<p style="font-size: 0.8rem; color: #64748b;">Nenhuma mensagem neste canal.</p>';
+            target.scrollTop = target.scrollHeight;
+        }
+
+        function renderWorkTasks() {
+            const target = document.getElementById('taskList');
+            const tasks = workStorage('workTasks', []);
+            target.innerHTML = tasks.length ? tasks.map(task => `<div class="task-item ${task.status === 'Concluída' ? 'done' : ''}"><div><strong>${escapeWorkHtml(task.title)}</strong><small>Responsável: ${escapeWorkHtml(task.assignee)} | ${new Date(task.timestamp).toLocaleDateString('pt-BR')}</small></div><select class="task-status-select" data-task-id="${task.id}"><option ${task.status === 'Pendente' ? 'selected' : ''}>Pendente</option><option ${task.status === 'Em andamento' ? 'selected' : ''}>Em andamento</option><option ${task.status === 'Concluída' ? 'selected' : ''}>Concluída</option></select></div>`).join('') : '<p style="font-size: 0.8rem; color: #64748b;">Nenhuma tarefa designada.</p>';
+            document.querySelectorAll('.task-status-select').forEach(select => select.addEventListener('change', () => { const updated = workStorage('workTasks', []).map(task => task.id === select.dataset.taskId ? { ...task, status: select.value } : task); saveWorkStorage('workTasks', updated); renderWorkTasks(); registerWorkAudit(`Atualizou tarefa para ${select.value}`); }));
+        }
+
+        function initializeWorkModule() {
+            document.getElementById('perfilForm').addEventListener('submit', event => { event.preventDefault(); localStorage.setItem('userName', document.getElementById('perfilNome').value.trim()); localStorage.setItem('userCargo', document.getElementById('perfilCargo').value.trim()); localStorage.setItem('userPhone', document.getElementById('perfilTelefone').value.trim()); fillPerfilTab(); registerWorkAudit('Alterou dados do perfil'); alert('Perfil atualizado com sucesso.'); });
+            document.getElementById('perfilFotoInput').addEventListener('change', event => { const file = event.target.files[0]; if (!file || !file.type.startsWith('image/')) return; const reader = new FileReader(); reader.onload = () => { localStorage.setItem('userProfilePhoto', reader.result); fillPerfilTab(); registerWorkAudit('Alterou a foto de perfil'); }; reader.readAsDataURL(file); });
+            document.getElementById('feedForm').addEventListener('submit', event => { event.preventDefault(); const text = document.getElementById('feedText').value.trim(); if (!text) return; const posts = workStorage('workFeedPosts', []); posts.unshift({ user: getWorkUserName(), text, timestamp: new Date().toISOString() }); saveWorkStorage('workFeedPosts', posts.slice(0, 50)); document.getElementById('feedText').value = ''; renderWorkFeed(); registerWorkAudit('Publicou uma atualização no feed'); });
+            document.getElementById('chatForm').addEventListener('submit', event => { event.preventDefault(); const input = document.getElementById('chatText'); const text = input.value.trim(); if (!text) return; const messages = workStorage('workChatMessages', []); messages.push({ user: getWorkUserName(), text, channel: selectedWorkChannel, timestamp: new Date().toISOString() }); saveWorkStorage('workChatMessages', messages.slice(-200)); input.value = ''; renderChatMessages(); registerWorkAudit(`Enviou mensagem no canal ${selectedWorkChannel}`); });
+            document.getElementById('taskForm').addEventListener('submit', event => { event.preventDefault(); const tasks = workStorage('workTasks', []); tasks.unshift({ id: `${Date.now()}`, title: document.getElementById('taskTitle').value.trim(), assignee: document.getElementById('taskAssignee').value.trim(), status: document.getElementById('taskStatus').value, timestamp: new Date().toISOString() }); saveWorkStorage('workTasks', tasks.slice(0, 100)); event.target.reset(); renderWorkTasks(); registerWorkAudit('Designou uma nova tarefa'); });
+        }
+
         function switchTab(tab) {
             document.querySelectorAll('.main-nav button').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -1608,6 +1777,10 @@
             if (tab === 'cadastro') {
                 document.getElementById('tabBtnCadastro').classList.add('active');
                 document.getElementById('tabCadastro').classList.add('active');
+            } else if (tab === 'perfil') {
+                document.getElementById('tabBtnPerfil').classList.add('active');
+                document.getElementById('tabPerfil').classList.add('active');
+                fillPerfilTab();
             } else if (tab === 'admin') {
                 document.getElementById('tabBtnAdmin').classList.add('active');
                 document.getElementById('tabAdmin').classList.add('active');
@@ -1837,6 +2010,9 @@
             }
         }
 
+        initializeWorkModule();
+        fillPerfilTab();
+        registerWorkAudit('Acessou a página de cadastro e perfil');
         fetchPendingRequests();
     </script>
 </body>
