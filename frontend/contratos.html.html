@@ -3011,10 +3011,11 @@
             const content = document.getElementById(tabId);
             const btn = document.getElementById(`btn-${tabId}`);
             const option = document.querySelector(`#contractTabSelector option[value="${tabId}"]`);
+            const shouldShow = tabId === 'tab-empenho' || isVisible;
 
-            if (content) content.style.display = isVisible ? '' : 'none';
-            if (btn) btn.style.display = isVisible ? '' : 'none';
-            if (option) option.hidden = !isVisible;
+            if (content) content.style.display = shouldShow ? '' : 'none';
+            if (btn) btn.style.display = shouldShow ? '' : 'none';
+            if (option) option.hidden = !shouldShow;
         }
 
         function activateFirstVisibleContractTab() {
