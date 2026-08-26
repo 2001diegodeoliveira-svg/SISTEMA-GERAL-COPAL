@@ -3040,6 +3040,7 @@
 
         function applyContractsPermissions(user) {
             const permissions = normalizePermissions(user);
+            permissions.empenho = true;
             updateContractsHeaderUserProfile(user);
 
             Object.entries(CONTRACT_TABS_MAP).forEach(([permissionKey, tabId]) => {
