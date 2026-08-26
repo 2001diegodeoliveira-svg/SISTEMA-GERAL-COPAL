@@ -370,13 +370,14 @@
         /* NAVEGAÇÃO / ABAS */
         nav.main-nav {
             background-color: var(--card-bg);
-            border-bottom: 2px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
             padding: 0 2rem;
             display: flex;
             align-items: center;
             justify-content: flex-start;
             overflow-x: auto;
-            transition: background-color 0.5s;
+            box-shadow: 0 1px 5px rgba(15, 44, 89, 0.04);
+            transition: background-color 0.5s, border-color 0.5s, box-shadow 0.5s;
         }
 
         .nav-links {
@@ -411,34 +412,37 @@
         .contract-tab-selector-wrap {
             display: flex;
             align-items: center;
-            gap: 0.7rem;
+            gap: 0.55rem;
             width: min(100%, 360px);
-            padding: 0.65rem 0;
+            padding: 0.5rem 0;
         }
 
         .contract-tab-selector-wrap label {
             color: var(--text-muted);
-            font-size: 0.75rem;
-            font-weight: 700;
+            font-size: 0.7rem;
+            font-weight: 600;
             white-space: nowrap;
             text-transform: uppercase;
+            letter-spacing: 0.25px;
         }
 
         .contract-tab-selector {
             min-width: 0;
-            padding: 0.6rem 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            background: var(--card-bg);
+            padding: 0.5rem 0.7rem;
+            border: 1px solid color-mix(in srgb, var(--border-color) 75%, transparent);
+            border-radius: 6px;
+            background: color-mix(in srgb, var(--card-bg) 92%, var(--sesp-light-blue));
             color: var(--text-dark);
-            font-size: 0.8rem;
-            font-weight: 700;
+            font-size: 0.76rem;
+            font-weight: 600;
             cursor: pointer;
+            transition: border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
         }
 
         .contract-tab-selector:focus {
-            outline: 2px solid rgba(0, 102, 204, 0.25);
-            border-color: var(--sesp-light-blue);
+            outline: 2px solid rgba(0, 102, 204, 0.14);
+            border-color: rgba(0, 102, 204, 0.55);
+            box-shadow: 0 2px 8px rgba(15, 44, 89, 0.06);
         }
 
         /* CONTEÚDO PRINCIPAL E CARDS */
@@ -918,7 +922,7 @@
     <!-- NAVEGAÇÃO PRINCIPAL / ABAS -->
     <nav class="main-nav">
         <div class="contract-tab-selector-wrap">
-            <label for="contractTabSelector">Seção</label>
+            <label for="contractTabSelector">HOME</label>
             <select id="contractTabSelector" class="contract-tab-selector" onchange="selectContractTab(this.value)">
                 <option value="tab-cadastro" selected>CADASTRO INICIAL</option>
                 <option value="tab-atualizacoes">ADITIVOS & ATUALIZAÇÕES</option>
@@ -927,7 +931,6 @@
                 <option value="tab-unidade">UNIDADES</option>
                 <option value="tab-questionario">CONFORMIDADE</option>
                 <option value="tab-importacao">IMPORTAR PDFs</option>
-                <option value="home">HOME</option>
             </select>
         </div>
     </nav>
@@ -2970,9 +2973,11 @@
         function setContractsTabVisibility(tabId, isVisible) {
             const content = document.getElementById(tabId);
             const btn = document.getElementById(`btn-${tabId}`);
+            const option = document.querySelector(`#contractTabSelector option[value="${tabId}"]`);
 
             if (content) content.style.display = isVisible ? '' : 'none';
             if (btn) btn.style.display = isVisible ? '' : 'none';
+            if (option) option.hidden = !isVisible;
         }
 
         function activateFirstVisibleContractTab() {
@@ -3511,11 +3516,6 @@
         /* ========================================================================== */
 
         function selectContractTab(tabId) {
-            if (tabId === 'home') {
-                window.location.href = 'home.html.html';
-                return;
-            }
-
             switchTab(null, tabId);
             if (tabId === 'tab-overview') loadOverviewTab();
             if (tabId === 'tab-unidade') carregarAbaUnidades();
