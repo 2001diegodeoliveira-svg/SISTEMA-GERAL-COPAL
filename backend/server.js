@@ -547,7 +547,7 @@ function getUserByLoginIdentifier(identifier) {
 function getSessionByToken(token) {
   return new Promise((resolve, reject) => {
     db.get(
-      `SELECT sessions.token, sessions.user_id, users.email, users.name, users.role, users.unidade, users.perfil, users.status, users.can_view_overview, users.background_image, users.access_level, users.account_status, users.permissions_json
+      `SELECT sessions.token, sessions.user_id, users.email, users.name, users.matricula, users.cpf, users.phone, users.cargo, users.role, users.unidade, users.perfil, users.status, users.can_view_overview, users.background_image, users.access_level, users.account_status, users.permissions_json
        FROM sessions
        JOIN users ON sessions.user_id = users.id
        WHERE sessions.token = ?`,
@@ -763,7 +763,10 @@ app.post('/auth/login', async (req, res) => {
           user: {
             email: adminUser.email,
             matricula: adminUser.matricula || null,
+            cpf: adminUser.cpf || null,
             name: adminUser.name,
+            phone: adminUser.phone || null,
+            cargo: adminUser.cargo || null,
             role: adminUser.role || 'admin',
             unidade: adminUser.unidade || null,
             perfil: adminUser.perfil || null,
@@ -829,7 +832,10 @@ app.post('/auth/login', async (req, res) => {
         user: {
           email: user.email,
           matricula: user.matricula || null,
+          cpf: user.cpf || null,
           name: user.name,
+          phone: user.phone || null,
+          cargo: user.cargo || null,
           role: resolvedRole,
           unidade: user.unidade || null,
           perfil: user.perfil || null,
@@ -859,7 +865,11 @@ app.get('/auth/me', async (req, res) => {
 
   res.json({ user: {
     email: session.email,
+    matricula: session.matricula,
+    cpf: session.cpf,
     name: session.name,
+    phone: session.phone,
+    cargo: session.cargo,
     role: session.role,
     unidade: session.unidade,
     perfil: session.perfil,
