@@ -408,6 +408,39 @@
             background-color: rgba(255, 255, 255, 0.05);
         }
 
+        .contract-tab-selector-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            width: min(100%, 360px);
+            padding: 0.65rem 0;
+        }
+
+        .contract-tab-selector-wrap label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+            text-transform: uppercase;
+        }
+
+        .contract-tab-selector {
+            min-width: 0;
+            padding: 0.6rem 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background: var(--card-bg);
+            color: var(--text-dark);
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .contract-tab-selector:focus {
+            outline: 2px solid rgba(0, 102, 204, 0.25);
+            border-color: var(--sesp-light-blue);
+        }
+
         /* CONTEÚDO PRINCIPAL E CARDS */
         main {
             flex: 1;
@@ -884,53 +917,19 @@
 
     <!-- NAVEGAÇÃO PRINCIPAL / ABAS -->
     <nav class="main-nav">
-        <ul class="nav-links">
-            <li>
-                <button id="btn-tab-home" onclick="window.location.href='home.html.html';">
-                    <i data-lucide="home" style="width: 15px;"></i> Home
-                </button>
-            </li>
-            <li>
-                <button id="btn-tab-cadastro" class="active" onclick="switchTab(event, 'tab-cadastro')">
-                    <i data-lucide="file-plus" style="width: 15px;"></i> ABA 01: CADASTRO INICIAL
-                </button>
-            </li>
-            <li>
-                <button id="btn-tab-atualizacoes" onclick="switchTab(event, 'tab-atualizacoes')">
-                    <i data-lucide="edit-3" style="width: 15px;"></i> ABA 02: ADITIVOS & ATUALIZAÇÕES
-                </button>
-            </li>
-            <li>
-                <button id="btn-tab-empenho" onclick="switchTab(event, 'tab-empenho')">
-                    <i data-lucide="file-check-2" style="width: 15px;"></i> ABA 03: EMPENHO
-                </button>
-            </li>
-            <li>
-                <button id="btn-tab-overview" onclick="switchTab(event, 'tab-overview'); loadOverviewTab();">
-                    <i data-lucide="sliders" style="width: 15px;"></i> VISÃO GERAL
-                </button>
-            </li>
-            <li style="display: none;">
-                <button type="button" onclick="abrirExtratoContrato()">
-                    <i data-lucide="file-bar-chart-2" style="width: 15px;"></i> EXTRATO
-                </button>
-            </li>
-            <li>
-                <button id="btn-tab-unidade" onclick="switchTab(event, 'tab-unidade'); carregarAbaUnidades();">
-                    <i data-lucide="building-2" style="width: 15px;"></i> ABA UNIDADES
-                </button>
-            </li>
-            <li>
-                <button id="btn-tab-questionario" onclick="switchTab(event, 'tab-questionario')">
-                    <i data-lucide="clipboard-check" style="width: 15px;"></i> ABA 04: CONFORMIDADE
-                </button>
-            </li>
-            <li>
-                <button id="btn-tab-importacao" onclick="switchTab(event, 'tab-importacao')">
-                    <i data-lucide="folder-open" style="width: 15px;"></i> IMPORTAR PDFs
-                </button>
-            </li>
-        </ul>
+        <div class="contract-tab-selector-wrap">
+            <label for="contractTabSelector">Seção</label>
+            <select id="contractTabSelector" class="contract-tab-selector" onchange="selectContractTab(this.value)">
+                <option value="tab-cadastro" selected>CADASTRO INICIAL</option>
+                <option value="tab-atualizacoes">ADITIVOS & ATUALIZAÇÕES</option>
+                <option value="tab-empenho">EMPENHO</option>
+                <option value="tab-overview">VISÃO GERAL</option>
+                <option value="tab-unidade">UNIDADES</option>
+                <option value="tab-questionario">CONFORMIDADE</option>
+                <option value="tab-importacao">IMPORTAR PDFs</option>
+                <option value="home">HOME</option>
+            </select>
+        </div>
     </nav>
 
     <!-- CONTEÚDO PRINCIPAL -->
@@ -3511,9 +3510,23 @@
 
         /* ========================================================================== */
 
+        function selectContractTab(tabId) {
+            if (tabId === 'home') {
+                window.location.href = 'home.html.html';
+                return;
+            }
+
+            switchTab(null, tabId);
+            if (tabId === 'tab-overview') loadOverviewTab();
+            if (tabId === 'tab-unidade') carregarAbaUnidades();
+        }
+
         function switchTab(event, tabId) {
             document.querySelectorAll('.nav-links button').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            const selector = document.getElementById('contractTabSelector');
+            if (selector && selector.value !== tabId) selector.value = tabId;
             
             if(event && event.currentTarget) {
                 event.currentTarget.classList.add('active');

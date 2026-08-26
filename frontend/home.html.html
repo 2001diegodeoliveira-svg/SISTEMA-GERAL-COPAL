@@ -750,7 +750,14 @@
                 const gerenciadorTabEl = document.getElementById('gerenciadorNavTab');
                 if (gerenciadorTabEl) gerenciadorTabEl.style.display = 'block';
             }
-            document.getElementById('devNavTab').style.display = 'block';
+            const devTab = document.getElementById('devNavTab');
+            const isDeveloper = role === 'developer';
+            if (devTab) devTab.style.display = isDeveloper ? 'block' : 'none';
+            if (!isDeveloper) {
+                localStorage.removeItem('devAuthenticated');
+                const developerPanel = document.getElementById('developerToolsPanel');
+                if (developerPanel) developerPanel.style.display = 'none';
+            }
         })();
 
         // =====================================================================
@@ -762,6 +769,12 @@
 
         function openDevPanel(event) {
             event.preventDefault();
+            const role = (localStorage.getItem('userRole') || '').toLowerCase();
+            if (role !== 'developer') {
+                devAuthenticated = false;
+                localStorage.removeItem('devAuthenticated');
+                return;
+            }
             if (devAuthenticated) {
                 showDevPanel();
             } else {
