@@ -949,7 +949,6 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     reqRequesterMatricula,
     reqRequesterEmail,
     reqVerificationCode,
-    reqTotpCode,
     reqItems,
     reqLatitude,
     reqLongitude,
@@ -975,11 +974,6 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
   const locationAccuracy = String(reqLocationAccuracy || '').trim() ? Number(reqLocationAccuracy) : null;
   if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
     return res.status(400).json({ message: 'A localização do assinante é obrigatória para emitir a requisição.' });
-  }
-
-  const unit = await getQuery(db, 'SELECT code, totp_secret FROM units WHERE lower(trim(code)) = lower(trim(?))', [reqUnitDemand || '']);
-  if (!unit?.totp_secret || !verifyTotpCode(unit.totp_secret, reqTotpCode)) {
-    return res.status(400).json({ message: 'Código do Google Authenticator inválido ou unidade sem autenticação configurada.' });
   }
 
   const contract = await getQuery(
@@ -1028,7 +1022,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     [reqRequesterEmail.toLowerCase()]
   ) : null;
 
-  if (reqVerificationCode && (!stored || stored.code !== reqVerificationCode || stored.used_at || Date.now() > stored.expires_at)) {
+  if (!reqVerificationCode || !stored || stored.code !== reqVerificationCode || stored.used_at || Date.now() > stored.expires_at) {
     return res.status(400).json({ message: 'Código de validação inválido ou expirado.' });
   }
 
@@ -1142,7 +1136,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
         reqRequesterName,
         reqRequesterMatricula,
         reqRequesterEmail,
-        reqTotpCode || reqVerificationCode || '',
+        reqVerificationCode,
         pdfAttachmentName,
         pdfAttachmentPath,
         `Requisição ${automaticReqNumber} - ${reqCompany}`,

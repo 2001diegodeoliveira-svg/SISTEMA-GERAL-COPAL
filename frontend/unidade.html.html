@@ -1555,15 +1555,14 @@
                     </div>
                     <div class="req-field-group col-span-1">
                         <label>E-mail do Servidor</label>
-                        <input type="email" id="reqRequesterEmail" placeholder="seu.email@empresa.com" required>
+                        <input type="email" id="reqRequesterEmail" placeholder="seu.email@servidor.com" required>
+                        <button type="button" class="btn-add-row" id="btnRequestEmailCode" style="width: fit-content;">Enviar código por e-mail</button>
                     </div>
                     <div class="req-field-group col-span-2" style="display:flex; flex-direction:column; gap: 0.35rem;">
-                        <label>Código do Google Authenticator</label>
-                        <input type="text" id="reqTotpCode" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="000000" style="width: 180px;" required>
-                        <small id="reqTotpHelp" style="color: #334155;">Escaneie o QR Code da unidade no Google Authenticator e informe o código atual.</small>
+                        <label>Código de validação enviado por e-mail</label>
+                        <input type="text" id="reqVerificationCode" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="000000" style="width: 180px;" required>
+                        <small id="reqVerificationHelp" style="color: #334155;">Informe seu e-mail e clique em “Enviar código por e-mail”. O código expira em 15 minutos.</small>
                         <small id="reqLocationHelp" style="color: #334155;">A localização será solicitada ao clicar em Emitir Requisição.</small>
-                        <button type="button" class="btn-add-row" id="btnSetupTotp" style="width: fit-content;">Gerar QR Code do Google Authenticator (ADM)</button>
-                        <div id="totpSetupResult" style="display:none; font-size:0.75rem; color:#334155;"></div>
                     </div>
 
                     <!-- INSTRUÇÕES DE PREENCHIMENTO -->
@@ -2424,36 +2423,33 @@
             populateRequisitionItems();
         });
 
-        document.getElementById('btnSetupTotp').addEventListener('click', async () => {
-            if (!activeUnitCode) {
-                alert('Selecione uma unidade antes de configurar o Google Authenticator.');
+        document.getElementById('btnRequestEmailCode').addEventListener('click', async () => {
+            const requesterName = document.getElementById('reqRequesterName').value.trim();
+            const requesterMatricula = document.getElementById('reqRequesterMatricula').value.trim();
+            const requesterEmail = document.getElementById('reqRequesterEmail').value.trim();
+            const help = document.getElementById('reqVerificationHelp');
+            if (!requesterName || !requesterMatricula || !requesterEmail) {
+                alert('Preencha nome, matrícula e e-mail do servidor antes de solicitar o código.');
                 return;
             }
-            if (!authToken) {
-                pendingAdminAction = 'setup-totp';
-                clearAdminLoginForm();
-                adminLoginModal.classList.add('active');
-                return;
-            }
-            await configureUnitTotp();
-        });
-
-        async function configureUnitTotp() {
+            const button = document.getElementById('btnRequestEmailCode');
+            button.disabled = true;
+            help.innerText = 'Enviando código para o e-mail do servidor...';
             try {
-                const res = await fetch(`/api/units/${encodeURIComponent(activeUnitCode)}/totp`, {
+                const res = await fetch('/api/request-requisition-code', {
                     method: 'POST',
-                    headers: getAuthHeaders(),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ requesterName, requesterMatricula, requesterEmail }),
                 });
                 const data = await res.json();
                 if (!res.ok) {
-                    alert(data.message || 'Não foi possível configurar o autenticador.');
-                    return;
+                    throw new Error(data.message || 'Não foi possível enviar o código.');
                 }
-                const result = document.getElementById('totpSetupResult');
-                result.style.display = 'block';
-                result.innerHTML = `<strong>QR Code da unidade</strong><br>Escaneie com o Google Authenticator. Depois, informe o código de 6 dígitos acima e permita a localização ao emitir.<br><img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data.otpauthUrl)}" alt="QR Code de configuração do Google Authenticator" style="margin-top:0.5rem; width:220px; height:220px; display:block;"><span style="display:block; margin-top:0.4rem;">Chave de recuperação: <strong>${data.secret}</strong></span>`;
+                help.innerText = data.message || 'Código enviado. Verifique o e-mail do servidor.';
             } catch (error) {
-                alert('Erro de conexão ao configurar o autenticador.');
+                help.innerText = error.message || 'Erro de conexão ao enviar o código.';
+            } finally {
+                button.disabled = false;
             }
         }
 
@@ -2463,7 +2459,7 @@
             const requesterName = document.getElementById('reqRequesterName').value.trim();
             const requesterMatricula = document.getElementById('reqRequesterMatricula').value.trim();
             const requesterEmail = document.getElementById('reqRequesterEmail').value.trim();
-            const totpCode = document.getElementById('reqTotpCode').value.trim();
+            const verificationCode = document.getElementById('reqVerificationCode').value.trim();
             const requisitionItems = collectRequisitionItems();
 
             if (!requesterName || !requesterMatricula || !requesterEmail) {
@@ -2471,8 +2467,8 @@
                 return;
             }
 
-            if (!/^\d{6}$/.test(totpCode)) {
-                alert('Informe o código de 6 dígitos do Google Authenticator.');
+            if (!/^\d{6}$/.test(verificationCode)) {
+                alert('Informe o código de 6 dígitos enviado para o e-mail do servidor.');
                 return;
             }
             if (!document.getElementById('reqContractNum').value || !requisitionItems.length) {
@@ -2509,7 +2505,7 @@
             formData.append('reqRequesterName', requesterName);
             formData.append('reqRequesterMatricula', requesterMatricula);
             formData.append('reqRequesterEmail', requesterEmail);
-            formData.append('reqTotpCode', totpCode);
+            formData.append('reqVerificationCode', verificationCode);
             formData.append('reqItems', JSON.stringify(requisitionItems));
             formData.append('reqLatitude', String(signerLocation.latitude));
             formData.append('reqLongitude', String(signerLocation.longitude));
@@ -2546,7 +2542,7 @@
             pendingRequisitionCode = null;
             currentRequesterEmail = '';
             currentRequesterMatricula = '';
-            document.getElementById('reqTotpHelp').innerText = 'Escaneie o QR Code da unidade no Google Authenticator e informe o código atual.';
+            document.getElementById('reqVerificationHelp').innerText = 'Informe seu e-mail e clique em “Enviar código por e-mail”. O código expira em 15 minutos.';
             document.getElementById('reqLocationHelp').innerText = 'A localização será solicitada ao clicar em Emitir Requisição.';
         }
 
@@ -2685,7 +2681,7 @@
                 return;
             }
 
-            if (pendingAdminAction === 'add-unit' || pendingAdminAction === 'setup-totp') {
+            if (pendingAdminAction === 'add-unit') {
                 try {
                     const res = await fetch('/auth/login', {
                         method: 'POST',
@@ -2701,7 +2697,7 @@
 
                     const role = String(data.user?.role || '').toLowerCase();
                     if (role !== 'admin' && role !== 'developer') {
-                        alert('Apenas administradores podem configurar o Google Authenticator ou cadastrar novas unidades.');
+                        alert('Apenas administradores podem cadastrar novas unidades.');
                         return;
                     }
 
@@ -2709,39 +2705,11 @@
                     const adminAction = pendingAdminAction;
 
                     closeAdminLoginModal();
-                    if (adminAction === 'setup-totp') {
-                        await configureUnitTotp();
-                        return;
-                    }
                     modal.classList.add('active');
                     return;
                 } catch (error) {
                     console.error('Erro ao autenticar administrador:', error);
                     alert('Erro de conexão ao servidor. Tente novamente.');
-                    return;
-                }
-            }
-
-            if (pendingAdminAction === 'setup-totp') {
-                try {
-                    const res = await fetch('/auth/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, password })
-                    });
-                    const data = await res.json();
-                    const role = String(data.user?.role || '').toLowerCase();
-                    if (!res.ok || (role !== 'admin' && role !== 'developer')) {
-                        alert(data.message || 'Somente administradores podem configurar o Google Authenticator.');
-                        return;
-                    }
-                    authToken = data.accessToken || '';
-                    closeAdminLoginModal();
-                    await setupUnitTotp();
-                    return;
-                } catch (error) {
-                    console.error('Erro ao autenticar para configurar TOTP:', error);
-                    alert('Erro de conexão ao autenticar o administrador.');
                     return;
                 }
             }
