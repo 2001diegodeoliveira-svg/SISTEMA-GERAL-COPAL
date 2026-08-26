@@ -417,6 +417,31 @@
             padding: 0.5rem 0;
         }
 
+        .contract-home-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin: 0.5rem 0.9rem 0.5rem 0;
+            padding: 0.5rem 0.8rem;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-muted);
+            font: inherit;
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
+        }
+
+        .contract-home-button:hover,
+        .contract-home-button:focus-visible {
+            color: var(--sesp-light-blue);
+            background: rgba(0, 102, 204, 0.06);
+            border-color: rgba(0, 102, 204, 0.18);
+            outline: none;
+        }
+
         .contract-tab-selector-wrap label {
             color: var(--text-muted);
             font-size: 0.7rem;
@@ -427,7 +452,8 @@
         }
 
         .contract-tab-selector {
-            min-width: 0;
+            flex: 1;
+            min-width: 180px;
             padding: 0.5rem 0.7rem;
             border: 1px solid color-mix(in srgb, var(--border-color) 75%, transparent);
             border-radius: 6px;
@@ -443,6 +469,14 @@
             outline: 2px solid rgba(0, 102, 204, 0.14);
             border-color: rgba(0, 102, 204, 0.55);
             box-shadow: 0 2px 8px rgba(15, 44, 89, 0.06);
+        }
+
+        @media (max-width: 600px) {
+            nav.main-nav { padding: 0 0.75rem; }
+            .contract-home-button { margin-right: 0.35rem; padding-inline: 0.55rem; }
+            .contract-home-button i { width: 14px !important; }
+            .contract-tab-selector-wrap { flex: 1; width: auto; }
+            .contract-tab-selector { min-width: 150px; }
         }
 
         /* CONTEÚDO PRINCIPAL E CARDS */
@@ -921,8 +955,11 @@
 
     <!-- NAVEGAÇÃO PRINCIPAL / ABAS -->
     <nav class="main-nav">
+        <button type="button" class="contract-home-button" onclick="window.location.href='home.html.html';">
+            <i data-lucide="home" style="width: 15px;"></i> HOME
+        </button>
         <div class="contract-tab-selector-wrap">
-            <label for="contractTabSelector">HOME</label>
+            <label for="contractTabSelector">Seção</label>
             <select id="contractTabSelector" class="contract-tab-selector" onchange="selectContractTab(this.value)">
                 <option value="tab-cadastro" selected>CADASTRO INICIAL</option>
                 <option value="tab-atualizacoes">ADITIVOS & ATUALIZAÇÕES</option>
