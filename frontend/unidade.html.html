@@ -1441,12 +1441,12 @@
                     
                     <div class="req-field-group col-span-1">
                         <label>Nº Requisição / Ano</label>
-                        <input type="text" id="reqNumberYear" placeholder="Ex: 001/2026" required>
+                        <input type="text" id="reqNumberYear" placeholder="Gerado automaticamente" readonly required>
                     </div>
 
                     <div class="req-field-group col-span-1">
                         <label>Unid. Demandante</label>
-                        <input type="text" id="reqUnitDemand" placeholder="Ex: CBM-MT / 1º BBM" required>
+                        <input type="text" id="reqUnitDemand" placeholder="Preenchida automaticamente" readonly required>
                     </div>
 
                     <div class="req-field-group col-span-1">
@@ -1458,23 +1458,23 @@
 
                     <div class="req-field-group col-span-1">
                         <label>Data da Emissão</label>
-                        <input type="date" id="reqIssueDate" required>
+                        <input type="date" id="reqIssueDate" readonly required>
                     </div>
 
                     <div class="req-field-group col-span-2">
                         <label>Contratada (Razão Social)</label>
-                        <input type="text" id="reqCompany" placeholder="Nome da empresa contratada" required>
+                        <input type="text" id="reqCompany" placeholder="Preenchida pelo contrato" readonly required>
                     </div>
 
                     <div class="req-field-group col-span-1">
                         <label>E-mails da Contratada</label>
-                        <input type="text" id="reqCompanyEmail" placeholder="email1@empresa.com, email2@empresa.com" required>
+                        <input type="text" id="reqCompanyEmail" placeholder="Preenchido pelo contrato" readonly required>
                         <small style="color:#64748b;">Separe vários e-mails por vírgula ou ponto e vírgula. Todos receberão o mesmo modelo e anexo.</small>
                     </div>
 
                     <div class="req-field-group col-span-1">
                         <label>CNPJ da Contratada</label>
-                        <input type="text" id="reqCnpj" placeholder="00.000.000/0001-00" required>
+                        <input type="text" id="reqCnpj" placeholder="Preenchido pelo contrato" readonly required>
                     </div>
 
                     <!-- TABELA DE ITENS DA REQUISIÇÃO -->
@@ -1526,9 +1526,9 @@
                     <!-- TERMO E REGRAS DE ENTREGA -->
                     <div class="col-span-4 req-statement-box">
                         Solicito a entrega do material/prestação do serviço acima descrito, no prazo máximo de 
-                        <input type="number" id="reqDeadlineDays" value="15" style="width: 50px;"> 
+                        <input type="number" id="reqDeadlineDays" value="15" readonly style="width: 50px;"> 
                         dias 
-                        <select id="reqDaysType" style="border: none; border-bottom: 1px solid #334155; background: transparent; font-weight: 700;">
+                        <select id="reqDaysType" disabled style="border: none; border-bottom: 1px solid #334155; background: transparent; font-weight: 700;">
                             <option value="úteis">úteis</option>
                             <option value="corridos">corridos</option>
                         </select>, 
@@ -1959,6 +1959,52 @@
             if ([...select.options].some(option => option.value === current)) select.value = current;
         }
 
+        function getTodayIsoDate() {
+            const today = new Date();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${today.getFullYear()}-${month}-${day}`;
+        }
+
+        function getContractDeliveryType(contract) {
+            const countingType = String(contract?.formaContagem || '').toLowerCase();
+            return countingType.includes('ú') || countingType.includes('ut') ? 'úteis' : 'corridos';
+        }
+
+        async function populateRequisitionContractData() {
+            const contractNumber = document.getElementById('reqContractNum').value;
+            const contract = contractsCache.find(item => item.numContrato === contractNumber);
+            const numberField = document.getElementById('reqNumberYear');
+            const issueDateField = document.getElementById('reqIssueDate');
+            issueDateField.value = getTodayIsoDate();
+
+            if (!contract) {
+                numberField.value = '';
+                document.getElementById('reqCompany').value = '';
+                document.getElementById('reqCompanyEmail').value = '';
+                document.getElementById('reqCnpj').value = '';
+                document.getElementById('reqDeadlineDays').value = '';
+                document.getElementById('reqDaysType').value = 'corridos';
+                return;
+            }
+
+            document.getElementById('reqCompany').value = contract.razaoSocial || contract.nomeFantasia || contract.credor || '';
+            document.getElementById('reqCompanyEmail').value = contract.emailEmpresa || '';
+            document.getElementById('reqCnpj').value = contract.cnpj || '';
+            document.getElementById('reqDeadlineDays').value = contract.prazoEntrega || '';
+            document.getElementById('reqDaysType').value = getContractDeliveryType(contract);
+
+            numberField.value = '';
+            try {
+                const response = await fetch(`/api/requisition-next-number?contract=${encodeURIComponent(contractNumber)}`);
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Não foi possível gerar o número da requisição.');
+                numberField.value = data.number || '';
+            } catch (error) {
+                console.error('Falha ao gerar número da requisição:', error);
+            }
+        }
+
         function populateRequisitionItems() {
             const items = getRequisitionItems();
             const tbody = document.getElementById('reqItemsBody');
@@ -2290,7 +2336,9 @@
             const unitDemandField = document.getElementById('reqUnitDemand');
             if (activeUnitCode) {
                 unitDemandField.value = activeUnitCode;
+                document.getElementById('reqIssueDate').value = getTodayIsoDate();
                 renderRequisitionContracts();
+                populateRequisitionContractData();
                 populateRequisitionItems();
             }
         });
@@ -2371,7 +2419,10 @@
             });
         }
 
-        document.getElementById('reqContractNum').addEventListener('change', populateRequisitionItems);
+        document.getElementById('reqContractNum').addEventListener('change', () => {
+            populateRequisitionContractData();
+            populateRequisitionItems();
+        });
 
         document.getElementById('btnSetupTotp').addEventListener('click', async () => {
             if (!activeUnitCode) {

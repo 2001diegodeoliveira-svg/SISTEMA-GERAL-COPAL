@@ -917,8 +917,21 @@ COPAL SESP`,
   }
 });
 
+app.get('/api/requisition-next-number', async (req, res) => {
+  const contractNumber = String(req.query.contract || '').trim();
+  if (!contractNumber) return res.status(400).json({ message: 'Contrato é obrigatório.' });
+
+  const row = await getQuery(
+    db,
+    'SELECT COUNT(*) AS total FROM requisitions WHERE lower(trim(req_contract_num)) = lower(trim(?))',
+    [contractNumber]
+  );
+  const nextNumber = Number(row?.total || 0) + 1;
+  res.json({ number: `${String(nextNumber).padStart(3, '0')}/${new Date().getFullYear()}` });
+});
+
 app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, res) => {
-  const {
+  let {
     reqNumberYear,
     reqUnitDemand,
     reqContractNum,
@@ -969,12 +982,29 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
     return res.status(400).json({ message: 'Código do Google Authenticator inválido ou unidade sem autenticação configurada.' });
   }
 
-  const contract = await getQuery(contractsDb, 'SELECT numContrato, unidades FROM contracts WHERE lower(trim(numContrato)) = lower(trim(?))', [reqContractNum || '']);
+  const contract = await getQuery(
+    contractsDb,
+    'SELECT numContrato, unidades, razaoSocial, nomeFantasia, credor, emailEmpresa, cnpj, prazoEntrega, formaContagem FROM contracts WHERE lower(trim(numContrato)) = lower(trim(?))',
+    [reqContractNum || '']
+  );
   if (!contract) return res.status(404).json({ message: 'Contrato não encontrado.' });
+  reqCompany = contract.razaoSocial || contract.nomeFantasia || contract.credor || '';
+  reqCompanyEmail = contract.emailEmpresa || '';
+  reqCnpj = contract.cnpj || '';
+  reqDeadlineDays = contract.prazoEntrega || '';
+  reqDaysType = String(contract.formaContagem || '').toLowerCase().includes('ú') || String(contract.formaContagem || '').toLowerCase().includes('ut') ? 'úteis' : 'corridos';
+  reqIssueDate = new Date().toISOString().slice(0, 10);
   const contractUnits = safeJsonParse(contract.unidades, []);
   const unitData = contractUnits.find((entry) => normalizeUnitCodeServer(entry?.unidade || entry) === normalizeUnitCodeServer(reqUnitDemand));
   const allocatedItems = Array.isArray(unitData?.itensDetalhados) ? unitData.itensDetalhados : [];
   if (!unitData || !allocatedItems.length) return res.status(400).json({ message: 'A unidade não possui itens disponíveis neste contrato.' });
+
+  const previousNumberRow = await getQuery(
+    db,
+    'SELECT COUNT(*) AS total FROM requisitions WHERE lower(trim(req_contract_num)) = lower(trim(?))',
+    [reqContractNum || '']
+  );
+  const automaticReqNumber = `${String(Number(previousNumberRow?.total || 0) + 1).padStart(3, '0')}/${new Date().getFullYear()}`;
 
   const previousRows = await db.all('SELECT req_items, req_unit_demand FROM requisitions WHERE lower(trim(req_contract_num)) = lower(trim(?))', [reqContractNum || '']);
   const consumed = {};
@@ -1014,7 +1044,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
   const pdfAttachmentPath = req.file ? req.file.path : '';
   let requisitionRecordId = null;
 
-  const requisitionBody = `Requisição Nº: ${reqNumberYear || 'N/A'}\n` +
+  const requisitionBody = `Requisição Nº: ${automaticReqNumber}\n` +
     `Unidade Demandante: ${reqUnitDemand || 'N/A'}\n` +
     `Contrato Nº: ${reqContractNum || 'N/A'}\n` +
     `Data da Emissão: ${reqIssueDate || 'N/A'}\n` +
@@ -1033,7 +1063,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
 
   const emailHtml = `
     <h2>Requisição de Materiais e/ou Serviços</h2>
-    <p><strong>Requisição Nº:</strong> ${reqNumberYear || 'N/A'}</p>
+    <p><strong>Requisição Nº:</strong> ${automaticReqNumber}</p>
     <p><strong>Unidade Demandante:</strong> ${reqUnitDemand || 'N/A'}</p>
     <p><strong>Contrato Nº:</strong> ${reqContractNum || 'N/A'}</p>
     <p><strong>Data da Emissão:</strong> ${reqIssueDate || 'N/A'}</p>
@@ -1096,7 +1126,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
         signer_location_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?)` ,
       [
-        reqNumberYear || '',
+        automaticReqNumber,
         reqUnitDemand || '',
         reqContractNum || '',
         reqIssueDate || '',
@@ -1115,7 +1145,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
         reqTotpCode || reqVerificationCode || '',
         pdfAttachmentName,
         pdfAttachmentPath,
-        `Requisição ${reqNumberYear || ''} - ${reqCompany}`,
+        `Requisição ${automaticReqNumber} - ${reqCompany}`,
         requisitionBody,
         emailHtml,
         'pending',
@@ -1133,7 +1163,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
 
     await sendEmail({
       to: companyRecipients,
-      subject: `Requisição ${reqNumberYear || ''} - ${reqCompany}`,
+      subject: `Requisição ${automaticReqNumber} - ${reqCompany}`,
       text: requisitionBody,
       html: emailHtml,
       attachments,
@@ -1144,7 +1174,7 @@ app.post('/api/submit-requisition', upload.single('pdfAttachment'), async (req, 
       await runQuery(db, 'UPDATE requisition_codes SET used_at = ? WHERE id = ?', [Date.now(), stored.id]);
     }
 
-    writeAuditLog(req.user?.user_id, 'requisition_submit', 'requisition', requisitionRecordId, { reqNumberYear: reqNumberYear || '', reqCompany: reqCompany || '', reqRequesterName });
+    writeAuditLog(req.user?.user_id, 'requisition_submit', 'requisition', requisitionRecordId, { reqNumberYear: automaticReqNumber, reqCompany: reqCompany || '', reqRequesterName });
     return res.json({ message: 'Requisição validada e enviada para o e-mail da empresa contratada.' });
   } catch (error) {
     console.error('Erro ao enviar requisição para a empresa:', error);
