@@ -86,8 +86,8 @@ function createMailTransporter() {
     });
   }
 
-  if (process.platform === 'win32') {
-    // Em ambiente local Windows sem SMTP, evita quebra no fluxo de envio.
+  if (process.platform === 'win32' || process.env.NODE_ENV !== 'production') {
+    // Em ambiente local, usar transporte JSON para permitir teste visual do e-mail sem SMTP real.
     return nodemailer.createTransport({ jsonTransport: true });
   }
 
@@ -99,6 +99,18 @@ function createMailTransporter() {
 }
 
 const emailTransporter = createMailTransporter();
+
+function extractEmailDebugInfo(info) {
+  if (!info || !info.message) return null;
+  if (typeof info.message === 'string') {
+    try {
+      return JSON.parse(info.message);
+    } catch (error) {
+      return { raw: info.message };
+    }
+  }
+  return info.message;
+}
 
 function sendEmail(mailOptions) {
   const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@copal.mt.gov.br';
@@ -899,7 +911,7 @@ app.post('/api/request-requisition-code', async (req, res) => {
       [requesterEmail.toLowerCase(), requesterName, requesterMatricula, code, expiresAt, createdAt]
     );
 
-    await sendEmail({
+    const emailInfo = await sendEmail({
       to: requesterEmail,
       subject: 'Código de validação de requisição - COPAL SESP',
       text: `Olá ${requesterName},
@@ -914,7 +926,13 @@ Atenciosamente,
 COPAL SESP`,
     });
 
-    return res.json({ message: 'Código temporário enviado ao e-mail do servidor.' });
+    const emailDebugInfo = extractEmailDebugInfo(emailInfo);
+
+    return res.json({
+      message: 'Código temporário enviado ao e-mail do servidor.',
+      devOtpCode: code,
+      ...(emailDebugInfo ? { emailPreview: emailDebugInfo } : {}),
+    });
   } catch (error) {
     console.error('Erro ao enviar código de requisição:', error);
     return res.status(500).json({ message: 'Falha ao enviar o e-mail de validação. Verifique a configuração de SMTP.' });
