@@ -904,6 +904,8 @@ app.post('/api/request-requisition-code', async (req, res) => {
   const expiresAt = Date.now() + 15 * 60 * 1000;
   const createdAt = Date.now();
 
+  const smtpConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+
   try {
     await runQuery(
       db,
@@ -911,10 +913,12 @@ app.post('/api/request-requisition-code', async (req, res) => {
       [requesterEmail.toLowerCase(), requesterName, requesterMatricula, code, expiresAt, createdAt]
     );
 
-    const emailInfo = await sendEmail({
-      to: requesterEmail,
-      subject: 'Código de validação de requisição - COPAL SESP',
-      text: `Olá ${requesterName},
+    if (smtpConfigured) {
+      try {
+        const emailInfo = await sendEmail({
+          to: requesterEmail,
+          subject: 'Código de validação de requisição - COPAL SESP',
+          text: `Olá ${requesterName},
 
 Seu código temporário de validação de requisição é: ${code}
 Matrícula: ${requesterMatricula}
@@ -924,18 +928,30 @@ O código expira em 15 minutos.
 
 Atenciosamente,
 COPAL SESP`,
-    });
+        });
 
-    const emailDebugInfo = extractEmailDebugInfo(emailInfo);
+        const emailDebugInfo = extractEmailDebugInfo(emailInfo);
+
+        return res.json({
+          message: 'Código temporário enviado ao e-mail do servidor.',
+          devOtpCode: code,
+          ...(emailDebugInfo ? { emailPreview: emailDebugInfo } : {}),
+        });
+      } catch (error) {
+        console.error('Erro ao enviar o e-mail de validação; usando fallback de exibição:', error.message);
+      }
+    }
 
     return res.json({
-      message: 'Código temporário enviado ao e-mail do servidor.',
+      message: 'SMTP não configurado. Código de validação exibido abaixo.',
+      code,
       devOtpCode: code,
-      ...(emailDebugInfo ? { emailPreview: emailDebugInfo } : {}),
+      fallback: true,
+      expiresAt,
     });
   } catch (error) {
-    console.error('Erro ao enviar código de requisição:', error);
-    return res.status(500).json({ message: 'Falha ao enviar o e-mail de validação. Verifique a configuração de SMTP.' });
+    console.error('Erro ao gerar código de requisição:', error);
+    return res.status(500).json({ message: 'Falha ao gerar o código de validação. Tente novamente.' });
   }
 });
 

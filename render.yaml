@@ -34,11 +34,11 @@ services:
       - key: SMTP_SECURE
         value: false
       - key: SMTP_USER
-        sync: false
+        value: sespprojeto@gmail.com
       - key: SMTP_PASS
         sync: false
       - key: SMTP_FROM
-        sync: false
+        value: sespprojeto@gmail.com
 
 # Banco PostgreSQL gerenciado pelo Render
 databases:
