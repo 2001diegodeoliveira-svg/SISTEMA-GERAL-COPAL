@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
+const dns = require('dns');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const { createDatabase } = require('./config/database');
@@ -75,6 +76,9 @@ const requisitionCodeStore = {};
 
 function createMailTransporter() {
   if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    const lookup4 = (hostname, options, callback) => {
+      dns.lookup(hostname, { ...options, family: 4 }, callback);
+    };
     return nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT || 587),
@@ -83,7 +87,7 @@ function createMailTransporter() {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
-      family: 4,
+      lookup: lookup4,
       connectionTimeout: 15000,
       greetingTimeout: 15000,
       socketTimeout: 20000,
