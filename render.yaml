@@ -39,6 +39,10 @@ services:
         sync: false
       - key: SMTP_FROM
         value: sespprojeto@gmail.com
+      - key: EMAIL_API_PROVIDER
+        sync: false
+      - key: EMAIL_API_KEY
+        sync: false
 
 # Banco PostgreSQL gerenciado pelo Render
 databases:

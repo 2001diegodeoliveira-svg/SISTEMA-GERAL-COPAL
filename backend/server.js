@@ -120,9 +120,89 @@ function extractEmailDebugInfo(info) {
   return info.message;
 }
 
-function sendEmail(mailOptions) {
+async function sendEmail(mailOptions) {
   const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@copal.mt.gov.br';
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    return emailTransporter.sendMail({ from: fromAddress, ...mailOptions });
+  }
+  if (process.env.EMAIL_API_PROVIDER && process.env.EMAIL_API_KEY) {
+    return sendEmailViaApi(mailOptions);
+  }
   return emailTransporter.sendMail({ from: fromAddress, ...mailOptions });
+}
+
+function emailDeliveryConfigured() {
+  const smtpConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+  const apiConfigured = Boolean(process.env.EMAIL_API_PROVIDER && process.env.EMAIL_API_KEY);
+  return smtpConfigured || apiConfigured;
+}
+
+function httpsPostJson(url, headers, body) {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify(body);
+    const req = require('https').request(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+        ...headers,
+      },
+      timeout: 20000,
+    }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve({ statusCode: res.statusCode, body: data });
+        } else {
+          reject(new Error(`API de e-mail respondeu HTTP ${res.statusCode}: ${data.slice(0, 300)}`));
+        }
+      });
+    });
+    req.on('timeout', () => { req.destroy(new Error('Timeout ao chamar a API de e-mail')); });
+    req.on('error', reject);
+    req.write(payload);
+    req.end();
+  });
+}
+
+async function sendEmailViaApi(mailOptions) {
+  const provider = String(process.env.EMAIL_API_PROVIDER || '').toLowerCase();
+  const apiKey = process.env.EMAIL_API_KEY;
+  const fromAddress = process.env.SMTP_FROM || process.env.EMAIL_FROM || 'no-reply@copal.mt.gov.br';
+  const recipients = parseEmailRecipients(String(mailOptions.to || ''));
+
+  if (!recipients.length) {
+    throw new Error('Nenhum destinatário de e-mail válido informado.');
+  }
+
+  if (provider === 'resend') {
+    const resp = await httpsPostJson('https://api.resend.com/emails', {
+      Authorization: `Bearer ${apiKey}`,
+    }, {
+      from: fromAddress,
+      to: recipients,
+      subject: mailOptions.subject,
+      text: mailOptions.text || mailOptions.html || '',
+    });
+    return { messageId: `${Date.now()}@resend`, message: resp.body };
+  }
+
+  if (provider === 'brevo') {
+    const resp = await httpsPostJson('https://api.brevo.com/v3/smtp/email', {
+      'api-key': apiKey,
+      Accept: 'application/json',
+    }, {
+      sender: { name: 'COPAL SESP', email: fromAddress },
+      to: recipients.map((email) => ({ email })),
+      subject: mailOptions.subject,
+      textContent: mailOptions.text || '',
+      htmlContent: mailOptions.html || undefined,
+    });
+    return { messageId: `${Date.now()}@brevo`, message: resp.body };
+  }
+
+  throw new Error(`Provedor de e-mail não suportado: ${provider || '(vazio)'}`);
 }
 
 function parseEmailRecipients(value) {
@@ -912,7 +992,7 @@ app.post('/api/request-requisition-code', async (req, res) => {
   const expiresAt = Date.now() + 15 * 60 * 1000;
   const createdAt = Date.now();
 
-  const smtpConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+  const emailConfigured = emailDeliveryConfigured();
 
   try {
     await runQuery(
@@ -921,7 +1001,7 @@ app.post('/api/request-requisition-code', async (req, res) => {
       [requesterEmail.toLowerCase(), requesterName, requesterMatricula, code, expiresAt, createdAt]
     );
 
-    if (smtpConfigured) {
+    if (emailConfigured) {
       try {
         const emailInfo = await sendEmail({
           to: requesterEmail,
