@@ -1031,7 +1031,7 @@ COPAL SESP`,
     }
 
     return res.json({
-      message: 'SMTP não configurado. Código de validação exibido abaixo.',
+      message: 'Envio de e-mail indisponível no momento. Código de validação exibido abaixo.',
       code,
       devOtpCode: code,
       fallback: true,
