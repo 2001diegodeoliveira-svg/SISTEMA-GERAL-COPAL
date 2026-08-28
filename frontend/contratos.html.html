@@ -1144,7 +1144,11 @@
                     </div>
                     <div class="form-group">
                         <label for="valorGlobal">Valor Global (R$) *</label>
-                        <input type="text" id="valorGlobal" oninput="maskMoney(this)" placeholder="R$ 0,00" required>
+                        <input type="text" id="valorGlobal" oninput="maskMoney(this); validarSomaItensVsValorGlobal()" placeholder="R$ 0,00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="somaTotalItens">Soma Total dos Itens (R$) *</label>
+                        <input type="text" id="somaTotalItens" readonly placeholder="R$ 0,00" style="font-weight: 700; background-color: rgba(0,0,0,0.03);">
                     </div>
                     <div class="form-group">
                         <label for="dtInicial">Data Inicial Vigência *</label>
@@ -1225,6 +1229,8 @@
                                 <i data-lucide="plus" style="width:14px;"></i> + ADICIONAR TABELA / LINHA DE LOTE
                             </button>
                         </div>
+                        <div id="alertaValorGlobal" class="info-box" style="display:none; margin-top: 12px; background: #fef2f2; border-color: #fca5a5; color: #b91c1c;"></div>
+                        <div id="somaTotalItensOk" class="info-box" style="display:none; margin-top: 12px; background: #f0fdf4; border-color: #86efac; color: #166534;"></div>
                     </div>
 
                     <div class="form-group full-width" style="border-top: 1px dashed var(--border-color); padding-top: 15px; margin-top: 10px;">
@@ -2649,6 +2655,7 @@
 
             lucide.createIcons();
             atualizarSelectsLotesUnidades();
+            atualizarSomaTotalItens();
         }
 
         function rebuildContractUnits(contractUnits = []) {
@@ -3301,6 +3308,8 @@ if (content) content.style.display = shouldShow ? '' : 'none';
             document.addEventListener('input', (event) => {
                 enforceUppercaseValue(event.target);
             });
+
+            if (typeof atualizarSomaTotalItens === 'function') atualizarSomaTotalItens();
         });
 
         /* ==========================================================================
@@ -3739,6 +3748,7 @@ if (content) content.style.display = shouldShow ? '' : 'none';
             const total = qtd * vUnit;
             tr.querySelector('.lote-vtotal').value = formatMoney(total);
             atualizarSelectsLotesUnidades();
+            atualizarSomaTotalItens();
         }
 
         async function buscarItemSiag(inputElement) {
@@ -3907,6 +3917,7 @@ if (content) content.style.display = shouldShow ? '' : 'none';
             tbody.appendChild(tr);
             lucide.createIcons();
             atualizarSelectsLotesUnidades();
+            atualizarSomaTotalItens();
         }
 
         function removerLinhaLote(btn) {
@@ -3915,9 +3926,57 @@ if (content) content.style.display = shouldShow ? '' : 'none';
             if (tbody.querySelectorAll('tr').length > 1) {
                 tr.remove();
                 atualizarSelectsLotesUnidades();
+                atualizarSomaTotalItens();
             } else {
                 alert('A tabela deve conter ao menos uma linha de lote/item!');
             }
+        }
+
+        // SOMA TOTAL DOS ITENS DO CONTRATO vs VALOR GLOBAL
+        function getSomaTotalItensContrato() {
+            let total = 0;
+            document.querySelectorAll('#tbody-lotes-contrato tr').forEach(row => {
+                const vTotal = row.querySelector('.lote-vtotal')?.value;
+                total += parseMoney(vTotal);
+            });
+            return total;
+        }
+
+        function atualizarSomaTotalItens() {
+            const campo = document.getElementById('somaTotalItens');
+            if (campo) campo.value = formatMoney(getSomaTotalItensContrato());
+            validarSomaItensVsValorGlobal();
+        }
+
+        function validarSomaItensVsValorGlobal() {
+            const valorGlobalInput = document.getElementById('valorGlobal');
+            const alerta = document.getElementById('alertaValorGlobal');
+            const okBox = document.getElementById('somaTotalItensOk');
+            if (!valorGlobalInput || !alerta) return;
+
+            const somaItens = getSomaTotalItensContrato();
+            const valorGlobal = parseMoney(valorGlobalInput.value);
+
+            if (valorGlobal > 0 && somaItens > valorGlobal) {
+                const excedente = somaItens - valorGlobal;
+                alerta.innerHTML = `<strong>ATENÇÃO:</strong> A soma total dos itens (R$ ${formatMoney(somaItens)}) ULTRAPASSA o Valor Global do contrato (R$ ${formatMoney(valorGlobal)}).<br>O excedente é de R$ ${formatMoney(excedente)} — ajuste os valores dos itens ou do Valor Global antes de salvar.`;
+                alerta.style.display = 'block';
+                if (okBox) okBox.style.display = 'none';
+                valorGlobalInput.style.borderColor = '#ef4444';
+                return false;
+            }
+
+            alerta.style.display = 'none';
+            if (okBox) {
+                if (somaItens > 0) {
+                    okBox.innerHTML = `<strong>OK:</strong> Soma total dos itens (R$ ${formatMoney(somaItens)}) está dentro do Valor Global${valorGlobal > 0 ? ' (R$ ' + formatMoney(valorGlobal) + ')' : ''}.`;
+                    okBox.style.display = 'block';
+                } else {
+                    okBox.style.display = 'none';
+                }
+            }
+            valorGlobalInput.style.borderColor = '';
+            return true;
         }
 
         // CÁLCULO E MANIPULAÇÃO DOS ITENS DA UNIDADE (MODIFICADO SEGUNDO SOLICITAÇÃO)
@@ -4099,6 +4158,14 @@ if (content) content.style.display = shouldShow ? '' : 'none';
         function salvarEtapa01a05() {
             const num = normalizeContractNumber(document.getElementById('numContrato').value);
             if(!num) { alert('Informe o número do contrato!'); return; }
+
+            // VALIDAÇÃO: SOMA DOS ITENS NÃO PODE ULTRAPASSAR O VALOR GLOBAL
+            if (typeof validarSomaItensVsValorGlobal === 'function' && !validarSomaItensVsValorGlobal()) {
+                alert('Não é possível salvar: a soma total dos itens ultrapassa o Valor Global do contrato. Ajuste os valores antes de prosseguir.');
+                const alertaEl = document.getElementById('alertaValorGlobal');
+                if (alertaEl) alertaEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
 
             const fileInput = document.getElementById('anexoContrato');
             let nomeAnexo = fileInput.files.length > 0 ? fileInput.files[0].name : null;
