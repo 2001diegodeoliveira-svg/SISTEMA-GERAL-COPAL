@@ -8,8 +8,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     :root {
       --bg: #0b1120;
@@ -349,7 +347,7 @@
 
     .middle {
       display: grid;
-      grid-template-columns: 1.3fr 1fr 0.9fr;
+      grid-template-columns: 1fr;
       gap: 10px;
     }
 
@@ -399,6 +397,50 @@
 
     .badge.ok { border-color: rgba(41, 232, 158, 0.5); color: #9fffd9; background: rgba(41, 232, 158, 0.12); }
     .badge.warn { border-color: rgba(246, 200, 95, 0.5); color: #ffe9a8; background: rgba(246, 200, 95, 0.12); }
+
+    .panel-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .auto-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1px solid rgba(46, 242, 255, 0.5);
+      background: rgba(8, 20, 38, 0.8);
+      color: var(--cyan);
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .auto-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 16px rgba(46, 242, 255, 0.4);
+    }
+
+    .auto-btn.active {
+      background: rgba(41, 232, 158, 0.2);
+      border-color: rgba(41, 232, 158, 0.65);
+      color: #9fffd9;
+      box-shadow: 0 0 16px rgba(41, 232, 158, 0.4);
+      animation: microPulse 1.6s ease-in-out infinite;
+    }
+
+    .auto-btn svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .select-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
     .badge.danger { border-color: rgba(255, 95, 122, 0.5); color: #ffc0cb; background: rgba(255, 95, 122, 0.14); }
 
     .select-contract {
@@ -507,46 +549,6 @@
       background: linear-gradient(90deg, var(--blue), var(--cyan), var(--green));
     }
 
-    #map {
-      height: 242px;
-      border-radius: 12px;
-      border: 1px solid rgba(121, 174, 232, 0.26);
-      overflow: hidden;
-      position: relative;
-      z-index: 0;
-      background: linear-gradient(160deg, #091221, #0b1a31);
-    }
-
-    .map-fallback {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      color: #b2cbe7;
-      font-size: 13px;
-      padding: 16px;
-      background:
-        radial-gradient(circle at 30% 40%, rgba(46, 242, 255, 0.1), transparent 50%),
-        linear-gradient(160deg, #091221, #0b1a31);
-    }
-
-    .map-address {
-      margin-top: 8px;
-      padding: 8px 10px;
-      border-radius: 10px;
-      border: 1px solid rgba(120, 170, 227, 0.24);
-      background: rgba(8, 14, 27, 0.72);
-      font-size: 11.5px;
-      color: #bcd4ee;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .map-address svg { width: 15px; height: 15px; color: var(--cyan); flex-shrink: 0; }
-
-    .activities,
     .alerts-list {
       display: grid;
       gap: 8px;
@@ -583,92 +585,9 @@
 
     .bottom {
       display: grid;
-      grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr 1fr;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
       gap: 10px;
       align-items: start;
-    }
-
-    .monitor-table {
-      max-height: 262px;
-      overflow: auto;
-      border: 1px solid rgba(115, 165, 224, 0.2);
-      border-radius: 10px;
-    }
-
-    .monitor-table table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 11px;
-    }
-
-    .monitor-table th,
-    .monitor-table td {
-      text-align: left;
-      padding: 7px 8px;
-      border-bottom: 1px solid rgba(107, 158, 213, 0.2);
-      white-space: nowrap;
-    }
-
-    .monitor-table th {
-      position: sticky;
-      top: 0;
-      z-index: 1;
-      background: rgba(8, 15, 30, 0.95);
-      color: #9ec2e4;
-      font-family: "Rajdhani", sans-serif;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      font-size: 11px;
-    }
-
-    .person {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-
-    .avatar {
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      border: 1px solid rgba(152, 208, 255, 0.5);
-      display: grid;
-      place-items: center;
-      background: linear-gradient(145deg, rgba(66, 146, 255, 0.4), rgba(142, 96, 252, 0.3));
-      font-family: "Rajdhani", sans-serif;
-      font-size: 12px;
-      font-weight: 700;
-      color: #dcefff;
-      flex-shrink: 0;
-    }
-
-    .status {
-      font-size: 10px;
-      border-radius: 999px;
-      padding: 3px 8px;
-      font-weight: 700;
-      display: inline-block;
-    }
-
-    .online { background: rgba(41, 232, 158, 0.2); color: #a4ffd8; }
-    .away { background: rgba(255, 140, 77, 0.22); color: #ffd3b2; }
-    .offline { background: rgba(111, 135, 168, 0.22); color: #b7c6da; }
-
-    .bar {
-      height: 6px;
-      border-radius: 999px;
-      background: rgba(92, 134, 182, 0.25);
-      overflow: hidden;
-      min-width: 92px;
-    }
-
-    .bar i {
-      display: block;
-      height: 100%;
-      width: var(--p, 0%);
-      background: linear-gradient(90deg, #19c47c, #2ef2ff);
-      box-shadow: 0 0 10px rgba(46, 242, 255, 0.46);
-      animation: barPulse 2.7s ease-in-out infinite;
     }
 
     .kpi:nth-child(2) { animation-delay: 0.18s; }
@@ -758,17 +677,13 @@
     }
 
     .scrollable::-webkit-scrollbar,
-    .activities::-webkit-scrollbar,
-    .alerts-list::-webkit-scrollbar,
-    .monitor-table::-webkit-scrollbar {
+    .alerts-list::-webkit-scrollbar {
       width: 8px;
       height: 8px;
     }
 
     .scrollable::-webkit-scrollbar-thumb,
-    .activities::-webkit-scrollbar-thumb,
-    .alerts-list::-webkit-scrollbar-thumb,
-    .monitor-table::-webkit-scrollbar-thumb {
+    .alerts-list::-webkit-scrollbar-thumb {
       border-radius: 999px;
       background: linear-gradient(180deg, rgba(62, 167, 255, 0.7), rgba(46, 242, 255, 0.5));
     }
@@ -797,7 +712,6 @@
     @media (max-width: 1680px) {
       .kpis { grid-template-columns: repeat(4, minmax(120px, 1fr)); }
       .bottom { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .monitor-large { grid-column: span 2; }
     }
 
     @media (max-width: 1180px) {
@@ -805,7 +719,6 @@
       .home-cta { border-left: 0; padding-left: 0; }
       .middle { grid-template-columns: 1fr; }
       .bottom { grid-template-columns: 1fr 1fr; }
-      .monitor-large { grid-column: span 2; }
       .flow-track { grid-template-columns: repeat(4, 1fr); row-gap: 14px; }
       .flow-step:not(:last-child)::after { display: none; }
     }
@@ -815,7 +728,6 @@
       .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .header-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .bottom { grid-template-columns: 1fr; }
-      .monitor-large { grid-column: span 1; }
       .contract-grid { grid-template-columns: 1fr; }
       .fact-wide { grid-column: span 1; }
       .brand h1 { font-size: 26px; }
@@ -838,7 +750,6 @@
       <div class="header-meta">
         <div class="meta-item"><span>Sincronização</span><b class="conn-status" id="syncStatus"><span class="conn-dot"></span> Conectado</b></div>
         <div class="meta-item"><span>Última atualização</span><b id="clock" style="font-size:18px">--/--/---- --:--:--</b></div>
-        <div class="meta-item"><span>Usuários ativos</span><b id="onlineUsers" style="color:#66d1ff">0</b></div>
         <div class="meta-item"><span>Contratos em alerta</span><b id="criticalAlerts" style="color:#6f87a8">0</b></div>
       </div>
 
@@ -853,12 +764,20 @@
       <article class="panel glass">
         <div class="panel-hd">
           <h3><i data-lucide="route"></i> Fluxo de Contrato - Tempo Real</h3>
-          <span class="badge">pipeline ativo</span>
+          <div class="panel-actions">
+            <span class="badge" id="autoBadge">pipeline ativo</span>
+            <button class="auto-btn" id="autoBtn" onclick="toggleAutoCycle()" title="Alternar contratos automaticamente" aria-label="Alternar contratos automaticamente">
+              <i data-lucide="play"></i>
+            </button>
+          </div>
         </div>
         <div id="flowTrack" class="flow-track"></div>
         <div class="panel-hd" style="margin-top:8px">
           <h3><i data-lucide="file-text"></i> Contrato Selecionado</h3>
-          <span class="badge" id="contractBadge">sem dados</span>
+          <div class="panel-actions">
+            <span class="badge" id="contractBadge">sem dados</span>
+            <span class="badge select-badge"><i data-lucide="repeat" style="width:12px;height:12px"></i> <span id="autoCounter">1 de 1</span></span>
+          </div>
         </div>
         <select class="select-contract" id="contractSelect" onchange="onSelectContract(this.value)"></select>
         <div class="contract-grid" id="contractGrid">
@@ -874,50 +793,9 @@
           </div>
         </div>
       </article>
-
-      <article class="panel glass">
-        <div class="panel-hd">
-          <h3><i data-lucide="map-pin"></i> Localização da Empresa</h3>
-          <span class="badge" id="mapBadge">CEP: ---</span>
-        </div>
-        <div id="map">
-          <div class="map-fallback" id="mapFallback">Carregando mapa...</div>
-        </div>
-        <div class="map-address" id="mapAddress"><i data-lucide="building-2"></i> <span>Nenhum endereço cadastrado.</span></div>
-      </article>
-
-      <article class="panel glass">
-        <div class="panel-hd">
-          <h3><i data-lucide="activity"></i> Atividades Recentes</h3>
-          <span class="badge">tempo real</span>
-        </div>
-        <div class="activities scrollable" id="activities"></div>
-      </article>
     </section>
 
     <section class="bottom">
-      <article class="panel glass monitor-large">
-        <div class="panel-hd">
-          <h3><i data-lucide="users"></i> Monitoramento de Usuários</h3>
-          <span class="badge">lista completa</span>
-        </div>
-        <div class="monitor-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Função</th>
-                <th>Status</th>
-                <th>Atividade Atual</th>
-                <th>Tempo Online</th>
-                <th>Online</th>
-              </tr>
-            </thead>
-            <tbody id="employeesTable"></tbody>
-          </table>
-        </div>
-      </article>
-
       <article class="panel glass">
         <div class="panel-hd">
           <h3><i data-lucide="bell-ring"></i> Alertas e Notificações</h3>
@@ -969,12 +847,10 @@
   <script>
     const STATE = {
       contratos: [],
-      funcionarios: [],
-      activities: [],
       selectedNum: '',
       chartInstances: {},
-      map: null,
-      mapMarker: null,
+      autoCycle: false,
+      autoTimer: null,
     };
 
     function refreshIcons(root) {
@@ -1093,22 +969,6 @@
       return '#29e89e';
     }
 
-    function getAddressParts(contract) {
-      return [
-        contract?.logradouro,
-        contract?.numEndereco,
-        contract?.bairro,
-        contract?.cidade,
-        contract?.uf,
-        contract?.cep
-      ].map((item) => String(item || '').trim()).filter(Boolean);
-    }
-
-    function getAddressText(contract) {
-      const parts = getAddressParts(contract);
-      return parts.length ? parts.join(', ') : '-';
-    }
-
     function getUnitEntries(contract) {
       return Array.isArray(contract?.unidades) ? contract.unidades : [];
     }
@@ -1119,18 +979,6 @@
 
     function getAllUnitNames(contratos) {
       return Array.from(new Set(contratos.flatMap((contract) => getUnitEntries(contract).map((entry) => getUnitName(entry)).filter(Boolean)))).sort((a, b) => a.localeCompare(b));
-    }
-
-    function formatTempo(segundos) {
-      const mm = Math.floor(segundos / 60).toString().padStart(2, "0");
-      const ss = Math.floor(segundos % 60).toString().padStart(2, "0");
-      return `${mm}:${ss}`;
-    }
-
-    function formatHora(value) {
-      const parsed = new Date(value);
-      if (Number.isNaN(parsed.getTime())) return '--:--:--';
-      return parsed.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
 
     function clearCharts() {
@@ -1257,7 +1105,6 @@
         document.getElementById("contractBadge").className = 'badge';
         document.getElementById("contractGrid").innerHTML = '<div class="no-data" style="grid-column:span 2">Nenhum contrato cadastrado no sistema.</div>';
         renderFlow({});
-        renderMapForContract(null);
         return;
       }
 
@@ -1297,95 +1144,13 @@
       `;
 
       renderFlow(contract);
-      renderMapForContract(contract);
-    }
 
-    function renderMapForContract(contract) {
-      const fallback = document.getElementById("mapFallback");
-      const addressEl = document.getElementById("mapAddress");
-      const badgeEl = document.getElementById("mapBadge");
-
-      if (!contract) {
-        badgeEl.textContent = 'CEP: ---';
-        addressEl.innerHTML = '<i data-lucide="building-2"></i> <span>Nenhum endereço cadastrado para o contrato selecionado.</span>';
-        fallback.textContent = 'Sem endereço para exibir.';
-        refreshIcons(addressEl);
-        if (STATE.map) {
-          STATE.map.remove();
-          STATE.map = null;
-          STATE.mapMarker = null;
-        }
-        return;
+      const currentIdx = STATE.contratos.findIndex((c) => getContractNumber(c) === STATE.selectedNum);
+      const counterEl = document.getElementById("autoCounter");
+      if (counterEl) {
+        const displayIdx = currentIdx >= 0 ? currentIdx + 1 : 1;
+        counterEl.textContent = `${displayIdx} de ${STATE.contratos.length}`;
       }
-
-      const cep = contract?.cep || '';
-      badgeEl.textContent = cep ? `CEP: ${cep}` : 'CEP: ---';
-      addressEl.innerHTML = `<i data-lucide="building-2"></i> <span>${escapeHtml(getAddressText(contract))}</span>`;
-      refreshIcons(addressEl);
-
-      const address = getAddressText(contract);
-      if (address === '-') {
-        fallback.textContent = 'Sem endereço cadastrado para este contrato.';
-        if (STATE.map) {
-          STATE.map.remove();
-          STATE.map = null;
-          STATE.mapMarker = null;
-        }
-        return;
-      }
-
-      fallback.textContent = 'Localizando endereço no mapa...';
-
-      const query = encodeURIComponent(address + ', Brasil');
-      fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`)
-        .then((response) => response.json())
-        .then((results) => {
-          if (!Array.isArray(results) || !results.length) {
-            fallback.textContent = 'Não foi possível localizar o endereço no mapa.';
-            return;
-          }
-          const lat = Number(results[0].lat);
-          const lon = Number(results[0].lon);
-
-          if (!STATE.map) {
-            STATE.map = L.map('map').setView([lat, lon], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              maxZoom: 19,
-              attribution: '&copy; OpenStreetMap'
-            }).addTo(STATE.map);
-          } else {
-            STATE.map.setView([lat, lon], 15);
-          }
-
-          if (STATE.mapMarker) STATE.map.removeLayer(STATE.mapMarker);
-          STATE.mapMarker = L.circleMarker([lat, lon], {
-            radius: 9,
-            color: '#2ef2ff',
-            weight: 2,
-            fillColor: '#0c5673',
-            fillOpacity: 0.9,
-          }).addTo(STATE.map);
-          STATE.mapMarker.bindPopup(escapeHtml(getCompanyName(contract)));
-          fallback.style.display = 'none';
-        })
-        .catch(() => {
-          fallback.textContent = 'Falha ao carregar o mapa. Tente novamente em instantes.';
-        });
-    }
-
-    function renderActivities() {
-      const host = document.getElementById("activities");
-      if (!STATE.activities.length) {
-        host.innerHTML = '<div class="item"><b>Sem atividades</b><div>Ainda não há registros de ações no sistema.</div><small>--</small></div>';
-        return;
-      }
-      host.innerHTML = STATE.activities.map((item) => `
-        <div class="item">
-          <b>${escapeHtml(item?.userName || 'Sistema')} — ${escapeHtml(item?.descricao || item?.action || '')}</b>
-          <div>${escapeHtml(item?.unidade || 'Todas as unidades')}</div>
-          <small>${formatHora(item?.created_at)}</small>
-        </div>
-      `).join("");
     }
 
     function renderAlerts() {
@@ -1435,44 +1200,6 @@
         </div>
       `).join("");
       refreshIcons(host);
-    }
-
-    function renderEmployees() {
-      const list = Array.isArray(STATE.funcionarios) ? STATE.funcionarios : [];
-      const host = document.getElementById("employeesTable");
-
-      if (!list.length) {
-        host.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#6f87a8; padding:24px;">Nenhum usuário cadastrado no sistema.</td></tr>';
-      } else {
-        const sorted = [...list].sort((a, b) => (a.status === 'Online' ? -1 : 1) - (b.status === 'Online' ? -1 : 1));
-        host.innerHTML = sorted.map((pessoa, index) => {
-          const statusClass = pessoa.status === "Online" ? "online" : (pessoa.status === 'Ausente' || pessoa.status === 'Away' ? "away" : "offline");
-          const delay = `${(index % 5) * 0.18}s`;
-          const atividade = pessoa.atividade || pessoa.atividadeAtual || 'Sem atividades recentes';
-          const unidade = pessoa.unidade || '';
-          const initials = escapeHtml(String(pessoa.nome || '?').trim().split(/\s+/).map((p) => p[0] || '').join('').slice(0, 2).toUpperCase());
-          return `
-            <tr>
-              <td>
-                <div class="person">
-                  <div class="avatar">${initials}</div>
-                  <span>${escapeHtml(pessoa.nome)}${unidade ? `<small style="display:block;color:#6f87a8;font-size:11px">${escapeHtml(unidade)}</small>` : ''}</span>
-                </div>
-              </td>
-              <td>${escapeHtml(pessoa.funcao)}</td>
-              <td><span class="status ${statusClass}">${escapeHtml(pessoa.status)}</span></td>
-              <td>${escapeHtml(atividade)}</td>
-              <td>${formatTempo(pessoa.tempoOnlineSeg)}</td>
-              <td><div class="bar"><i style="--p:${Math.max(0, Math.min(100, pessoa.online || 0))}%;animation-delay:${delay}"></i></div></td>
-            </tr>
-          `;
-        }).join("");
-      }
-
-      const onlineCount = list.filter((f) => f.status === 'Online').length;
-      const onlineEl = document.getElementById("onlineUsers");
-      onlineEl.textContent = String(onlineCount);
-      onlineEl.style.color = onlineCount > 0 ? "#66d1ff" : "#6f87a8";
     }
 
     function renderCharts() {
@@ -1617,15 +1344,9 @@
     }
 
     async function loadAll() {
-      const [contractsData, funcionarios, activitiesData] = await Promise.all([
-        safeApi('/api/contracts', { contracts: [] }),
-        safeApi('/api/funcionarios', []),
-        safeApi('/api/activities', { activities: [] }),
-      ]);
+      const contractsData = await safeApi('/api/contracts', { contracts: [] });
 
       STATE.contratos = Array.isArray(contractsData?.contracts) ? contractsData.contracts : [];
-      STATE.funcionarios = Array.isArray(funcionarios) ? funcionarios : [];
-      STATE.activities = Array.isArray(activitiesData?.activities) ? activitiesData.activities : [];
 
       if (!STATE.selectedNum && STATE.contratos.length) {
         STATE.selectedNum = getContractNumber(STATE.contratos[0]);
@@ -1633,8 +1354,6 @@
 
       renderKpis();
       renderSelectedContract();
-      renderActivities();
-      renderEmployees();
       renderAlerts();
       renderCharts();
     }
@@ -1646,6 +1365,39 @@
     }
 
     window.onSelectContract = onSelectContract;
+
+    function stepContract() {
+      if (!STATE.contratos.length) return;
+      const currentIdx = Math.max(STATE.contratos.findIndex((c) => getContractNumber(c) === STATE.selectedNum), 0);
+      const next = (currentIdx + 1) % STATE.contratos.length;
+      STATE.selectedNum = getContractNumber(STATE.contratos[next]);
+      renderSelectedContract();
+      renderAlerts();
+    }
+
+    function toggleAutoCycle() {
+      STATE.autoCycle = !STATE.autoCycle;
+      const btn = document.getElementById("autoBtn");
+      const badge = document.getElementById("autoBadge");
+
+      if (STATE.autoCycle) {
+        if (STATE.autoTimer) clearInterval(STATE.autoTimer);
+        STATE.autoTimer = setInterval(stepContract, 4000);
+        btn.classList.add("active");
+        btn.innerHTML = '<i data-lucide="pause"></i>';
+        badge.textContent = 'alternando automaticamente';
+      } else {
+        if (STATE.autoTimer) clearInterval(STATE.autoTimer);
+        STATE.autoTimer = null;
+        btn.classList.remove("active");
+        btn.innerHTML = '<i data-lucide="play"></i>';
+        badge.textContent = 'pipeline ativo';
+      }
+      refreshIcons(btn);
+      refreshIcons(badge);
+    }
+
+    window.toggleAutoCycle = toggleAutoCycle;
 
     async function bootstrap() {
       document.getElementById("clock").textContent = new Date().toLocaleString("pt-BR");
