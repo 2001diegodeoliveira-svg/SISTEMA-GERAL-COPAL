@@ -921,6 +921,51 @@
                     .replace(/"/g, '&quot;')
                     .replace(/'/g, '&#39;');
             },
+            normalizeSearchText(value) {
+                return String(value || '')
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-z0-9\s/]/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+            },
+            getSearchableText(contract) {
+                const contractObj = contract || {};
+                const units = this.getUnitEntries(contractObj).map((entry) => this.getUnitName(entry)).filter(Boolean).join(' ');
+                const lotes = (Array.isArray(contractObj.lotes) ? contractObj.lotes : [])
+                    .map((lote) => `${String(lote?.lote || '')} ${String(lote?.descricao || '')}`).join(' ');
+                const aditivos = (Array.isArray(contractObj.aditivos) ? contractObj.aditivos : [])
+                    .flatMap((aditivo) => [String(aditivo?.numero || ''), String(aditivo?.numeroAditivo || ''), String(aditivo?.objeto || ''), String(aditivo?.descricao || '')]).join(' ');
+                const empenhos = (Array.isArray(contractObj.empenhos) ? contractObj.empenhos : [])
+                    .flatMap((e) => [String(e?.numero || ''), String(e?.numEmpenho || ''), String(e?.notaEmpenho || ''), String(e?.objeto || ''), String(e?.descricao || '')]).join(' ');
+                return this.normalizeSearchText([
+                    contractObj.numContrato,
+                    contractObj.numProcesso,
+                    contractObj.processo,
+                    contractObj.credor,
+                    contractObj.razaoSocial,
+                    contractObj.nomeFantasia,
+                    contractObj.nomeEmpresa,
+                    contractObj.cnpj,
+                    contractObj.objeto,
+                    contractObj.cidade,
+                    contractObj.bairro,
+                    contractObj.logradouro,
+                    contractObj.uf,
+                    contractObj.status,
+                    contractObj.emailEmpresa,
+                    contractObj.telefoneFixo,
+                    contractObj.telefoneWhatsapp,
+                    units,
+                    lotes,
+                    aditivos,
+                    empenhos
+                ].join(' '));
+            },
+            getCompactDigits(value) {
+                return String(value || '').replace(/\D/g, '');
+            },
             parseMoney(value) {
                 if (typeof value === 'number') return value;
                 const text = String(value || '').trim();
@@ -1865,7 +1910,23 @@
                     return;
                 }
 
-                const resultados = dashboardState.contratos.filter((contract) => JSON.stringify(contract).toLowerCase().includes(term));
+                const termNormalized = utils.normalizeSearchText(term);
+                const termDigits = utils.getCompactDigits(termNormalized);
+                const hasNumberCriteria = termDigits.length >= 8;
+                const termTokens = termNormalized.split(' ').filter(Boolean);
+
+                const resultados = dashboardState.contratos.filter((contract) => {
+                    const searchable = utils.getSearchableText(contract);
+                    if (hasNumberCriteria && termDigits.length >= 14) {
+                        const contractCnpjDigits = utils.getCompactDigits(contract?.cnpj || '');
+                        if (contractCnpjDigits.includes(termDigits)) return true;
+                    }
+                    if (hasNumberCriteria) {
+                        const processDigits = utils.getCompactDigits([contract?.numContrato, contract?.numProcesso, contract?.processo].join(' '));
+                        if (processDigits.includes(termDigits)) return true;
+                    }
+                    return termTokens.every((token) => searchable.includes(token));
+                });
                 if (!resultados.length) {
                     resultsContainer.innerHTML = '<div class="empty-state"><i data-lucide="search-x"></i><br>Nenhum contrato corresponde ao termo pesquisado.</div>';
                     if (detailsPanel) detailsPanel.style.display = 'none';
