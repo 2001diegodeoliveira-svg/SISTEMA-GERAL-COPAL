@@ -6,6 +6,7 @@
 <title>Gerenciador de Usuários</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
   :root{
     --bg: #0d1210;
@@ -22,6 +23,8 @@
     --danger-dim: #4a2020;
     --blue: #7aa8e6;
     --blue-dim: #1f3555;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.3), 0 8px 20px -10px rgba(0,0,0,.4);
+    --shadow-md:0 2px 4px rgba(0,0,0,.35), 0 16px 32px -14px rgba(0,0,0,.55);
   }
   *{box-sizing:border-box;}
   body{
@@ -81,9 +84,12 @@
   .stat{
     background:var(--panel);
     border:1px solid var(--line);
-    border-radius:10px;
+    border-radius:12px;
     padding:16px 18px;
+    box-shadow:var(--shadow-sm);
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
   }
+  .stat:hover{ transform:translateY(-2px); box-shadow:var(--shadow-md); border-color:var(--accent-dim); }
   .stat .label{
     font-size:12px;
     color:var(--text-dim);
@@ -106,8 +112,9 @@
   .card{
     background:var(--panel);
     border:1px solid var(--line);
-    border-radius:10px;
+    border-radius:12px;
     overflow:hidden;
+    box-shadow:var(--shadow-sm);
   }
   .card-head{
     padding:14px 18px;
@@ -143,7 +150,13 @@
     font-family:'Space Grotesk', sans-serif;
     font-size:12px;
     padding:6px 10px;
-    border-radius:6px;
+    border-radius:8px;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  select:focus, input[type="text"]:focus{
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(94,230,168,.18);
   }
   input[type="text"]{flex:1; min-width:180px;}
 
@@ -245,11 +258,14 @@
     font-family:'Space Grotesk', sans-serif;
     font-size:11px;
     padding:5px 10px;
-    border-radius:6px;
+    border-radius:8px;
     cursor:pointer;
     transition: all 0.2s;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
   }
-  .btn:hover{border-color:var(--accent); color:var(--accent);}
+  .btn:hover{border-color:var(--accent); color:var(--accent); transform:translateY(-1px);}
   .btn.danger:hover{border-color:var(--danger); color:var(--danger);}
 
   .access-denied{ display:none; text-align:center; padding:60px 20px; }
@@ -272,10 +288,11 @@
   .modal{
     background:var(--panel);
     border:1px solid var(--line);
-    border-radius:10px;
+    border-radius:14px;
     width:100%;
     max-width:560px;
     padding:22px;
+    box-shadow:var(--shadow-md);
   }
   .modal h3{font-size:15px; margin:0 0 6px;}
   .modal p{font-size:12px; color:var(--text-dim); margin:0 0 16px;}
@@ -311,15 +328,15 @@
   </div>
   <div style="display:flex; align-items:center; gap:12px;">
     <div class="live-badge"><span class="dot"></span> ao vivo</div>
-    <button class="btn" style="padding:8px 16px; font-size:12px;" onclick="window.location.href=resolveFrontendPath('cadastrouser.html.html');">CADASTRO DE USUÁRIO</button>
-    <button class="btn" style="padding:8px 16px; font-size:12px;" onclick="window.location.href=resolveFrontendPath('home.html.html');">HOME</button>
+    <button class="btn" style="padding:8px 16px; font-size:12px;" onclick="window.location.href=resolveFrontendPath('cadastrouser.html.html');"><i data-lucide="user-plus" style="width:13px;"></i> CADASTRO DE USUÁRIO</button>
+    <button class="btn" style="padding:8px 16px; font-size:12px;" onclick="window.location.href=resolveFrontendPath('home.html.html');"><i data-lucide="home" style="width:13px;"></i> HOME</button>
   </div>
 </header>
 
 <div id="accessDenied" class="access-denied">
-  <h2>⚠ Acesso restrito</h2>
+  <h2 style="display:flex; align-items:center; justify-content:center; gap:10px;"><i data-lucide="shield-alert" style="width:22px;"></i> Acesso restrito</h2>
   <p>Esta área é exclusiva para administradores do sistema.</p>
-  <button class="btn" style="margin-top:16px;" onclick="window.location.href=resolveFrontendPath('home.html.html');">Voltar para a Home</button>
+  <button class="btn" style="margin-top:16px;" onclick="window.location.href=resolveFrontendPath('home.html.html');"><i data-lucide="arrow-left" style="width:13px;"></i> Voltar para a Home</button>
 </div>
 
 <div id="gerenciadorContent" style="display:none;">
@@ -345,7 +362,7 @@
   <div class="layout">
     <div class="card">
       <div class="card-head">
-        <h2>Usuários cadastrados</h2>
+        <h2 style="display:flex; align-items:center; gap:8px;"><i data-lucide="users" style="width:14px;"></i> Usuários cadastrados</h2>
         <span class="hint">via /auth/users</span>
       </div>
       <div class="filters">
@@ -369,11 +386,11 @@
 
     <div class="card">
       <div class="card-head">
-        <h2>Por papel</h2>
+        <h2 style="display:flex; align-items:center; gap:8px;"><i data-lucide="user-cog" style="width:14px;"></i> Por papel</h2>
       </div>
       <div class="side-list" id="role-ranking"></div>
       <div class="card-head" style="border-top:1px solid var(--line);">
-        <h2>Por unidade</h2>
+        <h2 style="display:flex; align-items:center; gap:8px;"><i data-lucide="building-2" style="width:14px;"></i> Por unidade</h2>
       </div>
       <div class="side-list" id="unit-ranking"></div>
     </div>
@@ -382,7 +399,7 @@
 
 <div class="modal-overlay" id="permModal">
   <div class="modal">
-    <h3>Editar Permissões de Acesso</h3>
+    <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="shield-check" style="width:16px;"></i> Editar Permissões de Acesso</h3>
     <p id="permModalUserName">Ajuste os módulos liberados para o usuário selecionado.</p>
     <div class="perms">
       <label class="perm-item"><input type="checkbox" id="access-perm-processos"> Processos</label>
@@ -395,8 +412,8 @@
       <label class="perm-item"><input type="checkbox" id="access-perm-execucao-pagamento"> Execução &amp; Pagamento</label>
     </div>
     <div class="modal-actions">
-      <button class="btn" onclick="closePermModal()">Fechar</button>
-      <button class="btn" onclick="saveAccessPermissions()">Salvar Alterações</button>
+      <button class="btn" onclick="closePermModal()"><i data-lucide="x" style="width:13px;"></i> Fechar</button>
+      <button class="btn" onclick="saveAccessPermissions()"><i data-lucide="save" style="width:13px;"></i> Salvar Alterações</button>
     </div>
   </div>
 </div>
@@ -408,6 +425,8 @@
 <script src="api-client.js"></script>
 
 <script>
+lucide.createIcons();
+
 function resolveFrontendPath(relativePath) {
   const normalized = String(relativePath || '').replace(/^\.?\/?/, '');
   if ((window.location.hostname || '').toLowerCase().includes('vercel.app')) {
@@ -587,6 +606,7 @@ function renderUsers() {
 
   if (!filtered.length) {
     feedEl.innerHTML = '<div class="empty">Nenhum usuário encontrado.</div>';
+    lucide.createIcons();
     return;
   }
 
@@ -600,9 +620,9 @@ function renderUsers() {
     const permissionsSummary = getPermissionsSummaryText(userPermissions);
 
     const actions = canRevoke
-      ? `<button class="btn" onclick="openPermModal(${u.id})">Permissões</button>
-         <button class="btn danger" onclick="revokeUserAccess(${u.id}, '${escapeHtml(String(u.name || '')).replace(/'/g, "\\'")}')">Excluir Acesso</button>`
-      : '<span style="color:#8a9a92; font-size:11px; font-family:\'IBM Plex Mono\',monospace;">Protegido</span>';
+      ? `<button class="btn" onclick="openPermModal(${u.id})"><i data-lucide="shield" style="width:12px;"></i> Permissões</button>
+         <button class="btn danger" onclick="revokeUserAccess(${u.id}, '${escapeHtml(String(u.name || '')).replace(/'/g, "\\'")}')"><i data-lucide="user-x" style="width:12px;"></i> Excluir Acesso</button>`
+      : '<span style="color:#8a9a92; font-size:11px; font-family:\'IBM Plex Mono\',monospace; display:inline-flex; align-items:center; gap:5px;"><i data-lucide="lock" style="width:11px;"></i> Protegido</span>';
 
     return `
       <div class="row">
@@ -617,6 +637,7 @@ function renderUsers() {
         <div style="display:flex; gap:6px; flex-shrink:0;">${actions}</div>
       </div>`;
   }).join('');
+  lucide.createIcons();
 }
 
 async function fetchRegisteredUsers() {

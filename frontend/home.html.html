@@ -18,6 +18,9 @@
             --text-dark: #333333;
             --border-color: #dcdcdc;
             --white: #ffffff;
+            --shadow-sm: 0 1px 2px rgba(15, 44, 89, 0.06), 0 4px 12px -6px rgba(15, 44, 89, 0.12);
+            --shadow-md: 0 2px 4px rgba(15, 44, 89, 0.06), 0 12px 28px -14px rgba(15, 44, 89, 0.22);
+            --shadow-lg: 0 8px 20px rgba(7, 23, 49, 0.1), 0 24px 60px -24px rgba(7, 23, 49, 0.32);
         }
 
         * {
@@ -56,14 +59,15 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 34px;
-            height: 30px;
+            width: 36px;
+            height: 34px;
             padding: 0;
             color: var(--sesp-blue);
             background: transparent;
             border: 1px solid #bfdbfe;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
         }
 
         .menu-toggle:hover,
@@ -99,13 +103,13 @@
 
         /* --- CABEÇALHO SESP / LOGO --- */
         header {
-            background-color: var(--sesp-blue);
+            background: linear-gradient(135deg, var(--sesp-blue), var(--sesp-accent));
             color: var(--white);
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-sm);
         }
 
         .header-brand {
@@ -201,17 +205,17 @@
         .system-dashboard-panel {
             background-color: var(--white);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-radius: 14px;
+            box-shadow: var(--shadow-sm);
             overflow: hidden;
             display: flex;
             flex-direction: column;
         }
 
         .panel-header {
-            background-color: var(--sesp-dark-blue);
+            background: linear-gradient(135deg, var(--sesp-dark-blue), var(--sesp-blue));
             color: var(--white);
-            padding: 1rem 1.2rem;
+            padding: 1.1rem 1.2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -242,11 +246,18 @@
         .metric-card {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            padding: 1rem;
+            border-radius: 12px;
+            padding: 1.1rem;
             display: flex;
             flex-direction: column;
-            gap: 0.3rem;
+            gap: 0.35rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(0, 102, 204, 0.32);
+            box-shadow: 0 10px 24px -12px rgba(15, 44, 89, 0.25);
         }
 
         .metric-card .title {
@@ -271,8 +282,9 @@
         /* Tabela / Lista de Processos / Contratos do COPAL */
         .system-table-container {
             border: 1px solid #e2e8f0;
-            border-radius: 6px;
+            border-radius: 12px;
             overflow: hidden;
+            box-shadow: var(--shadow-sm);
         }
 
         .system-table {
@@ -283,11 +295,14 @@
         }
 
         .system-table th {
-            background-color: #f1f5f9;
-            color: #334155;
+            background: linear-gradient(135deg, var(--sesp-blue), var(--sesp-accent));
+            color: var(--white);
             padding: 0.75rem 1rem;
             font-weight: 700;
-            border-bottom: 1px solid #e2e8f0;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         }
 
         .system-table td {
@@ -295,11 +310,18 @@
             border-bottom: 1px solid #f1f5f9;
         }
 
+        .system-table tbody tr:hover {
+            background-color: rgba(0, 102, 204, 0.05);
+        }
+
         .status-badge {
-            padding: 0.2rem 0.5rem;
-            border-radius: 12px;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
             font-size: 0.7rem;
             font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .status-active { background-color: #dcfce7; color: #15803d; }
@@ -341,20 +363,41 @@
         }
         .dev-modal-overlay.active { display: flex; }
         .dev-modal-card {
-            background: #fff; border-radius: 8px; padding: 2rem; width: 100%; max-width: 360px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.25); border: 1px solid var(--border-color);
+            background: #fff; border-radius: 14px; padding: 2rem; width: 100%; max-width: 360px;
+            box-shadow: var(--shadow-lg); border: 1px solid var(--border-color);
         }
         .dev-modal-card h3 { font-size: 1rem; margin-bottom: 1rem; color: var(--sesp-blue); display: flex; align-items: center; gap: 0.5rem; }
         .dev-modal-card input {
-            width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 6px;
-            font-size: 0.85rem; margin-bottom: 0.75rem; outline: none;
+            width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 8px;
+            font-size: 0.85rem; margin-bottom: 0.75rem; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .dev-modal-card input:focus { border-color: var(--sesp-accent); }
+        .dev-modal-card input:focus { border-color: var(--sesp-accent); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.12); }
         .dev-modal-card .dev-err { color: #dc2626; font-size: 0.78rem; margin-bottom: 0.5rem; display: none; }
         .dev-modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.5rem; }
-        .dev-btn { padding: 0.5rem 1.2rem; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.82rem; }
-        .dev-btn-primary { background: var(--sesp-blue); color: #fff; }
+        .dev-btn { padding: 0.55rem 1.2rem; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.4rem; transition: filter 0.2s, transform 0.15s ease; }
+        .dev-btn:hover { filter: brightness(1.1); }
+        .dev-btn:active { transform: translateY(1px); }
+        .dev-btn-primary { background: var(--sesp-blue); color: #fff; box-shadow: 0 6px 16px -8px rgba(15, 44, 89, 0.5); }
         .dev-btn-cancel { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+
+        .btn-more {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: none;
+            padding: 0.8rem 1.2rem;
+            border-radius: 10px;
+            color: var(--white);
+            font-weight: 700;
+            font-size: 0.82rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: filter 0.2s, transform 0.15s ease, box-shadow 0.2s ease;
+            box-shadow: 0 8px 20px -10px rgba(15, 44, 89, 0.45);
+        }
+        .btn-more:hover { filter: brightness(1.12); transform: translateY(-1px); }
+        .btn-more:active { transform: translateY(0); }
 
         /* DEV PANEL — painel */
         .dev-section-title { font-size: 0.82rem; font-weight: 700; color: var(--sesp-blue); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
@@ -498,8 +541,8 @@
                     </div>
                 </div>
                 <div style="margin-top: 1rem; display: grid; gap: 0.75rem;">
-                    <button id="openUsersBtn" type="button" class="btn-more" style="background-color: var(--sesp-blue);">Ver Usuários Cadastrados</button>
-                    <a href="#" class="btn-more" style="background-color: var(--sesp-accent);">Abrir Recursos Exclusivos</a>
+                    <button id="openUsersBtn" type="button" class="btn-more" style="background-color: var(--sesp-blue);"><i data-lucide="users" style="width:16px;"></i> Ver Usuários Cadastrados</button>
+                    <a href="#" class="btn-more" style="background-color: var(--sesp-accent);"><i data-lucide="sparkles" style="width:16px;"></i> Abrir Recursos Exclusivos</a>
                 </div>
             </div>
         </section>
@@ -547,7 +590,7 @@
                         <button onclick="crLimpar()"
                                 style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;padding:6px 14px;
                                        border-radius:6px;font-size:0.82rem;cursor:pointer;">
-                            Limpar
+                            <i data-lucide="eraser" style="width:13px;vertical-align:middle;"></i> Limpar
                         </button>
                     </div>
                     <div id="crProgress" style="display:none;margin-bottom:1rem;">
@@ -651,13 +694,13 @@
                         <option value="empenho">Empenhos</option>
                         <option value="nota">Notas fiscais</option>
                     </select>
-                    <button class="dev-btn dev-btn-primary" onclick="devLoadDocuments()">Filtrar</button>
+                    <button class="dev-btn dev-btn-primary" onclick="devLoadDocuments()"><i data-lucide="filter" style="width:14px;"></i> Filtrar</button>
                 </div>
                 <div id="devDocumentsList" style="min-height: 120px;"></div>
 
                 <div style="margin-top:0.5rem;text-align:right;">
                     <button class="dev-btn dev-btn-primary" onclick="devRefreshAll()"><i data-lucide="refresh-cw" style="width:13px;vertical-align:middle;"></i> Atualizar Tudo</button>
-                    <button class="dev-btn dev-btn-cancel" onclick="devLogout()" style="margin-left:0.4rem;">Sair do Dev</button>
+                    <button class="dev-btn dev-btn-cancel" onclick="devLogout()" style="margin-left:0.4rem;"><i data-lucide="log-out" style="width:14px;"></i> Sair do Dev</button>
                 </div>
             </div>
         </section>
@@ -673,7 +716,7 @@
                 </div>
                 <div class="dev-editor-actions">
                     <button class="dev-btn dev-btn-cancel" onclick="closeDevDocumentEditor()">Cancelar</button>
-                    <button class="dev-btn dev-btn-primary" onclick="saveDevDocumentEditor()">Salvar Alterações</button>
+                    <button class="dev-btn dev-btn-primary" onclick="saveDevDocumentEditor()"><i data-lucide="save" style="width:14px;"></i> Salvar Alterações</button>
                 </div>
             </div>
         </div>
@@ -686,8 +729,8 @@
                 <input type="text" id="devLoginInput" placeholder="Login" autocomplete="off">
                 <input type="password" id="devPasswordInput" placeholder="Senha">
                 <div class="dev-modal-actions">
-                    <button class="dev-btn dev-btn-cancel" onclick="closeDevLoginModal()">Cancelar</button>
-                    <button class="dev-btn dev-btn-primary" onclick="devAuthenticate()">Entrar</button>
+                    <button class="dev-btn dev-btn-cancel" onclick="closeDevLoginModal()"><i data-lucide="x" style="width:14px;"></i> Cancelar</button>
+                    <button class="dev-btn dev-btn-primary" onclick="devAuthenticate()"><i data-lucide="log-in" style="width:14px;"></i> Entrar</button>
                 </div>
             </div>
         </div>
@@ -1320,46 +1363,46 @@
                 let statusHtml, acaoHtml, credorObj;
 
                 if (!numDetectado) {
-                    statusHtml = `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:0.75rem;white-space:nowrap;">⚠️ Número não detectado</span>`;
+                    statusHtml = `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:999px;font-size:0.75rem;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="triangle-alert" style="width:12px;"></i> Número não detectado</span>`;
                     acaoHtml = `
                         <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
                             <input id="crManual_${i}" type="text" placeholder="Ex: 057/2026/SESP"
-                                   style="border:1px solid #cbd5e1;border-radius:4px;padding:3px 6px;font-size:0.78rem;width:130px;"
+                                   style="border:1px solid #cbd5e1;border-radius:6px;padding:3px 6px;font-size:0.78rem;width:130px;"
                                    oninput="crMascaraNumContrato(this)"
                                    onblur="crBuscarManual(${i})">
                             <button onclick="crBuscarManual(${i})"
-                                    style="background:var(--sesp-blue);color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:0.78rem;">
-                                Buscar
+                                    style="background:var(--sesp-blue);color:#fff;border:none;padding:4px 9px;border-radius:6px;cursor:pointer;font-size:0.78rem;display:inline-flex;align-items:center;gap:4px;">
+                                <i data-lucide="search" style="width:11px;"></i> Buscar
                             </button>
                         </div>`;
                     credorObj = '-';
                 } else if (!contrato) {
-                    statusHtml = `<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:12px;font-size:0.75rem;white-space:nowrap;">❌ Não cadastrado</span>`;
+                    statusHtml = `<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:999px;font-size:0.75rem;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="circle-x" style="width:12px;"></i> Não cadastrado</span>`;
                     acaoHtml = `
                         <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
                             <span id="crInfo_${i}" style="color:#64748b;font-size:0.75rem;">Informe o nº ou cadastre</span>
                             <input id="crManual_${i}" type="text" placeholder="${numDetectado}"
-                                   style="border:1px solid #cbd5e1;border-radius:4px;padding:3px 6px;font-size:0.78rem;width:130px;"
+                                   style="border:1px solid #cbd5e1;border-radius:6px;padding:3px 6px;font-size:0.78rem;width:130px;"
                                    oninput="crMascaraNumContrato(this)"
                                    onblur="crBuscarManual(${i})">
                             <button onclick="crBuscarManual(${i})"
-                                    style="background:var(--sesp-blue);color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:0.78rem;">
-                                Buscar
+                                    style="background:var(--sesp-blue);color:#fff;border:none;padding:4px 9px;border-radius:6px;cursor:pointer;font-size:0.78rem;display:inline-flex;align-items:center;gap:4px;">
+                                <i data-lucide="search" style="width:11px;"></i> Buscar
                             </button>
                         </div>`;
                     credorObj = '-';
                 } else if (temBase64) {
-                    statusHtml = `<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:12px;font-size:0.75rem;white-space:nowrap;">✅ Já vinculado</span>`;
+                    statusHtml = `<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:999px;font-size:0.75rem;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="badge-check" style="width:12px;"></i> Já vinculado</span>`;
                     acaoHtml = `<button onclick="crVincular(${i}, '${(numDetectado || '').replace(/'/g,"\\'")}', this)"
-                                         style="background:#e2e8f0;color:#334155;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.78rem;">
-                                    Substituir
+                                         style="background:#e2e8f0;color:#334155;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.78rem;display:inline-flex;align-items:center;gap:4px;">
+                                    <i data-lucide="refresh-cw" style="width:11px;"></i> Substituir
                                 </button>`;
                     credorObj = contrato.credor || '-';
                 } else {
-                    statusHtml = `<span style="background:#fef9c3;color:#78350f;padding:2px 8px;border-radius:12px;font-size:0.75rem;white-space:nowrap;">🔗 Pronto para vincular</span>`;
+                    statusHtml = `<span style="background:#fef9c3;color:#78350f;padding:2px 8px;border-radius:999px;font-size:0.75rem;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="link-2" style="width:12px;"></i> Pronto para vincular</span>`;
                     acaoHtml = `<button id="crBtnLinha_${i}" onclick="crVincular(${i}, '${(numDetectado || '').replace(/'/g,"\\'")}', this)"
-                                         style="background:var(--sesp-blue);color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.78rem;font-weight:700;">
-                                    Vincular PDF
+                                         style="background:var(--sesp-blue);color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.78rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;">
+                                    <i data-lucide="link-2" style="width:11px;"></i> Vincular PDF
                                 </button>`;
                     credorObj = contrato.credor || '-';
                 }
@@ -1368,7 +1411,7 @@
                     <tr style="border-bottom:1px solid #f1f5f9;" id="crLinha_${i}">
                         <td style="padding:8px 12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
                             title="${file.name.replace(/"/g,'&quot;')}">
-                            📄 ${file.name}
+                            <i data-lucide="file-text" style="width:14px;vertical-align:middle;"></i> ${file.name}
                         </td>
                         <td style="padding:8px 12px;font-family:monospace;font-size:0.8rem;" id="crNumCell_${i}">
                             ${numDetectado || '<span style="color:#94a3b8;">—</span>'}
@@ -1412,7 +1455,7 @@
 
             if (!contrato) {
                 if (infoEl) infoEl.textContent = 'Não encontrado. Faça o cadastro primeiro.';
-                if (statusCell) statusCell.innerHTML = `<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:12px;font-size:0.75rem;">❌ Não cadastrado</span>`;
+                if (statusCell) statusCell.innerHTML = `<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:999px;font-size:0.75rem;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="circle-x" style="width:12px;"></i> Não cadastrado</span>`;
                 return;
             }
 
@@ -1420,15 +1463,16 @@
             const numNorm = num;
             if (numCell) numCell.textContent = numNorm;
             if (credorCell) credorCell.textContent = contrato.credor || '-';
-            if (statusCell) statusCell.innerHTML = `<span style="background:#fef9c3;color:#78350f;padding:2px 8px;border-radius:12px;font-size:0.75rem;">🔗 Pronto para vincular</span>`;
+            if (statusCell) statusCell.innerHTML = `<span style="background:#fef9c3;color:#78350f;padding:2px 8px;border-radius:999px;font-size:0.75rem;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="link-2" style="width:12px;"></i> Pronto para vincular</span>`;
             if (acaoCell) acaoCell.innerHTML = `<button id="crBtnLinha_${i}" onclick="crVincular(${i}, '${numNorm.replace(/'/g,"\\'")}', this)"
-                    style="background:var(--sesp-blue);color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.78rem;font-weight:700;">
-                    Vincular PDF
+                    style="background:var(--sesp-blue);color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.78rem;font-weight:700;display:inline-flex;align-items:center;gap:4px;">
+                    <i data-lucide="link-2" style="width:11px;"></i> Vincular PDF
                 </button>`;
 
             // Atualiza cache local
             crContratosCache[numNorm] = contrato;
             document.getElementById('crBtnVincularTodos').style.display = 'inline-flex';
+            lucide.createIcons();
         }
 
         async function crVincular(fileIndex, numContrato, btnEl) {
@@ -1482,8 +1526,9 @@
 
                 const statusCell = document.getElementById(`crStatusCell_${fileIndex}`);
                 const acaoCell = document.getElementById(`crAcaoCell_${fileIndex}`);
-                if (statusCell) statusCell.innerHTML = `<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:12px;font-size:0.75rem;">✅ Vinculado com sucesso</span>`;
+                if (statusCell) statusCell.innerHTML = `<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:999px;font-size:0.75rem;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="badge-check" style="width:12px;"></i> Vinculado com sucesso</span>`;
                 if (acaoCell) acaoCell.innerHTML = '—';
+                lucide.createIcons();
 
             } catch (err) {
                 if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Vincular PDF'; }
@@ -1517,7 +1562,8 @@
             }
 
             fill.style.width = '100%';
-            label.textContent = `✅ Todos vinculados!`;
+            label.innerHTML = `<i data-lucide="check-circle" style="width:13px;vertical-align:middle;"></i> Todos vinculados!`;
+            lucide.createIcons();
             btn.style.display = 'none';
         }
 

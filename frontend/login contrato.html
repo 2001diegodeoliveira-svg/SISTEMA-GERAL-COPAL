@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login de Contratos | SESP COPAL</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body {
@@ -76,6 +77,10 @@
             cursor: pointer;
             transition: transform .2s, box-shadow .2s;
             margin-top: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         .login-btn:hover {
             transform: translateY(-1px);
@@ -111,7 +116,7 @@
                 <label for="password">Senha</label>
                 <input id="password" name="password" type="password" placeholder="Digite sua senha" autocomplete="current-password" required>
             </div>
-            <button id="loginBtn" class="login-btn" type="submit">Entrar</button>
+            <button id="loginBtn" class="login-btn" type="submit"><i data-lucide="log-in" style="width:18px;"></i> Entrar</button>
             <div id="loginMessage" class="message"></div>
         </form>
 
@@ -121,6 +126,8 @@
     <script src="api-client.js"></script>
 
     <script>
+        lucide.createIcons();
+
         // Login automático desativado: o usuário precisa sempre informar credenciais.
 
         document.getElementById('contractsLoginForm').addEventListener('submit', async (event) => {
@@ -137,7 +144,7 @@
             }
 
             loginBtn.disabled = true;
-            loginBtn.innerText = 'Validando...';
+            loginBtn.innerHTML = 'Validando...';
             loginMessage.innerText = '';
 
             try {
@@ -178,7 +185,8 @@
                 loginMessage.innerText = error?.message || 'Não foi possível conectar ao servidor.';
             } finally {
                 loginBtn.disabled = false;
-                loginBtn.innerText = 'Entrar';
+                loginBtn.innerHTML = '<i data-lucide="log-in" style="width:18px;"></i> Entrar';
+                lucide.createIcons();
             }
         });
     </script>

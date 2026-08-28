@@ -4,27 +4,30 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Integr&#234;ncia | Sistema COPAL</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root { font-family: Arial, sans-serif; color: #17212b; }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; background: #eef4f5; }
-    header { padding: 2.5rem max(1.5rem, 8vw) 1.5rem; background: #0b2d4d; color: #fff; }
-    h1 { margin: 0; }
+    header { padding: 2.5rem max(1.5rem, 8vw) 1.5rem; background: linear-gradient(135deg, #0b2d4d, #087e8b); color: #fff; }
+    h1 { margin: 0; display: flex; align-items: center; gap: 0.6rem; }
     nav { padding: 0 max(1.5rem, 8vw); background: #fff; border-bottom: 1px solid #cbd5e1; }
-    nav a { display: inline-block; padding: 1rem 1.25rem; color: #0b2d4d; font-weight: 700; text-decoration: none; border-bottom: 3px solid #f4b942; }
-    main { width: min(92vw, 900px); margin: 3rem auto; padding: 2rem; background: #fff; border: 1px solid #d9e2e7; border-radius: 8px; }
+    nav a { display: inline-flex; align-items: center; gap: 0.45rem; padding: 1rem 1.25rem; color: #0b2d4d; font-weight: 700; text-decoration: none; border-bottom: 3px solid #f4b942; }
+    main { width: min(92vw, 900px); margin: 3rem auto; padding: 2rem; background: #fff; border: 1px solid #d9e2e7; border-radius: 12px; box-shadow: 0 1px 2px rgba(11, 45, 77, 0.05), 0 12px 28px -16px rgba(11, 45, 77, 0.2); }
+    h2 { display: flex; align-items: center; gap: 0.5rem; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Integr&#234;ncia</h1>
+    <h1><i data-lucide="shield-check" style="width: 32px;"></i> Integr&#234;ncia</h1>
   </header>
   <nav aria-label="Navega&#231;&#227;o principal">
-    <a href="home.html.html">COPAL</a>
+    <a href="home.html.html"><i data-lucide="home" style="width: 16px;"></i> COPAL</a>
   </nav>
   <main>
-    <h2>Acesso aos sistemas</h2>
+    <h2><i data-lucide="layout-grid" style="width: 20px;"></i> Acesso aos sistemas</h2>
     <p>Selecione a aba COPAL para abrir a p&#225;gina inicial.</p>
   </main>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

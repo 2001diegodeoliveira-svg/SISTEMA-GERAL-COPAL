@@ -4,22 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Introducao | Sistema COPAL</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root { color-scheme: light; font-family: Arial, sans-serif; }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: linear-gradient(135deg, #0b2d4d, #087e8b); color: #fff; }
-    main { width: min(92vw, 620px); padding: 3rem; text-align: center; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 12px; }
-    h1 { margin: 0 0 1rem; font-size: clamp(2rem, 6vw, 3.5rem); }
+    main { width: min(92vw, 620px); padding: 3rem; text-align: center; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 18px; box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.45); backdrop-filter: blur(6px); }
+    h1 { margin: 0 0 1rem; font-size: clamp(2rem, 6vw, 3.5rem); display: flex; align-items: center; justify-content: center; gap: 0.6rem; }
     p { margin: 0 0 2rem; line-height: 1.6; }
-    a { display: inline-block; padding: 0.85rem 1.5rem; border-radius: 6px; background: #f4b942; color: #12263a; font-weight: 700; text-decoration: none; }
-    a:hover, a:focus-visible { background: #ffd166; }
+    a { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.85rem 1.5rem; border-radius: 10px; background: #f4b942; color: #12263a; font-weight: 700; text-decoration: none; box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.4); transition: background 0.15s ease, transform 0.1s ease; }
+    a:hover, a:focus-visible { background: #ffd166; transform: translateY(-1px); }
   </style>
 </head>
 <body>
   <main>
-    <h1>Sistema COPAL</h1>
+    <h1><i data-lucide="rocket" style="width: 42px;"></i> Sistema COPAL</h1>
     <p>Bem-vindo ao Sistema Geral COPAL.</p>
-    <a href="intgerencia.html">Entrar no sistema</a>
+    <a href="intgerencia.html">Entrar no sistema <i data-lucide="arrow-right" style="width: 18px;"></i></a>
   </main>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

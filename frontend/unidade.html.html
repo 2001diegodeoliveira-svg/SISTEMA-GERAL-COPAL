@@ -18,6 +18,9 @@
             --text-dark: #333333;
             --border-color: #dcdcdc;
             --white: #ffffff;
+            --shadow-sm: 0 1px 2px rgba(15, 44, 89, 0.06), 0 4px 12px -6px rgba(15, 44, 89, 0.12);
+            --shadow-md: 0 2px 4px rgba(15, 44, 89, 0.06), 0 12px 28px -14px rgba(15, 44, 89, 0.22);
+            --shadow-lg: 0 8px 20px rgba(7, 23, 49, 0.1), 0 24px 60px -24px rgba(7, 23, 49, 0.32);
         }
 
         * {
@@ -61,13 +64,13 @@
 
         /* CABEÇALHO SESP */
         header {
-            background-color: var(--sesp-blue);
+            background: linear-gradient(135deg, var(--sesp-blue), var(--sesp-accent));
             color: var(--white);
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-sm);
         }
 
         .header-brand {
@@ -160,12 +163,12 @@
         .page-actions-bar {
             background-color: var(--white);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 14px;
             padding: 1rem 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            box-shadow: var(--shadow-sm);
             flex-wrap: wrap;
             gap: 1rem;
         }
@@ -193,17 +196,23 @@
         .search-input {
             padding: 0.5rem 0.8rem;
             border: 1px solid #cbd5e1;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 0.8rem;
             width: 240px;
             outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--sesp-light-blue);
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.12);
         }
 
         .btn-add-unit {
-            background-color: var(--sesp-light-blue);
+            background: linear-gradient(135deg, var(--sesp-light-blue), var(--sesp-accent));
             color: var(--white);
-            padding: 0.6rem 1.2rem;
-            border-radius: 6px;
+            padding: 0.6rem 1.3rem;
+            border-radius: 10px;
             font-size: 0.8rem;
             font-weight: 700;
             border: none;
@@ -211,11 +220,16 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            transition: background 0.2s;
+            transition: filter 0.2s, transform 0.15s ease, box-shadow 0.2s ease;
+            box-shadow: 0 8px 20px -10px rgba(29, 78, 216, 0.55);
         }
 
         .btn-add-unit:hover {
-            background-color: #0052a3;
+            filter: brightness(1.1);
+        }
+
+        .btn-add-unit:active {
+            transform: translateY(1px);
         }
 
         /* GRID DE UNIDADES */
@@ -228,8 +242,8 @@
         .unit-card {
             background-color: var(--white);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -237,12 +251,12 @@
         }
 
         .unit-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
         }
 
         .unit-card-header {
-            background-color: var(--sesp-dark-blue);
+            background: linear-gradient(135deg, var(--sesp-dark-blue), var(--sesp-blue));
             color: var(--white);
             padding: 1rem;
             display: flex;
@@ -253,7 +267,7 @@
         .unit-badge-icon {
             background: rgba(255, 255, 255, 0.15);
             padding: 0.6rem;
-            border-radius: 8px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -301,7 +315,7 @@
             gap: 0.8rem;
             background-color: #f8fafc;
             padding: 0.8rem;
-            border-radius: 6px;
+            border-radius: 12px;
             border: 1px solid #e2e8f0;
         }
 
@@ -352,9 +366,9 @@
             display: none;
             background-color: var(--white);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 14px;
             padding: 1.5rem;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+            box-shadow: var(--shadow-sm);
             flex-direction: column;
             gap: 1.5rem;
         }
@@ -377,7 +391,7 @@
             background-color: #e2e8f0;
             color: #334155;
             padding: 0.5rem 1rem;
-            border-radius: 6px;
+            border-radius: 10px;
             border: none;
             font-size: 0.8rem;
             font-weight: 700;
@@ -393,10 +407,10 @@
         }
 
         .btn-req-tab {
-            background-color: #0284c7;
+            background: linear-gradient(135deg, #0284c7, #0369a1);
             color: var(--white);
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
+            padding: 0.5rem 1.1rem;
+            border-radius: 10px;
             border: none;
             font-size: 0.8rem;
             font-weight: 700;
@@ -404,11 +418,12 @@
             display: flex;
             align-items: center;
             gap: 0.4rem;
-            transition: background 0.2s;
+            transition: filter 0.2s, box-shadow 0.2s;
+            box-shadow: 0 6px 16px -8px rgba(3, 105, 161, 0.55);
         }
 
         .btn-req-tab:hover {
-            background-color: #0369a1;
+            filter: brightness(1.1);
         }
 
         /* CONTRATOS */
@@ -452,7 +467,7 @@
             padding: 0.55rem 0.65rem;
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 5px;
+            border-radius: 10px;
         }
 
         .contract-summary-metric label {
@@ -483,7 +498,7 @@
             padding: 0.9rem 1rem;
             border: 1px solid #fbbf24;
             border-left: 4px solid #f59e0b;
-            border-radius: 6px;
+            border-radius: 12px;
             background: #fffbeb;
         }
 
@@ -533,7 +548,7 @@
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
             border-left: 4px solid var(--sesp-light-blue);
-            border-radius: 6px;
+            border-radius: 12px;
             padding: 1rem;
             display: flex;
             justify-content: space-between;
@@ -545,7 +560,7 @@
 
         .contract-item-card:hover {
             background-color: #ffffff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            box-shadow: var(--shadow-md);
         }
 
         .contract-info-main {
@@ -603,10 +618,13 @@
         .badge-status-active {
             background-color: #dcfce7;
             color: #166534;
-            padding: 0.2rem 0.6rem;
-            border-radius: 12px;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
             font-size: 0.7rem;
             font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
 
         /* DETALHES COMPLETOS DO CONTRATO */
@@ -614,11 +632,11 @@
             display: none;
             background-color: #ffffff;
             border: 1px solid #cbd5e1;
-            border-radius: 8px;
+            border-radius: 14px;
             padding: 1.5rem;
             flex-direction: column;
             gap: 1.5rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            box-shadow: var(--shadow-sm);
         }
 
         .contract-full-header {
@@ -638,7 +656,7 @@
         .info-box-card {
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
-            border-radius: 6px;
+            border-radius: 12px;
             padding: 1rem;
             display: flex;
             flex-direction: column;
@@ -683,12 +701,14 @@
         }
 
         .balance-table th {
-            background-color: var(--sesp-dark-blue);
+            background: linear-gradient(135deg, var(--sesp-blue), var(--sesp-accent));
             color: var(--white);
             padding: 0.6rem 0.8rem;
             text-align: left;
             font-weight: 700;
             font-size: 0.75rem;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
         }
 
         .balance-table td {
@@ -706,9 +726,9 @@
             display: none;
             background-color: var(--white);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 14px;
             padding: 2rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: var(--shadow-sm);
             flex-direction: column;
             gap: 1.5rem;
         }
@@ -755,15 +775,17 @@
         .req-field-group input, .req-field-group select, .req-field-group textarea {
             padding: 0.55rem;
             border: 1px solid #cbd5e1;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 0.8rem;
             outline: none;
             background-color: #fcfcfd;
+            transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
         }
 
         .req-field-group input:focus, .req-field-group textarea:focus {
             border-color: var(--sesp-light-blue);
             background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.12);
         }
 
         /* TABELA DINÂMICA DE ITENS */
@@ -775,12 +797,13 @@
         }
 
         .req-table-items th {
-            background-color: var(--sesp-dark-blue);
+            background: linear-gradient(135deg, var(--sesp-blue), var(--sesp-accent));
             color: var(--white);
             padding: 0.6rem;
             font-size: 0.72rem;
             text-transform: uppercase;
-            border: 1px solid #1e293b;
+            letter-spacing: 0.04em;
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
 
         .req-table-items td {
@@ -806,6 +829,7 @@
             align-items: center;
             justify-content: center;
             width: 100%;
+            border-radius: 6px;
         }
 
         .btn-add-row {
@@ -813,7 +837,7 @@
             color: var(--sesp-blue);
             border: 1px dashed var(--sesp-light-blue);
             padding: 0.5rem;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 0.78rem;
             font-weight: 700;
             cursor: pointer;
@@ -822,17 +846,19 @@
             justify-content: center;
             gap: 0.4rem;
             margin-top: 0.5rem;
+            transition: background 0.2s, border-color 0.2s;
         }
 
         .btn-add-row:hover {
             background-color: #e2e8f0;
+            border-color: var(--sesp-light-blue);
         }
 
         /* TERMO DECLARATÓRIO */
         .req-statement-box {
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
-            border-radius: 6px;
+            border-radius: 12px;
             padding: 1rem;
             font-size: 0.8rem;
             color: #334155;
@@ -874,7 +900,7 @@
         .instructions-box {
             background-color: #fffbebfb;
             border: 1px solid #fef08a;
-            border-radius: 6px;
+            border-radius: 12px;
             padding: 1rem;
             font-size: 0.75rem;
             color: #713f12;
@@ -898,7 +924,7 @@
         .vendor-box {
             border: 2px dashed #cbd5e1;
             padding: 1rem;
-            border-radius: 6px;
+            border-radius: 12px;
             background-color: #f8fafc;
         }
 
@@ -926,15 +952,15 @@
 
         .modal-container {
             background-color: var(--white);
-            border-radius: 8px;
+            border-radius: 14px;
             width: 100%;
             max-width: 500px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            box-shadow: var(--shadow-lg);
             overflow: hidden;
         }
 
         .modal-header {
-            background-color: var(--sesp-dark-blue);
+            background: linear-gradient(135deg, var(--sesp-dark-blue), var(--sesp-blue));
             color: var(--white);
             padding: 1rem 1.2rem;
             display: flex;
@@ -974,9 +1000,15 @@
         .form-group input, .form-group select {
             padding: 0.6rem;
             border: 1px solid #cbd5e1;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 0.8rem;
             outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--sesp-light-blue);
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.12);
         }
 
         .modal-footer {
@@ -992,34 +1024,44 @@
             background-color: #e2e8f0;
             color: #334155;
             padding: 0.5rem 1rem;
-            border-radius: 6px;
+            border-radius: 8px;
             border: none;
             font-size: 0.8rem;
             font-weight: 700;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
         }
 
         .btn-save {
-            background-color: var(--sesp-light-blue);
+            background: linear-gradient(135deg, var(--sesp-light-blue), var(--sesp-accent));
             color: var(--white);
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
+            padding: 0.5rem 1.1rem;
+            border-radius: 8px;
             border: none;
             font-size: 0.8rem;
             font-weight: 700;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: filter 0.2s, box-shadow 0.2s;
+            box-shadow: 0 6px 16px -8px rgba(29, 78, 216, 0.55);
         }
+
+        .btn-save:hover { filter: brightness(1.1); }
 
         /* ESTILOS DE USUÁRIOS DA UNIDADE */
         .users-management-card {
             background-color: #ffffff;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 14px;
             padding: 1.2rem;
             display: flex;
             flex-direction: column;
             gap: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            box-shadow: var(--shadow-sm);
         }
 
         .users-table {
@@ -1029,11 +1071,13 @@
         }
 
         .users-table th {
-            background-color: var(--sesp-dark-blue);
+            background: linear-gradient(135deg, var(--sesp-blue), var(--sesp-accent));
             color: var(--white);
             padding: 0.6rem;
             text-align: left;
             font-size: 0.75rem;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
         }
 
         .users-table td {
@@ -1047,7 +1091,7 @@
             color: #dc2626;
             border: 1px solid #fca5a5;
             padding: 0.3rem 0.6rem;
-            border-radius: 4px;
+            border-radius: 8px;
             font-size: 0.7rem;
             font-weight: 700;
             cursor: pointer;
@@ -1347,8 +1391,8 @@
                         <p style="font-size: 0.8rem; color: #64748b;">Detalhamento Completo do Contrato e Saldos da Unidade</p>
                     </div>
                     <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
-                        <button class="btn-req-tab active" id="btnDetailContractTab" type="button">Detalhes</button>
-                        <button class="btn-req-tab" id="btnContractHistoryTab" type="button">Histórico de Requisições</button>
+                        <button class="btn-req-tab active" id="btnDetailContractTab" type="button"><i data-lucide="file-text" style="width: 14px;"></i> Detalhes</button>
+                        <button class="btn-req-tab" id="btnContractHistoryTab" type="button"><i data-lucide="history" style="width: 14px;"></i> Histórico de Requisições</button>
                         <button class="btn-back" id="btnBackToContractList" style="font-size: 0.75rem; padding: 0.4rem 0.8rem;">
                             <i data-lucide="x" style="width: 14px;"></i> Fechar Detalhes
                         </button>
@@ -1584,7 +1628,7 @@
                     <div class="req-field-group col-span-1">
                         <label>E-mail do Servidor</label>
                         <input type="email" id="reqRequesterEmail" placeholder="seu.email@servidor.com" required>
-                        <button type="button" class="btn-add-row" id="btnRequestEmailCode" style="width: fit-content;">Enviar código por e-mail</button>
+                        <button type="button" class="btn-add-row" id="btnRequestEmailCode" style="width: fit-content;"><i data-lucide="mail-plus" style="width: 14px;"></i> Enviar código por e-mail</button>
                     </div>
                     <div class="req-field-group col-span-2" style="display:flex; flex-direction:column; gap: 0.35rem;">
                         <label>Código de validação enviado por e-mail</label>
@@ -1632,7 +1676,7 @@
 
                     <!-- BOTÕES DE AÇÃO -->
                     <div class="col-span-4" style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
-                        <button type="button" class="btn-cancel" onclick="resetReqForm()">Limpar Formulário</button>
+                        <button type="button" class="btn-cancel" onclick="resetReqForm()"><i data-lucide="eraser" style="width: 15px;"></i> Limpar Formulário</button>
                         <button type="submit" class="btn-save" style="display: flex; align-items: center; gap: 0.4rem;">
                             <i data-lucide="send" style="width: 16px;"></i> Emitir Requisição
                         </button>
@@ -1670,8 +1714,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-cancel" id="cancelModalBtn">Cancelar</button>
-                <button class="btn-save" id="saveUnitBtn">Salvar Unidade</button>
+                <button class="btn-cancel" id="cancelModalBtn"><i data-lucide="x" style="width: 14px;"></i> Cancelar</button>
+                <button class="btn-save" id="saveUnitBtn"><i data-lucide="save" style="width: 14px;"></i> Salvar Unidade</button>
             </div>
         </div>
     </div>
@@ -1697,8 +1741,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-cancel" id="cancelLoginModalBtn">Cancelar</button>
-                <button class="btn-save" id="submitLoginBtn">Autenticar</button>
+                <button class="btn-cancel" id="cancelLoginModalBtn"><i data-lucide="x" style="width: 14px;"></i> Cancelar</button>
+                <button class="btn-save" id="submitLoginBtn"><i data-lucide="shield-check" style="width: 14px;"></i> Autenticar</button>
             </div>
         </div>
     </div>
@@ -1721,7 +1765,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-save" id="saveNewCredentialsBtn">Salvar e Continuar</button>
+                <button class="btn-save" id="saveNewCredentialsBtn"><i data-lucide="key-round" style="width: 14px;"></i> Salvar e Continuar</button>
             </div>
         </div>
     </div>

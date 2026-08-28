@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Limpar Cache do Sistema</title>
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
-  :root{ --primary:#1B3A5C; --accent:#2E6F95; --ink:#1B1F23; --line:#DAD7CF; --bg:#F5F4F0; }
+  :root{ --primary:#1B3A5C; --accent:#2E6F95; --ink:#1B1F23; --line:#DAD7CF; --bg:#F5F4F0; --shadow-lg:0 20px 50px -18px rgba(27,58,92,.3); }
   *{ box-sizing:border-box; }
   body{
     margin:0; padding:40px 16px;
@@ -16,31 +17,33 @@
   }
   .card{
     background:#fff; max-width:520px; width:100%;
-    border:1px solid var(--line); border-radius:6px;
-    padding:28px;
-    box-shadow:0 10px 30px rgba(0,0,0,.08);
+    border:1px solid var(--line); border-radius:14px;
+    padding:30px;
+    box-shadow:0 1px 2px rgba(0,0,0,.04), 0 14px 34px -16px rgba(27,58,92,.22);
   }
-  h1{ font-size:18px; margin:0 0 6px; color:var(--primary); }
+  h1{ font-size:18px; margin:0 0 6px; color:var(--primary); display:flex; align-items:center; gap:8px; }
   p{ font-size:13.5px; line-height:1.5; color:#4B5560; margin:0 0 18px; }
   ul{ font-size:12.5px; color:#6b7280; margin:0 0 20px; padding-left:18px; }
   li{ margin-bottom:4px; font-family:ui-monospace, monospace; }
   .btn{
-    display:inline-block; border:none; cursor:pointer;
+    display:inline-flex; align-items:center; gap:7px; border:none; cursor:pointer;
     font-family:inherit; font-size:14px; font-weight:600;
-    padding:11px 18px; border-radius:4px;
+    padding:11px 18px; border-radius:9px;
+    transition:filter .15s ease, transform .08s ease, background .15s ease;
   }
-  .btn-primary{ background:var(--primary); color:#fff; margin-right:8px; }
-  .btn-primary:hover{ filter:brightness(1.15); }
+  .btn:active{ transform:translateY(1px); }
+  .btn-primary{ background:linear-gradient(135deg, var(--primary), var(--accent)); color:#fff; margin-right:8px; box-shadow:0 8px 18px -10px rgba(27,58,92,.5); }
+  .btn-primary:hover{ filter:brightness(1.14); }
   .btn-ghost{ background:#EFEDE6; color:var(--ink); }
   .btn-ghost:hover{ background:#e3e0d6; }
-  .status{ margin-top:16px; font-size:13px; padding:10px 14px; border-radius:4px; display:none; }
-  .status.ok{ display:block; background:#e7f3ec; color:#2F7D4F; border:1px solid #bfe3cd; }
+  .status{ margin-top:16px; font-size:13px; padding:10px 14px; border-radius:8px; display:none; }
+  .status.ok{ display:flex; align-items:center; gap:7px; background:#e7f3ec; color:#2F7D4F; border:1px solid #bfe3cd; }
   .status.err{ display:block; background:#fdecec; color:#C1502E; border:1px solid #f2c4c4; }
 </style>
 </head>
 <body>
   <div class="card">
-    <h1>Limpar cache do sistema</h1>
+    <h1><i data-lucide="broom" style="width:20px;"></i> Limpar cache do sistema</h1>
     <p>Clique abaixo para apagar do navegador os dados armazenados em cache do Sistema Geral COPAL (contratos, unidades e caches locais). Os dados persistidos no banco de dados não são afetados.</p>
     <ul>
       <li>sgc_contracts_cache_v2</li>
@@ -51,12 +54,14 @@
       <li>COPAL_OFFLINE_UNIT_USERS</li>
       <li>API_BASE_URL</li>
     </ul>
-    <button class="btn btn-primary" id="limparBtn">Limpar caches agora</button>
-    <button class="btn btn-ghost" id="voltarBtn">Voltar para a home</button>
+    <button class="btn btn-primary" id="limparBtn"><i data-lucide="trash-2" style="width:16px;"></i> Limpar caches agora</button>
+    <button class="btn btn-ghost" id="voltarBtn"><i data-lucide="home" style="width:16px;"></i> Voltar para a home</button>
     <div class="status" id="status"></div>
   </div>
 
   <script>
+    lucide.createIcons();
+
     const KEYS = [
       'sgc_contracts_cache_v2',
       'sgc_contracts_cache_v3',
@@ -88,7 +93,8 @@
         sessionStorage.removeItem('contractsAuthBootstrap');
         const status = document.getElementById('status');
         status.className = 'status ok';
-        status.textContent = `Cache limpo com sucesso (${removed} item(ns) removidos). Recarregue a página do sistema.`;
+        status.innerHTML = '<i data-lucide="check-circle" style="width:16px;"></i> Cache limpo com sucesso (' + removed + ' item(ns) removidos). Recarregue a página do sistema.';
+        lucide.createIcons();
       } catch (error) {
         const status = document.getElementById('status');
         status.className = 'status err';

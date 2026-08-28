@@ -22,7 +22,10 @@
     --ruim:#C1502E;
     --inservivel:#8C2F2F;
 
-    --radius:3px;
+    --radius:9px;
+    --radius-sm:4px;
+    --shadow-sm:0 1px 2px rgba(27,26,24,.05), 0 6px 18px -8px rgba(27,26,24,.12);
+    --shadow-md:0 2px 4px rgba(27,26,24,.06), 0 14px 30px -12px rgba(27,26,24,.2);
     --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
     --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
@@ -41,10 +44,11 @@
 
   /* ---------- Header ---------- */
   header.topbar{
-    background:var(--primary);
+    background:linear-gradient(135deg, var(--primary), var(--primary-dark));
     color:#fff;
     padding:22px 28px 0 28px;
     border-bottom:4px solid var(--stamp);
+    box-shadow:var(--shadow-sm);
   }
   .topbar-inner{
     max-width:1180px;
@@ -69,12 +73,13 @@
   .brand-mark{
     width:42px;height:42px;
     border:2px solid rgba(255,255,255,.55);
-    border-radius:2px;
+    border-radius:var(--radius-sm);
     display:flex;align-items:center;justify-content:center;
     font-family:var(--mono);
     font-weight:600;
     font-size:13px;
     letter-spacing:.5px;
+    background:rgba(255,255,255,.08);
   }
   .brand h1{
     font-size:19px;
@@ -126,8 +131,11 @@
     font-size:10.5px;
     font-family:var(--mono);
     padding:2px 6px;
-    border-radius:2px;
+    border-radius:var(--radius-sm);
     background:rgba(255,255,255,.12);
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
   }
 
   /* ---------- Main ---------- */
@@ -157,6 +165,9 @@
     position:relative;
     top:1px;
     border-bottom:2px solid transparent;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
   }
   .tab-btn:hover{ color:var(--ink); }
   .tab-btn.active{
@@ -181,6 +192,7 @@
     border-radius:var(--radius);
     background:var(--panel);
     color:var(--ink);
+    transition:border-color .15s ease, box-shadow .15s ease;
   }
   .toolbar input[type="text"]{
     flex:1;
@@ -206,17 +218,20 @@
     border-radius:var(--radius);
     border:1px solid transparent;
     cursor:pointer;
-    transition:filter .12s ease, transform .05s ease;
+    transition:filter .12s ease, transform .05s ease, box-shadow .15s ease;
     white-space:nowrap;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
   }
   .btn:active{ transform:translateY(1px); }
-  .btn-primary{ background:var(--primary); color:#fff; }
-  .btn-primary:hover{ filter:brightness(1.12); }
+  .btn-primary{ background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff; box-shadow:0 8px 18px -10px rgba(27,26,24,.45); }
+  .btn-primary:hover{ filter:brightness(1.15); }
   .btn-ghost{ background:var(--panel); color:var(--ink); border-color:var(--line); }
   .btn-ghost:hover{ background:#EFEDE6; }
-  .btn-danger-text{ background:none; border:none; color:var(--ruim); font-weight:600; cursor:pointer; font-size:12.5px; padding:4px 6px;}
+  .btn-danger-text{ background:none; border:none; color:var(--ruim); font-weight:600; cursor:pointer; font-size:12.5px; padding:4px 6px; display:inline-flex; align-items:center; gap:5px;}
   .btn-danger-text:hover{ text-decoration:underline; }
-  .btn-edit-text{ background:none; border:none; color:var(--accent); font-weight:600; cursor:pointer; font-size:12.5px; padding:4px 6px;}
+  .btn-edit-text{ background:none; border:none; color:var(--accent); font-weight:600; cursor:pointer; font-size:12.5px; padding:4px 6px; display:inline-flex; align-items:center; gap:5px;}
   .btn-edit-text:hover{ text-decoration:underline; }
 
   /* ---------- Table ---------- */
@@ -225,6 +240,7 @@
     border:1px solid var(--line);
     border-radius:var(--radius);
     overflow:hidden;
+    box-shadow:var(--shadow-sm);
   }
   table{
     width:100%;
@@ -235,8 +251,8 @@
     font-size:11px;
     text-transform:uppercase;
     letter-spacing:.6px;
-    color:var(--ink-soft);
-    background:#EFEDE6;
+    color:#fff;
+    background:linear-gradient(135deg, var(--primary), var(--accent));
     padding:11px 16px;
     border-bottom:1px solid var(--line);
     position:sticky;
@@ -300,7 +316,10 @@
     border-left:4px solid var(--primary);
     border-radius:var(--radius);
     padding:14px 16px;
+    box-shadow:var(--shadow-sm);
+    transition:transform .15s ease, box-shadow .15s ease;
   }
+  .dash-card:hover{ transform:translateY(-2px); box-shadow:var(--shadow-md); }
   .dash-card .num{
     font-family:var(--mono);
     font-size:24px;
@@ -342,6 +361,7 @@
     border:1px solid var(--line);
     border-radius:var(--radius);
     padding:16px;
+    box-shadow:var(--shadow-sm);
   }
   .chart-card h3{
     font-size:12px;
@@ -523,7 +543,7 @@
     max-width:440px;
     border-radius:var(--radius);
     border:1px solid var(--line);
-    box-shadow:0 12px 40px rgba(0,0,0,.18);
+    box-shadow:0 24px 60px -18px rgba(20,24,28,.45);
   }
   .modal-head{
     padding:18px 22px;
@@ -532,11 +552,13 @@
     align-items:center;
     justify-content:space-between;
   }
-  .modal-head h2{ margin:0; font-size:15.5px; font-weight:600; }
+  .modal-head h2{ margin:0; font-size:15.5px; font-weight:600; display:flex; align-items:center; gap:8px; }
   .modal-head button{
     background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-soft);
-    line-height:1;padding:2px 6px;
+    line-height:1;padding:4px 6px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;
+    transition:background .15s ease, color .15s ease;
   }
+  .modal-head button:hover{ background:rgba(0,0,0,.06); color:var(--ink); }
   .modal-body{ padding:20px 22px; }
   .field{ margin-bottom:16px; }
   .field label{
@@ -556,10 +578,12 @@
     border:1px solid var(--line);
     border-radius:var(--radius);
     background:#FCFBF9;
+    transition:border-color .15s ease, box-shadow .15s ease;
   }
   .field input:focus, .field select:focus, .toolbar input:focus, .toolbar select:focus{
-    outline:2px solid var(--accent);
-    outline-offset:1px;
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(46,111,149,.15);
     background:#fff;
   }
   .field input.rp-input{ font-family:var(--mono); }
@@ -593,6 +617,7 @@
     pointer-events:none;
     transition:opacity .18s ease, transform .18s ease;
     z-index:60;
+    box-shadow:var(--shadow-md);
   }
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
 
@@ -612,6 +637,8 @@
     thead th:nth-child(3), td:nth-child(3){ display:none; } /* esconder quantidade coluna larga? mantemos qtd, ocultamos nada crítico */
   }
 </style>
+
+<script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
@@ -625,8 +652,8 @@
       </div>
     </div>
     <div class="topbar-actions">
-      <button class="btn btn-ghost" id="exportBtn" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:#fff;">Exportar CSV</button>
-      <button class="btn btn-ghost" id="homeBtn" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:#fff;">HOME</button>
+      <button class="btn btn-ghost" id="exportBtn" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:#fff;"><i data-lucide="file-down" style="width:15px;"></i> Exportar CSV</button>
+      <button class="btn btn-ghost" id="homeBtn" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:#fff;"><i data-lucide="home" style="width:15px;"></i> HOME</button>
     </div>
   </div>
   <div class="stats">
@@ -647,15 +674,15 @@
 
 <main>
   <div class="tabs">
-    <button class="tab-btn active" id="tabDashboardBtn" data-tab="dashboard">Dashboard</button>
-    <button class="tab-btn" id="tabEstoqueBtn" data-tab="estoque">Estoque</button>
+    <button class="tab-btn active" id="tabDashboardBtn" data-tab="dashboard"><i data-lucide="layout-dashboard" style="width:15px;"></i> Dashboard</button>
+    <button class="tab-btn" id="tabEstoqueBtn" data-tab="estoque"><i data-lucide="box" style="width:15px;"></i> Estoque</button>
   </div>
 
   <!-- ===== Painel: Dashboard (tela principal) ===== -->
   <div class="panel active" id="panelDashboard">
     <div class="toolbar dash-toolbar">
       <input type="text" id="dashSearchInput" placeholder="Buscar item por Nº RP ou descrição para filtrar os gráficos…">
-      <button class="btn btn-ghost" id="dashClearBtn" style="display:none;">Limpar filtro</button>
+      <button class="btn btn-ghost" id="dashClearBtn" style="display:none;"><i data-lucide="filter-x" style="width:15px;"></i> Limpar filtro</button>
       <span class="filter-info" id="dashFilterInfo"></span>
     </div>
 
@@ -718,7 +745,7 @@
         <option value="Ruim">Ruim</option>
         <option value="Inservível">Inservível</option>
       </select>
-      <button class="btn btn-primary" id="newItemBtn">+ Novo item</button>
+      <button class="btn btn-primary" id="newItemBtn"><i data-lucide="plus" style="width:15px;"></i> Novo item</button>
     </div>
 
     <div class="table-wrap">
@@ -746,8 +773,8 @@
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="modal-head">
-      <h2 id="modalTitle">Novo item</h2>
-      <button id="closeModalBtn" aria-label="Fechar">✕</button>
+      <h2 id="modalTitle"><i data-lucide="package" style="width:17px;"></i> Novo item</h2>
+      <button id="closeModalBtn" aria-label="Fechar"><i data-lucide="x" style="width:16px;"></i></button>
     </div>
     <div class="modal-body">
       <div class="field">
@@ -777,8 +804,8 @@
       </div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-ghost" id="cancelBtn">Cancelar</button>
-      <button class="btn btn-primary" id="saveBtn">Salvar</button>
+      <button class="btn btn-ghost" id="cancelBtn"><i data-lucide="x" style="width:15px;"></i> Cancelar</button>
+      <button class="btn btn-primary" id="saveBtn"><i data-lucide="save" style="width:15px;"></i> Salvar</button>
     </div>
   </div>
 </div>
@@ -833,6 +860,8 @@
   const ESTADOS = ['Novo','Bom','Regular','Ruim','Inservível'];
   const ESTADO_COLORS = { 'Novo':'#2F7D4F', 'Bom':'#3B7A87', 'Regular':'#B8862B', 'Ruim':'#C1502E', 'Inservível':'#8C2F2F' };
 
+  lucide.createIcons();
+
   function showToast(msg){
     els.toast.textContent = msg;
     els.toast.classList.add('show');
@@ -876,11 +905,12 @@
       els.tableBody.innerHTML = `
         <tr><td colspan="5">
           <div class="empty-state">
-            <div class="glyph">RP · 000000</div>
+            <div class="glyph"><i data-lucide="archive" style="width:40px;height:40px;"></i></div>
             <p>Nenhum item cadastrado ainda.</p>
             <p class="sub">Clique em "Novo item" para registrar o primeiro bem do estoque.</p>
           </div>
         </td></tr>`;
+      lucide.createIcons();
       return;
     }
 
@@ -888,10 +918,12 @@
       els.tableBody.innerHTML = `
         <tr><td colspan="5">
           <div class="empty-state">
+            <div class="glyph"><i data-lucide="search-x" style="width:36px;height:36px;"></i></div>
             <p>Nenhum item encontrado para este filtro.</p>
             <p class="sub">Ajuste a busca ou o filtro de estado.</p>
           </div>
         </td></tr>`;
+      lucide.createIcons();
       return;
     }
 
@@ -905,11 +937,12 @@
           <td class="qtd">${it.quantidade}</td>
           <td><span class="tag ${it.estado}">${it.estado}</span></td>
           <td class="acoes">
-            <button class="btn-edit-text" data-action="edit" data-rp="${escapeHtml(it.rp)}">Editar</button>
-            <button class="btn-danger-text" data-action="delete" data-rp="${escapeHtml(it.rp)}">Excluir</button>
+            <button class="btn-edit-text" data-action="edit" data-rp="${escapeHtml(it.rp)}"><i data-lucide="pencil" style="width:13px;"></i> Editar</button>
+            <button class="btn-danger-text" data-action="delete" data-rp="${escapeHtml(it.rp)}"><i data-lucide="trash-2" style="width:13px;"></i> Excluir</button>
           </td>
         </tr>
       `).join('');
+    lucide.createIcons();
   }
 
   function getDashItems(){
@@ -945,6 +978,7 @@
       .filter(e=> counts[e] > 0)
       .map(e=> `<span class="chip-mini">${e} · ${counts[e]}</span>`)
       .join('') || '<span class="chip-mini">—</span>';
+    lucide.createIcons();
   }
 
   // ---------- Dashboard: agregação por item, sem depender de busca ----------
@@ -1051,6 +1085,7 @@
         <tr><td colspan="7">
           <div class="empty-state">${emptyMsg}</div>
         </td></tr>`;
+      lucide.createIcons();
       return;
     }
 
@@ -1106,7 +1141,7 @@
       const it = items.find(i=> i.rp === rpToEdit);
       if(!it) return;
       editingRp = rpToEdit;
-      els.modalTitle.textContent = 'Editar item';
+      els.modalTitle.innerHTML = '<i data-lucide="package" style="width:17px;"></i> Editar item';
       els.inputRp.value = it.rp;
       els.inputRp.disabled = true;
       els.inputDescricao.value = it.descricao;
@@ -1114,7 +1149,7 @@
       els.inputEstado.value = it.estado;
     }else{
       editingRp = null;
-      els.modalTitle.textContent = 'Novo item';
+      els.modalTitle.innerHTML = '<i data-lucide="package" style="width:17px;"></i> Novo item';
       els.inputRp.disabled = false;
       els.inputRp.value = '';
       els.inputDescricao.value = '';
@@ -1122,6 +1157,7 @@
       els.inputEstado.value = 'Bom';
     }
     els.overlay.classList.add('open');
+    lucide.createIcons();
     setTimeout(()=> (rpToEdit ? els.inputDescricao : els.inputRp).focus(), 30);
   }
 
