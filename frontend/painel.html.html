@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
   <style>
     :root {
       --bg: #0b1120;
@@ -290,6 +290,11 @@
       border: 1px solid rgba(154, 208, 255, 0.5);
       background: linear-gradient(145deg, rgba(66, 146, 255, 0.46), rgba(142, 96, 252, 0.36));
       box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.14), 0 0 16px rgba(62, 167, 255, 0.2);
+    }
+
+    .kpi-icon svg {
+      width: 18px;
+      height: 18px;
     }
 
     .kpi-value {
@@ -707,7 +712,7 @@
       </div>
 
       <a class="home-cta" href="home.html.html" aria-label="Ir para a pagina inicial">
-        <span><i class="fa-solid fa-house"></i> Home</span>
+        <span><i data-lucide="home"></i> Home</span>
       </a>
     </header>
 
@@ -856,14 +861,19 @@
       return parsed.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
 
+    function refreshIcons(root) {
+      const scope = (root && root.querySelector) ? root : document;
+      if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons({ root: scope });
+    }
+
     const fallbackKpis = [
-      { title: "Contratos Ativos", value: "0", trend: "Sem contratos", neon: "blue", icon: "fa-layer-group", bar: 0 },
-      { title: "Aditivos Ativos", value: "0", trend: "Sem aditivos", neon: "cyan", icon: "fa-file-circle-plus", bar: 0 },
-      { title: "Atualizacoes", value: "0", trend: "Sem atualizacoes", neon: "green", icon: "fa-arrows-rotate", bar: 0 },
-      { title: "Empenhos em Andamento", value: "0", trend: "Sem empenhos", neon: "purple", icon: "fa-receipt", bar: 0 },
-      { title: "Conformidade", value: "0.0%", trend: "Sem dados", neon: "teal", icon: "fa-shield-halved", bar: 0 },
-      { title: "Notas de Pagamento", value: "0", trend: "Sem notas", neon: "gold", icon: "fa-dollar-sign", bar: 0 },
-      { title: "Valor Total Contratos", value: "R$ 0,0M", trend: "Sem valores", neon: "light", icon: "fa-chart-line", bar: 0 }
+      { title: "Contratos Ativos", value: "0", trend: "Sem contratos", neon: "blue", icon: "layers", bar: 0 },
+      { title: "Aditivos Ativos", value: "0", trend: "Sem aditivos", neon: "cyan", icon: "file-plus-2", bar: 0 },
+      { title: "Atualizacoes", value: "0", trend: "Sem atualizacoes", neon: "green", icon: "refresh-cw", bar: 0 },
+      { title: "Empenhos em Andamento", value: "0", trend: "Sem empenhos", neon: "purple", icon: "receipt", bar: 0 },
+      { title: "Conformidade", value: "0.0%", trend: "Sem dados", neon: "teal", icon: "shield-check", bar: 0 },
+      { title: "Notas de Pagamento", value: "0", trend: "Sem notas", neon: "gold", icon: "dollar-sign", bar: 0 },
+      { title: "Valor Total Contratos", value: "R$ 0,0M", trend: "Sem valores", neon: "light", icon: "trending-up", bar: 0 }
     ];
 
     const fallbackFuncionarios = [];
@@ -898,13 +908,14 @@
         <article class="kpi" data-neon="${item.neon}">
           <div class="kpi-head">
             <div class="kpi-title">${item.title}</div>
-            <div class="kpi-icon"><i class="fa-solid ${item.icon}"></i></div>
+            <div class="kpi-icon"><i data-lucide="${item.icon}"></i></div>
           </div>
           <div class="kpi-value">${item.value}</div>
           <div class="kpi-trend">${item.trend}</div>
           <div class="kpi-bar"><i style="--w:${item.bar}%"></i></div>
         </article>
       `).join("");
+      refreshIcons(host);
     }
 
     function renderFlow(doneIndex = -1) {
@@ -927,12 +938,14 @@
     function renderAlerts() {
       const host = document.getElementById("alertsList");
       if (!alertItems.length) {
-        host.innerHTML = '<div class="item"><b><i class="fa-solid fa-flag" style="color:#6f87a8"></i> Sem alertas</b><div style="margin-top:3px">Nenhum alerta registrado.</div><small>--</small></div>';
+        host.innerHTML = '<div class="item"><b><i data-lucide="flag" style="color:#6f87a8"></i> Sem alertas</b><div style="margin-top:3px">Nenhum alerta registrado.</div><small>--</small></div>';
+        refreshIcons(host);
         return;
       }
       host.innerHTML = alertItems
-        .map((item) => `<div class="item"><b><i class="fa-solid fa-flag" style="color:#ff7d92"></i> ${escapeHtml(item.titulo)}</b><div style="margin-top:3px">${escapeHtml(item.texto)}</div><small>${escapeHtml(item.hora)}</small></div>`)
+        .map((item) => `<div class="item"><b><i data-lucide="flag" style="color:#ff7d92"></i> ${escapeHtml(item.titulo)}</b><div style="margin-top:3px">${escapeHtml(item.texto)}</div><small>${escapeHtml(item.hora)}</small></div>`)
         .join("");
+      refreshIcons(host);
     }
 
     function renderEmployees(funcionarios) {
@@ -1215,10 +1228,11 @@
         if (!alertsList) return;
         const msgs = data.filter((k) => !/sem|0/i.test(k.trend));
         if (!msgs.length) {
-          alertsList.innerHTML = '<div class="item"><b><i class="fa-solid fa-flag" style="color:#6f87a8"></i> Sem alertas</b><div style="margin-top:3px">Nenhum alerta registrado.</div><small>--</small></div>';
+          alertsList.innerHTML = '<div class="item"><b><i data-lucide="flag" style="color:#6f87a8"></i> Sem alertas</b><div style="margin-top:3px">Nenhum alerta registrado.</div><small>--</small></div>';
         } else {
-          alertsList.innerHTML = msgs.map((k) => `<div class="item"><b><i class="fa-solid fa-flag" style="color:#ff7d92"></i> ${escapeHtml(k.title)}</b><div style="margin-top:3px">${escapeHtml(k.value)}</div><small>${formatHora(new Date().toISOString())}</small></div>`).join("");
+          alertsList.innerHTML = msgs.map((k) => `<div class="item"><b><i data-lucide="flag" style="color:#ff7d92"></i> ${escapeHtml(k.title)}</b><div style="margin-top:3px">${escapeHtml(k.value)}</div><small>${formatHora(new Date().toISOString())}</small></div>`).join("");
         }
+        refreshIcons(alertsList);
       } catch (error) {
         document.getElementById("alertsList").innerHTML = '<div class="item"><b>Sem alertas</b><div>Nenhum alerta registrado.</div><small>--</small></div>';
       }
@@ -1277,6 +1291,7 @@
         .catch(() => {});
     }
 
+    if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
     bootstrap();
   </script>
 </body>

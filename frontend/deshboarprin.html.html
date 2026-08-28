@@ -7,139 +7,230 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>SGC - Monitoria de Contratos | SESP-MT</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
     <style>
         :root {
-            --bg-page: #0b132b;
-            --bg-card: #1c2541;
-            --bg-card-hover: #232d4c;
-            --sidebar-bg: #070b19;
-            --sidebar-hover: #1c2541;
-            --brand-blue: #4ea8de;
-            --brand-cyan: #38bdf8;
-            --text-main: #e0fbfc;
-            --text-muted: #8d99ae;
-            --border-color: #2d3748;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #3b82f6;
+            --bg: #0a0f1e;
+            --bg-soft: #0f172a;
+            --surface: #141e36;
+            --surface-2: #1b2741;
+            --line: rgba(148, 163, 184, 0.16);
+            --line-strong: rgba(148, 163, 184, 0.28);
+            --text: #e6edf7;
+            --muted: #8aa0bd;
+            --brand: #3b82f6;
+            --cyan: #22d3ee;
+            --success: #34d399;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --violet: #a78bfa;
+            --radius: 16px;
+            --shadow: 0 20px 40px -24px rgba(0, 0, 0, 0.7);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
         }
 
         body {
             display: flex;
             height: 100vh;
             min-height: 100vh;
-            background-color: var(--bg-page);
-            color: var(--text-main);
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(900px 420px at 82% -8%, rgba(34, 211, 238, 0.09), transparent 60%),
+                radial-gradient(760px 400px at 8% 0%, rgba(59, 130, 246, 0.1), transparent 55%);
+            background-attachment: fixed;
+            color: var(--text);
             overflow: hidden;
         }
 
         .sidebar {
-            width: 260px;
+            width: 256px;
+            min-width: 256px;
             height: 100vh;
-            background-color: var(--sidebar-bg);
-            color: #fff;
+            background: linear-gradient(180deg, #0c1427 0%, #0a0f1e 100%);
+            border-right: 1px solid var(--line);
             display: flex;
             flex-direction: column;
-            border-right: 1px solid var(--border-color);
+            z-index: 10;
         }
 
         .sidebar-header {
-            height: 70px;
+            min-height: 76px;
             display: flex;
             align-items: center;
-            padding: 0 20px;
+            padding: 0 18px;
             gap: 12px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--line);
         }
 
-        .sidebar-header i {
-            font-size: 24px;
-            color: var(--brand-blue);
+        .sidebar-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.35), rgba(34, 211, 238, 0.25));
+            border: 1px solid rgba(34, 211, 238, 0.35);
+            color: var(--cyan);
+            box-shadow: 0 0 18px rgba(34, 211, 238, 0.25);
         }
 
         .sidebar-header h2 {
             font-size: 15px;
-            font-weight: 600;
-            line-height: 1.2;
+            font-weight: 700;
+            line-height: 1.1;
             color: #fff;
         }
 
         .sidebar-header span {
             font-size: 11px;
-            color: var(--text-muted);
+            color: var(--muted);
         }
 
         .nav-menu {
             list-style: none;
-            padding: 20px 0;
+            padding: 14px 10px;
             flex: 1;
+            overflow-y: auto;
         }
 
         .nav-item {
-            padding: 14px 24px;
             display: flex;
             align-items: center;
             gap: 12px;
-            color: var(--text-muted);
+            padding: 12px 14px;
+            margin-bottom: 4px;
+            border-radius: 12px;
+            color: var(--muted);
             cursor: pointer;
-            transition: 0.2s;
-            font-size: 14px;
-            font-weight: 500;
+            transition: 0.18s;
+            font-size: 13.5px;
+            font-weight: 600;
+            position: relative;
         }
 
-        .nav-item:hover,
+        .nav-item svg {
+            width: 19px;
+            height: 19px;
+            flex-shrink: 0;
+        }
+
+        .nav-item:hover {
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--text);
+        }
+
         .nav-item.active {
-            background-color: var(--sidebar-hover);
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.22), rgba(34, 211, 238, 0.08));
             color: #fff;
-            border-left: 4px solid var(--brand-blue);
+            box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.35);
         }
 
-        .nav-item i {
-            width: 20px;
-            text-align: center;
+        .nav-item.active::before {
+            content: "";
+            position: absolute;
+            left: -10px;
+            top: 8px;
+            bottom: 8px;
+            width: 3px;
+            border-radius: 3px;
+            background: linear-gradient(var(--brand), var(--cyan));
+        }
+
+        .sidebar-footer {
+            padding: 14px 18px;
+            border-top: 1px solid var(--line);
+            font-size: 11px;
+            color: var(--muted);
         }
 
         .main-content {
             flex: 1;
-            min-height: 0;
+            min-width: 0;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
         .topbar {
-            min-height: 70px;
-            background-color: var(--bg-card);
-            border-bottom: 1px solid var(--border-color);
+            min-height: 76px;
+            background: rgba(15, 23, 42, 0.72);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--line);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 32px;
+            padding: 0 28px;
             gap: 16px;
         }
 
-        .page-title {
-            font-size: 18px;
-            font-weight: 600;
+        .topbar-titles h1 {
+            font-size: 17px;
+            font-weight: 700;
             color: #fff;
         }
 
-        .topbar-actions {
+        .topbar-titles p {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .topbar-right {
             display: flex;
             align-items: center;
-            gap: 14px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 10px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: rgba(148, 163, 184, 0.06);
+        }
+
+        .topbar-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            font-size: 13px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--brand), var(--cyan));
+            color: #08111f;
+        }
+
+        .topbar-user small {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .topbar-user strong {
+            font-size: 12.5px;
+            color: #fff;
+            display: block;
+            max-width: 160px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .content-area {
@@ -147,17 +238,27 @@
             min-height: 0;
             overflow-y: auto;
             overflow-x: hidden;
-            padding: 32px;
-            background-color: var(--bg-page);
+            padding: 26px 28px 40px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--line-strong) transparent;
+        }
+
+        .content-area::-webkit-scrollbar {
+            width: 9px;
+        }
+
+        .content-area::-webkit-scrollbar-thumb {
+            background: var(--line-strong);
+            border-radius: 8px;
         }
 
         .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 24px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            margin-bottom: 24px;
+            background: linear-gradient(160deg, rgba(27, 39, 65, 0.72), rgba(15, 23, 42, 0.85));
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 22px 24px;
+            box-shadow: var(--shadow);
+            margin-bottom: 22px;
         }
 
         .card-header {
@@ -165,58 +266,149 @@
             justify-content: space-between;
             align-items: center;
             gap: 12px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 12px;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--line);
             flex-wrap: wrap;
         }
 
         .card-title {
-            font-size: 15px;
-            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 13px;
+            font-weight: 700;
             color: #fff;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.6px;
+        }
+
+        .card-title svg {
+            width: 16px;
+            height: 16px;
+            color: var(--cyan);
         }
 
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 18px;
+            margin-bottom: 22px;
         }
 
         .kpi-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
+            background: linear-gradient(160deg, rgba(27, 39, 65, 0.72), rgba(15, 23, 42, 0.85));
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 18px 20px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            border-left: 4px solid var(--brand-blue);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            gap: 10px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            transition: 0.18s;
         }
 
-        .kpi-card.warning {
-            border-left-color: var(--warning);
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--line-strong);
         }
 
-        .kpi-card.success {
-            border-left-color: var(--success);
+        .kpi-card::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--brand), var(--cyan));
+            opacity: 0.7;
+        }
+
+        .kpi-card.warning::after {
+            background: linear-gradient(90deg, var(--warning), #fdba74);
+        }
+
+        .kpi-card.success::after {
+            background: linear-gradient(90deg, var(--success), #a7f3d0);
+        }
+
+        .kpi-card.danger::after {
+            background: linear-gradient(90deg, var(--danger), #fca5a5);
+        }
+
+        .kpi-top,
+        .kpi-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
         }
 
         .kpi-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
             text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .kpi-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            background: rgba(59, 130, 246, 0.14);
+            color: var(--cyan);
+            flex-shrink: 0;
+        }
+
+        .kpi-icon svg {
+            width: 18px;
+            height: 18px;
         }
 
         .kpi-value {
-            font-size: 26px;
-            font-weight: 700;
+            font-size: 25px;
+            font-weight: 800;
             color: #fff;
+            letter-spacing: -0.4px;
+        }
+
+        .kpi-sub {
+            font-size: 11.5px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .kpi-bar {
+            height: 5px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.14);
+            overflow: hidden;
+        }
+
+        .kpi-bar i {
+            display: block;
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--brand), var(--cyan));
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 22px;
+            margin-bottom: 22px;
+        }
+
+        .chart-box {
+            height: 280px;
+            position: relative;
         }
 
         table {
@@ -226,157 +418,219 @@
 
         th {
             text-align: left;
-            padding: 12px 16px;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
-            border-bottom: 2px solid var(--border-color);
+            padding: 11px 14px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            border-bottom: 1px solid var(--line);
             text-transform: uppercase;
-            background: rgba(0, 0, 0, 0.2);
+            letter-spacing: 0.5px;
+            background: rgba(148, 163, 184, 0.05);
+        }
+
+        th:first-child {
+            border-radius: 10px 0 0 0;
+        }
+
+        th:last-child {
+            border-radius: 0 10px 0 0;
         }
 
         td {
-            padding: 16px;
+            padding: 14px;
             font-size: 13px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--line);
             vertical-align: middle;
-            color: var(--text-main);
+            color: var(--text);
+        }
+
+        tbody tr {
+            transition: background 0.15s;
         }
 
         tbody tr:hover {
-            background-color: var(--bg-card-hover);
+            background: rgba(59, 130, 246, 0.07);
+        }
+
+        tr.hidden {
+            display: none;
         }
 
         .progress-container {
             width: 100%;
-            background-color: #2d3748;
+            background: rgba(148, 163, 184, 0.14);
             height: 6px;
-            border-radius: 4px;
-            margin-top: 6px;
+            border-radius: 999px;
+            margin-top: 7px;
             overflow: hidden;
         }
 
         .progress-bar {
             height: 100%;
-            background-color: var(--brand-blue);
-            border-radius: 4px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--brand), var(--cyan));
         }
 
         .progress-text {
             display: flex;
             justify-content: space-between;
-            font-size: 11px;
-            color: var(--text-muted);
+            font-size: 11.5px;
+            color: var(--muted);
             font-weight: 600;
             gap: 12px;
         }
 
         .badge {
-            padding: 4px 8px;
-            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
             font-size: 11px;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge svg {
+            width: 12px;
+            height: 12px;
         }
 
         .badge.ativo {
-            background: rgba(16, 185, 129, 0.2);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            background: rgba(52, 211, 153, 0.14);
+            color: #6ee7b7;
+            border: 1px solid rgba(52, 211, 153, 0.28);
         }
 
         .badge.vencendo {
-            background: rgba(245, 158, 11, 0.2);
-            color: #fbbf24;
-            border: 1px solid rgba(245, 158, 11, 0.3);
+            background: rgba(251, 191, 36, 0.14);
+            color: #fcd34d;
+            border: 1px solid rgba(251, 191, 36, 0.28);
         }
 
         .badge.encerrado {
-            background: rgba(239, 68, 68, 0.2);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: rgba(248, 113, 113, 0.14);
+            color: #fca5a5;
+            border: 1px solid rgba(248, 113, 113, 0.28);
         }
 
         .form-control {
             padding: 10px 14px;
-            background: #0b132b;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 14px;
+            background: rgba(9, 15, 30, 0.7);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            font-size: 13.5px;
             width: 100%;
             outline: none;
             color: #fff;
+            transition: border-color 0.15s;
         }
 
         .form-control:focus {
-            border-color: var(--brand-blue);
+            border-color: rgba(34, 211, 238, 0.6);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.12);
         }
 
         .btn {
-            padding: 10px 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 16px;
             border: none;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 700;
             cursor: pointer;
-            transition: 0.2s;
+            transition: 0.18s;
+            font-family: inherit;
+        }
+
+        .btn svg {
+            width: 15px;
+            height: 15px;
         }
 
         .btn-primary {
-            background: var(--brand-blue);
-            color: #0b132b;
+            background: linear-gradient(135deg, var(--brand), var(--cyan));
+            color: #08111f;
         }
 
         .btn-primary:hover {
-            background: var(--brand-cyan);
+            filter: brightness(1.1);
+            transform: translateY(-1px);
         }
 
         .btn-secondary {
-            background: #2d3748;
+            background: rgba(148, 163, 184, 0.14);
             color: #fff;
+            border: 1px solid var(--line);
         }
 
         .btn-secondary:hover {
-            background: #41516b;
+            background: rgba(148, 163, 184, 0.24);
         }
 
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 24px;
+        .btn-ghost {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--line);
+        }
+
+        .btn-ghost:hover {
+            color: #fff;
+            border-color: var(--line-strong);
         }
 
         .empty-state,
         .loading-state {
-            border: 1px dashed var(--border-color);
-            border-radius: 10px;
-            padding: 28px;
+            border: 1px dashed var(--line-strong);
+            border-radius: 14px;
+            padding: 30px;
             text-align: center;
-            color: var(--text-muted);
-            background: rgba(255, 255, 255, 0.03);
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.02);
+            font-size: 13.5px;
+        }
+
+        .empty-state svg,
+        .loading-state svg {
+            width: 30px;
+            height: 30px;
+            margin-bottom: 8px;
+            color: var(--line-strong);
         }
 
         .summary-note {
-            color: var(--text-muted);
+            color: var(--muted);
             font-size: 12px;
         }
 
         .contract-details-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
             gap: 12px;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
         }
 
         .contract-details-block {
-            border: 1px solid var(--border-color);
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
-            padding: 10px 12px;
-            font-size: 12px;
-            line-height: 1.5;
+            border: 1px solid var(--line);
+            background: rgba(148, 163, 184, 0.05);
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 12.5px;
+            line-height: 1.55;
             word-break: break-word;
+        }
+
+        .contract-details-block strong {
+            display: block;
+            color: var(--muted);
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
         }
 
         .details-scroll {
@@ -386,42 +640,118 @@
         }
 
         .contract-details-title {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--muted);
+            margin: 14px 0 8px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            font-weight: 600;
+            font-weight: 700;
         }
 
-        .topbar-user {
+        .contract-details-title svg {
+            width: 14px;
+            height: 14px;
+            color: var(--cyan);
+        }
+
+        .form-blue {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .form-blue h3 {
+            white-space: nowrap;
+            font-size: 12.5px;
+            color: var(--muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .contracts-filter-row {
             display: flex;
             align-items: center;
             gap: 10px;
+            flex: 1;
+            min-width: 240px;
+            max-width: 440px;
+            position: relative;
         }
 
-        .topbar-avatar {
-            width: 35px;
-            height: 35px;
-            background: var(--brand-blue);
-            color: #0b132b;
-            border-radius: 50%;
+        .contracts-filter-row svg {
+            position: absolute;
+            left: 12px;
+            width: 16px;
+            height: 16px;
+            color: var(--muted);
+            pointer-events: none;
+        }
+
+        .contracts-filter-row input {
+            padding-left: 36px;
+        }
+
+        .search-hero {
+            text-align: center;
+            padding: 36px 20px;
+        }
+
+        .search-hero h2 {
+            font-size: 19px;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .search-box {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
+            gap: 10px;
+            max-width: 720px;
+            margin: 16px auto 0;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .search-box .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 17px;
+            height: 17px;
+            color: var(--muted);
+            pointer-events: none;
+        }
+
+        .search-box input {
+            flex: 1;
+            min-width: 260px;
+            padding: 13px 14px 13px 40px;
+            font-size: 14.5px;
         }
 
         @media (max-width: 1100px) {
             body {
                 display: block;
                 overflow: auto;
+                height: auto;
             }
 
             .sidebar {
                 width: 100%;
+                min-width: 0;
+                height: auto;
                 border-right: none;
-                border-bottom: 1px solid var(--border-color);
+                border-bottom: 1px solid var(--line);
+                max-height: 30vh;
+            }
+
+            .sidebar-footer {
+                display: none;
             }
 
             .charts-grid {
@@ -433,11 +763,19 @@
             .topbar {
                 padding: 16px 18px;
                 align-items: flex-start;
-                flex-direction: column;
+                flex-wrap: wrap;
+            }
+
+            .topbar-right .topbar-user {
+                display: none;
             }
 
             .content-area {
                 padding: 18px;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             }
         }
     </style>
@@ -445,26 +783,39 @@
 <body>
     <aside class="sidebar">
         <div class="sidebar-header">
-            <i class="fa-solid fa-shield-halved"></i>
+            <div class="sidebar-logo"><i data-lucide="shield-check"></i></div>
             <div>
                 <h2>SESP-MT</h2>
                 <span>Monitoria de Contratos</span>
             </div>
         </div>
         <ul class="nav-menu">
-            <li class="nav-item" onclick="window.location.href = resolveFrontendPath('painel.html.html')"><i class="fa-solid fa-house"></i> Painel</li>
-            <li class="nav-item active" onclick="app.navigate('dashboard', this)"><i class="fa-solid fa-chart-pie"></i> Dashboard Executivo</li>
-            <li class="nav-item" onclick="app.navigate('unidades', this)"><i class="fa-solid fa-building-shield"></i> Painel de Unidades</li>
-            <li class="nav-item" onclick="app.navigate('contratos', this)"><i class="fa-solid fa-file-contract"></i> Painel de Contratos</li>
-            <li class="nav-item" onclick="app.navigate('busca', this)"><i class="fa-solid fa-magnifying-glass"></i> Busca Inteligente</li>
+            <li class="nav-item" onclick="window.location.href = resolveFrontendPath('painel.html.html')"><i data-lucide="home"></i> Painel</li>
+            <li class="nav-item active" onclick="app.navigate('dashboard', this)"><i data-lucide="layout-dashboard"></i> Dashboard Executivo</li>
+            <li class="nav-item" onclick="app.navigate('unidades', this)"><i data-lucide="building-2"></i> Painel de Unidades</li>
+            <li class="nav-item" onclick="app.navigate('contratos', this)"><i data-lucide="files"></i> Painel de Contratos</li>
+            <li class="nav-item" onclick="app.navigate('busca', this)"><i data-lucide="search"></i> Busca Inteligente</li>
         </ul>
+        <div class="sidebar-footer">
+            <i data-lucide="lock" style="width:12px;height:12px;margin-right:4px;"></i> Acesso autorizado somente à Monitoria SESP-MT
+        </div>
     </aside>
 
     <main class="main-content">
         <header class="topbar">
-            <div class="page-title" id="pageTitle">Dashboard Executivo</div>
-            <div class="topbar-actions">
-                <button class="btn btn-primary" type="button" onclick="openHomePage()"><i class="fa-solid fa-house"></i> HOME</button>
+            <div class="topbar-titles">
+                <h1 id="pageTitle">Dashboard Executivo</h1>
+                <p id="pageSubtitle">Visão consolidada da carteira de contratos</p>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-user">
+                    <div class="topbar-avatar" id="topbarAvatar">SG</div>
+                    <div>
+                        <strong id="topbarUserName">Monitoria SGC</strong>
+                        <small>Analista SESP-MT</small>
+                    </div>
+                </div>
+                <button class="btn btn-primary" type="button" onclick="openHomePage()"><i data-lucide="home"></i> HOME</button>
             </div>
         </header>
         <div class="content-area" id="appContent"></div>
@@ -483,6 +834,12 @@
                 return `/frontend/${String(relativePath || '').replace(/^\.?\/?/, '')}`;
             }
             return String(relativePath || '');
+        }
+
+        function refreshLucideIcons(container) {
+            if (typeof lucide === 'undefined' || !lucide.createIcons) return;
+            const root = (container && container.querySelector) ? container : document;
+            lucide.createIcons({ root });
         }
 
         function openHomePage() {
@@ -861,55 +1218,68 @@
             const totalValue = utils.getContractValue(contract);
             const usedValue = utils.getGlobalUsed(contract);
             const availableValue = Math.max(totalValue - usedValue, 0);
+            const percentFinance = totalValue > 0 ? (usedValue / totalValue) * 100 : 0;
+            const statusBadge = `<span class="badge ${utils.getBadgeClass(utils.getStatus(contract))}"><i data-lucide="circle"></i> ${utils.escapeHtml(utils.getStatus(contract))}</span>`;
 
             detailsContent.innerHTML = `
-                <div class="contract-details-grid">
-                    <div class="contract-details-block"><strong>Contrato:</strong> ${utils.escapeHtml(utils.getContractNumber(contract))}</div>
-                    <div class="contract-details-block"><strong>Processo:</strong> ${utils.escapeHtml(utils.getContractProcess(contract))}</div>
-                    <div class="contract-details-block"><strong>Status:</strong> ${utils.escapeHtml(utils.getStatus(contract))}</div>
-                    <div class="contract-details-block"><strong>Credor:</strong> ${utils.escapeHtml(String(contract?.credor || '-'))}</div>
-                    <div class="contract-details-block"><strong>Nome da Contratada:</strong> ${utils.escapeHtml(utils.getCompanyName(contract))}</div>
-                    <div class="contract-details-block"><strong>Endereço:</strong> ${utils.escapeHtml(utils.getAddressText(contract))}</div>
-                    <div class="contract-details-block"><strong>Endereço Eletrônico:</strong> ${utils.escapeHtml(utils.getEmailText(contract))}</div>
-                    <div class="contract-details-block"><strong>Telefone:</strong> ${utils.escapeHtml(utils.getPhoneText(contract))}</div>
-                    <div class="contract-details-block"><strong>Vigência:</strong> ${utils.escapeHtml(utils.getContractDurationMonths(contract))}</div>
-                    <div class="contract-details-block"><strong>Prazo de vigência:</strong> ${utils.escapeHtml(utils.formatDate(utils.getStartDate(contract)))} até ${utils.escapeHtml(utils.formatDate(utils.getEndDate(contract)))}</div>
-                    <div class="contract-details-block"><strong>Tipo de entrega:</strong> ${utils.escapeHtml(String(contract?.tipoEntrega || '-'))}</div>
-                    <div class="contract-details-block"><strong>Prazo de entrega:</strong> ${utils.escapeHtml(String(contract?.prazoEntrega || '-'))}</div>
-                </div>
-
-                <div class="contract-details-block" style="margin-bottom: 12px;"><strong>Objeto:</strong> ${utils.escapeHtml(utils.getContractObject(contract))}</div>
-
-                <div class="contract-details-grid">
-                    <div class="contract-details-block"><strong>Valor total:</strong> ${utils.escapeHtml(utils.formatMoney(totalValue))}</div>
-                    <div class="contract-details-block"><strong>Valor usado:</strong> ${utils.escapeHtml(utils.formatMoney(usedValue))}</div>
-                    <div class="contract-details-block"><strong>Saldo disponível:</strong> ${utils.escapeHtml(utils.formatMoney(availableValue))}</div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
+                    <div>
+                        <div style="font-size:18px; font-weight:800; color:#fff;">Contrato ${utils.escapeHtml(utils.getContractNumber(contract))}</div>
+                        <div style="font-size:13px; color:var(--muted); margin-top:4px;">${utils.escapeHtml(utils.getCompanyName(contract))}</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        ${statusBadge}
+                        ${attachmentUrl ? `<button class="btn btn-secondary" type="button" onclick="openContractPdf('${utils.escapeHtml(utils.getContractNumber(contract))}')"><i data-lucide="file-text"></i> Visualizar PDF</button>` : ''}
+                    </div>
                 </div>
 
                 <div class="contract-details-grid">
-                    <div class="contract-details-block"><strong>Lotes:</strong> ${lotes.length}</div>
-                    <div class="contract-details-block"><strong>Unidades:</strong> ${unidades.length}</div>
-                    <div class="contract-details-block"><strong>Aditivos:</strong> ${aditivos.length}</div>
-                    <div class="contract-details-block"><strong>Empenhos:</strong> ${empenhos.length}</div>
+                    <div class="contract-details-block"><strong>Processo</strong>${utils.escapeHtml(utils.getContractProcess(contract))}</div>
+                    <div class="contract-details-block"><strong>Credor</strong>${utils.escapeHtml(String(contract?.credor || '-'))}</div>
+                    <div class="contract-details-block"><strong>Vigência</strong>${utils.escapeHtml(utils.formatDate(utils.getStartDate(contract)))} até ${utils.escapeHtml(utils.formatDate(utils.getEndDate(contract)))}</div>
+                    <div class="contract-details-block"><strong>Duração</strong>${utils.escapeHtml(utils.getContractDurationMonths(contract))}</div>
+                    <div class="contract-details-block"><strong>Tipo de entrega</strong>${utils.escapeHtml(String(contract?.tipoEntrega || '-'))}</div>
+                    <div class="contract-details-block"><strong>Prazo de entrega</strong>${utils.escapeHtml(String(contract?.prazoEntrega || '-'))}</div>
+                    <div class="contract-details-block"><strong>Endereço</strong>${utils.escapeHtml(utils.getAddressText(contract))}</div>
+                    <div class="contract-details-block"><strong>Contato</strong>${utils.escapeHtml(utils.getContactText(contract))}</div>
                 </div>
 
-                <div class="contract-details-block" style="margin-bottom: 12px;">
-                    <strong>Documentos anexados:</strong><br>
-                    ${attachmentUrl ? `<a href="${attachmentUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--brand-cyan); font-weight: 600;">Visualizar PDF ${utils.escapeHtml(attachmentLabel)}</a>` : 'Sem anexo cadastrado'}
+                <div class="contract-details-title"><i data-lucide="scroll-text"></i> Objeto</div>
+                <div class="contract-details-block" style="margin-bottom:14px;">${utils.escapeHtml(utils.getContractObject(contract))}</div>
+
+                <div class="contract-details-title"><i data-lucide="wallet"></i> Indicadores Financeiros</div>
+                <div class="contract-details-grid">
+                    <div class="contract-details-block"><strong>Valor total</strong>${utils.escapeHtml(utils.formatMoney(totalValue))}</div>
+                    <div class="contract-details-block"><strong>Valor usado</strong>${utils.escapeHtml(utils.formatMoney(usedValue))}</div>
+                    <div class="contract-details-block"><strong>Saldo disponível</strong>${utils.escapeHtml(utils.formatMoney(availableValue))}</div>
+                    <div class="contract-details-block">
+                        <strong>Execução financeira</strong>
+                        <span style="font-weight:700; color:${percentFinance > 80 ? 'var(--warning)' : 'var(--success)'};">${percentFinance.toFixed(1)}%</span>
+                        <div class="progress-container"><div class="progress-bar" style="width:${Math.min(percentFinance, 100)}%; background:${percentFinance > 80 ? 'linear-gradient(90deg,var(--warning),#fdba74)' : 'linear-gradient(90deg,var(--brand),var(--cyan))'};"></div></div>
+                    </div>
                 </div>
 
-                <div class="contract-details-title">Lotes cadastrados</div>
-                <div class="contract-details-block" style="margin-bottom: 12px;">
+                <div class="contract-details-title"><i data-lucide="layers"></i> Vínculos e Documentos</div>
+                <div class="contract-details-grid">
+                    <div class="contract-details-block"><strong>Lotes</strong>${lotes.length}</div>
+                    <div class="contract-details-block"><strong>Unidades</strong>${unidades.length}</div>
+                    <div class="contract-details-block"><strong>Aditivos</strong>${aditivos.length}</div>
+                    <div class="contract-details-block"><strong>Empenhos</strong>${empenhos.length}</div>
+                </div>
+
+                <div class="contract-details-title"><i data-lucide="list"></i> Lotes cadastrados</div>
+                <div class="contract-details-block" style="margin-bottom:12px;">
                     ${lotes.length ? lotes.map((lote) => `${utils.escapeHtml(String(lote?.lote || 'Lote'))}${lote?.descricao ? ` - ${utils.escapeHtml(String(lote.descricao))}` : ''}`).join('<br>') : 'Nenhum lote cadastrado.'}
                 </div>
 
-                <div class="contract-details-title">Unidades vinculadas</div>
-                <div class="contract-details-block" style="margin-bottom: 12px;">${unidades.length ? utils.escapeHtml(unidades.join(' / ')) : 'Nenhuma unidade vinculada.'}</div>
+                <div class="contract-details-title"><i data-lucide="building-2"></i> Unidades vinculadas</div>
+                <div class="contract-details-block" style="margin-bottom:12px;">${unidades.length ? utils.escapeHtml(unidades.join(' / ')) : 'Nenhuma unidade vinculada.'}</div>
 
-                <div class="contract-details-block"><strong>Última atualização:</strong> ${utils.escapeHtml(utils.getLastUpdateLabel(contract))}</div>
+                <div class="contract-details-block"><strong>Última atualização</strong>${utils.escapeHtml(utils.getLastUpdateLabel(contract))}</div>
             `;
 
             detailsPanel.style.display = 'block';
+            refreshLucideIcons(detailsContent);
         }
 
         function updateTopbarUser() {
@@ -947,6 +1317,7 @@
         const app = {
             content: document.getElementById('appContent'),
             title: document.getElementById('pageTitle'),
+            subtitle: document.getElementById('pageSubtitle'),
             charts: [],
 
             clearCharts() {
@@ -987,11 +1358,13 @@
             },
 
             renderEmpty(message) {
-                this.content.innerHTML = `<div class="empty-state">${utils.escapeHtml(message || 'Nenhum contrato cadastrado encontrado.')}</div>`;
+                this.content.innerHTML = `<div class="empty-state"><i data-lucide="file-question"></i><br>${utils.escapeHtml(message || 'Nenhum contrato cadastrado encontrado.')}</div>`;
+                refreshLucideIcons(this.content);
             },
 
             renderDashboard() {
-                this.title.innerText = 'Dashboard Executivo - Inteligência Contratual';
+                this.title.innerText = 'Dashboard Executivo';
+                this.subtitle.innerText = 'Inteligência contratual da carteira SESP-MT';
                 if (!dashboardState.contratos.length) {
                     this.renderEmpty('Nenhum contrato cadastrado foi encontrado para abastecer o dashboard.');
                     return;
@@ -1006,56 +1379,80 @@
                 this.content.innerHTML = `
                     <div class="kpi-grid">
                         <div class="kpi-card">
-                            <span class="kpi-title">Valor Total Contratado</span>
-                            <span class="kpi-value">${utils.formatMoney(calc.totalValue)}</span>
+                            <div class="kpi-head">
+                                <div class="kpi-title">Valor Total Contratado</div>
+                                <div class="kpi-icon"><i data-lucide="wallet"></i></div>
+                            </div>
+                            <div class="kpi-value">${utils.formatMoney(calc.totalValue)}</div>
+                            <div class="kpi-sub"><i data-lucide="layers" style="width:13px;height:13px;"></i> ${calc.totalContracts} contratos na carteira</div>
                         </div>
                         <div class="kpi-card warning">
-                            <span class="kpi-title">Valor Empenhado (${percentGasto.toFixed(1)}%)</span>
-                            <span class="kpi-value">${utils.formatMoney(calc.totalUsed)}</span>
+                            <div class="kpi-head">
+                                <div class="kpi-title">Valor Empenhado</div>
+                                <div class="kpi-icon" style="background:rgba(251,191,36,0.14); color:var(--warning);"><i data-lucide="trending-up"></i></div>
+                            </div>
+                            <div class="kpi-value">${utils.formatMoney(calc.totalUsed)}</div>
+                            <div class="kpi-bar"><i style="width:${Math.min(percentGasto, 100)}%; background:linear-gradient(90deg,var(--warning),#fdba74);"></i></div>
+                            <div class="kpi-sub">${percentGasto.toFixed(1)}% do valor global</div>
                         </div>
                         <div class="kpi-card success">
-                            <span class="kpi-title">Saldo Global Disponível</span>
-                            <span class="kpi-value">${utils.formatMoney(calc.totalValue - calc.totalUsed)}</span>
+                            <div class="kpi-head">
+                                <div class="kpi-title">Saldo Global Disponível</div>
+                                <div class="kpi-icon" style="background:rgba(52,211,153,0.14); color:var(--success);"><i data-lucide="piggy-bank"></i></div>
+                            </div>
+                            <div class="kpi-value">${utils.formatMoney(calc.totalValue - calc.totalUsed)}</div>
+                            <div class="kpi-sub"><i data-lucide="check-circle-2" style="width:13px;height:13px;"></i> Saldo ainda disponível</div>
                         </div>
-                        <div class="kpi-card">
-                            <span class="kpi-title">Contratos Ativos / Críticos</span>
-                            <span class="kpi-value">${calc.active} <span style="font-size: 14px; color: var(--warning);">/ ${calc.critical}</span></span>
-                            <span class="summary-note">Leitura automática dos contratos cadastrados no SGC.</span>
+                        <div class="kpi-card danger">
+                            <div class="kpi-head">
+                                <div class="kpi-title">Contratos em Vigência</div>
+                                <div class="kpi-icon" style="background:rgba(248,113,113,0.14); color:var(--danger);"><i data-lucide="activity"></i></div>
+                            </div>
+                            <div class="kpi-value">${calc.active} <span style="font-size:15px; color:var(--muted); font-weight:600;">ativos</span></div>
+                            <div class="kpi-sub"><i data-lucide="alert-triangle" style="width:13px;height:13px; color:var(--warning);"></i> ${calc.critical} vencendo em até 90 dias</div>
                         </div>
                     </div>
 
                     <div class="charts-grid">
                         <div class="card">
-                            <div class="card-header"><div class="card-title">Empenhos por Unidade</div></div>
-                            <div style="height: 260px;"><canvas id="chartOrgaos"></canvas></div>
+                            <div class="card-header"><div class="card-title"><i data-lucide="bar-chart-3"></i> Empenhos por Unidade</div></div>
+                            <div class="chart-box"><canvas id="chartOrgaos"></canvas></div>
                         </div>
                         <div class="card">
-                            <div class="card-header"><div class="card-title">Status de Vigência</div></div>
-                            <div style="height: 260px;"><canvas id="chartStatus"></canvas></div>
+                            <div class="card-header"><div class="card-title"><i data-lucide="pie-chart"></i> Status de Vigência</div></div>
+                            <div class="chart-box"><canvas id="chartStatus"></canvas></div>
                         </div>
                     </div>
 
                     <div class="card">
-                        <div class="card-header"><div class="card-title" style="color: var(--warning);"><i class="fa-solid fa-bell"></i> Alertas Automáticos</div></div>
+                        <div class="card-header">
+                            <div class="card-title" style="color:var(--warning);"><i data-lucide="bell-ring"></i> Alertas Automáticos</div>
+                            <span class="summary-note">${alerts.length} contrato(s) em faixa crítica</span>
+                        </div>
                         ${alerts.length ? `
-                            <table style="background: rgba(245, 158, 11, 0.05); border-radius: 8px; overflow: hidden;">
-                                <tbody>
-                                    ${alerts.map(({ contract, dias }) => `
-                                        <tr>
-                                            <td style="width: 40px; text-align: center; color: var(--warning);"><i class="fa-solid fa-circle-exclamation"></i></td>
-                                            <td><strong>Contrato ${utils.escapeHtml(utils.getContractNumber(contract))}</strong> - ${dias < 0 ? 'vigência encerrada' : `vence em ${dias} dias`}. Empresa: ${utils.escapeHtml(utils.getCompanyName(contract))}</td>
-                                            <td style="text-align: right;"><button class="btn btn-primary" type="button" style="padding: 6px 12px; font-size: 11px;" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'contratos')">Detalhamento</button></td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        ` : '<div class="empty-state">Nenhum contrato em faixa crítica de vigência no momento.</div>'}
+                            <div style="display:flex; flex-direction:column; gap:10px;">
+                                ${alerts.map(({ contract, dias }) => `
+                                    <div style="display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; padding:13px 16px; border-radius:12px; background:rgba(251,191,36,0.07); border:1px solid rgba(251,191,36,0.22);">
+                                        <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:200px;">
+                                            <div class="kpi-icon" style="background:rgba(251,191,36,0.14); color:var(--warning);"><i data-lucide="alert-triangle"></i></div>
+                                            <div>
+                                                <strong style="color:#fff;">Contrato ${utils.escapeHtml(utils.getContractNumber(contract))}</strong>
+                                                <div style="font-size:12px; color:var(--muted); margin-top:2px;">${utils.escapeHtml(utils.getCompanyName(contract))} ${dias < 0 ? '— vigência encerrada' : `— vence em <strong style='color:var(--warning)'>${dias} dias</strong>`}</div>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-secondary" type="button" style="padding:7px 13px; font-size:11.5px;" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'contratos')"><i data-lucide="eye"></i> Ver detalhamento</button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : '<div class="empty-state"><i data-lucide="shield-check"></i><br>Nenhum contrato em faixa crítica de vigência no momento.</div>'}
                     </div>
                 `;
 
+                refreshLucideIcons(this.content);
+
                 setTimeout(() => {
-                    Chart.defaults.color = '#8D99AE';
-                    Chart.defaults.borderColor = '#2D3748';
+                    Chart.defaults.color = '#8AA0BD';
+                    Chart.defaults.borderColor = 'rgba(148,163,184,0.16)';
 
                     const chartUnits = document.getElementById('chartOrgaos');
                     if (chartUnits) {
@@ -1066,14 +1463,20 @@
                                 datasets: [{
                                     label: 'Empenhado (R$)',
                                     data: unitUsage.map(([, value]) => value),
-                                    backgroundColor: '#4EA8DE',
-                                    borderRadius: 6
+                                    backgroundColor: 'rgba(34,211,238,0.75)',
+                                    hoverBackgroundColor: 'rgba(59,130,246,0.9)',
+                                    borderRadius: 7,
+                                    maxBarThickness: 46
                                 }]
                             },
                             options: {
                                 responsive: true,
                                 maintainAspectRatio: false,
-                                plugins: { legend: { display: false } }
+                                plugins: { legend: { display: false, labels: { usePointStyle: true } } },
+                                scales: {
+                                    x: { grid: { display: false }, ticks: { maxRotation: 30, font: { size: 11 } } },
+                                    y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.1)' }, ticks: { callback: (value) => new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(value) } }
+                                }
                             }
                         }));
                     }
@@ -1086,15 +1489,16 @@
                                 labels: ['Ativos', 'Vencendo', 'Encerrados'],
                                 datasets: [{
                                     data: statusCounts,
-                                    backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
+                                    backgroundColor: ['#34d399', '#fbbf24', '#f87171'],
+                                    hoverOffset: 6,
                                     borderWidth: 0
                                 }]
                             },
                             options: {
                                 responsive: true,
                                 maintainAspectRatio: false,
-                                cutout: '75%',
-                                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } }
+                                cutout: '72%',
+                                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, boxHeight: 12, usePointStyle: true } } }
                             }
                         }));
                     }
@@ -1102,7 +1506,8 @@
             },
 
             renderUnidades(unidadeSelecionada) {
-                this.title.innerText = 'Painel Analítico de Unidades';
+                this.title.innerText = 'Painel de Unidades';
+                this.subtitle.innerText = 'Análise financeira por unidade administrativa';
                 const units = utils.getAllUnitNames();
                 const selectedUnit = unidadeSelecionada || units[0] || '';
 
@@ -1120,12 +1525,13 @@
                     totalUtilizado += utils.getUnitUsed(selectedUnit, contract);
                     return true;
                 });
+                const percentUnit = totalDestinado > 0 ? (totalUtilizado / totalDestinado) * 100 : 0;
 
                 this.content.innerHTML = `
                     <div class="card">
-                        <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
-                            <h3 style="white-space: nowrap; font-size: 14px; color: var(--text-muted);">SELECIONE A UNIDADE:</h3>
-                            <select class="form-control" style="max-width: 320px; font-weight: bold;" onchange="handleDashboardUnitSelect(this.value)">
+                        <div class="form-blue">
+                            <h3>SELECIONE A UNIDADE</h3>
+                            <select class="form-control" style="max-width:340px; font-weight:600;" onchange="handleDashboardUnitSelect(this.value)">
                                 <option value="__TODOS__">TODOS OS CONTRATOS</option>
                                 ${units.map((unit) => `<option value="${utils.escapeHtml(unit)}" ${unit === selectedUnit ? 'selected' : ''}>${utils.escapeHtml(unit)}</option>`).join('')}
                             </select>
@@ -1133,14 +1539,45 @@
                     </div>
 
                     <div class="kpi-grid">
-                        <div class="kpi-card"><span class="kpi-title">Valor Destinado à Unidade</span><span class="kpi-value">${utils.formatMoney(totalDestinado)}</span></div>
-                        <div class="kpi-card warning"><span class="kpi-title">Valor Empenhado</span><span class="kpi-value">${utils.formatMoney(totalUtilizado)}</span></div>
-                        <div class="kpi-card success"><span class="kpi-title">Saldo Financeiro Unidade</span><span class="kpi-value">${utils.formatMoney(Math.max(totalDestinado - totalUtilizado, 0))}</span></div>
-                        <div class="kpi-card"><span class="kpi-title">Contratos Vinculados</span><span class="kpi-value">${contratosDaUnidade.length}</span><span class="summary-note">Com base nos vínculos do cadastro inicial.</span></div>
+                        <div class="kpi-card">
+                            <div class="kpi-head">
+                                <div class="kpi-title">Valor Destinado</div>
+                                <div class="kpi-icon"><i data-lucide="building-2"></i></div>
+                            </div>
+                            <div class="kpi-value">${utils.formatMoney(totalDestinado)}</div>
+                            <div class="kpi-sub">Recurso alocado à unidade</div>
+                        </div>
+                        <div class="kpi-card warning">
+                            <div class="kpi-head">
+                                <div class="kpi-title">Valor Empenhado</div>
+                                <div class="kpi-icon" style="background:rgba(251,191,36,0.14); color:var(--warning);"><i data-lucide="trending-up"></i></div>
+                            </div>
+                            <div class="kpi-value">${utils.formatMoney(totalUtilizado)}</div>
+                            <div class="kpi-bar"><i style="width:${Math.min(percentUnit, 100)}%; background:linear-gradient(90deg,var(--warning),#fdba74);"></i></div>
+                            <div class="kpi-sub">${percentUnit.toFixed(1)}% do recurso destinado</div>
+                        </div>
+                        <div class="kpi-card success">
+                            <div class="kpi-head">
+                                <div class="kpi-title">Saldo Financeiro</div>
+                                <div class="kpi-icon" style="background:rgba(52,211,153,0.14); color:var(--success);"><i data-lucide="piggy-bank"></i></div>
+                            </div>
+                            <div class="kpi-value">${utils.formatMoney(Math.max(totalDestinado - totalUtilizado, 0))}</div>
+                            <div class="kpi-sub">Saldo restante da unidade</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-head">
+                                <div class="kpi-title">Contratos Vinculados</div>
+                                <div class="kpi-icon" style="background:rgba(167,139,250,0.14); color:var(--violet);"><i data-lucide="files"></i></div>
+                            </div>
+                            <div class="kpi-value">${contratosDaUnidade.length}</div>
+                            <div class="kpi-sub">Com base nos vínculos do cadastro inicial</div>
+                        </div>
                     </div>
 
                     <div class="card">
-                        <div class="card-header"><div class="card-title">Contratos Vinculados - ${utils.escapeHtml(selectedUnit)}</div></div>
+                        <div class="card-header">
+                            <div class="card-title"><i data-lucide="list"></i> Contratos vinculados — ${utils.escapeHtml(selectedUnit)}</div>
+                        </div>
                         ${contratosDaUnidade.length ? `
                             <table>
                                 <thead>
@@ -1160,46 +1597,94 @@
                                         const percent = allocated > 0 ? (used / allocated) * 100 : 0;
                                         return `
                                             <tr>
-                                                <td><strong>${utils.escapeHtml(utils.getContractNumber(contract))}</strong><br><span style="font-size: 11px; color: var(--text-muted)">${utils.escapeHtml(utils.getCompanyName(contract))}</span></td>
-                                                <td><div style="max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${utils.escapeHtml(utils.getContractObject(contract))}">${utils.escapeHtml(utils.getContractObject(contract))}</div></td>
+                                                <td><strong style="color:#fff;">${utils.escapeHtml(utils.getContractNumber(contract))}</strong><br><span style="font-size:11px; color:var(--muted);">${utils.escapeHtml(utils.getCompanyName(contract))}</span></td>
+                                                <td><div style="max-width:280px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${utils.escapeHtml(utils.getContractObject(contract))}">${utils.escapeHtml(utils.getContractObject(contract))}</div></td>
                                                 <td>
-                                                    <div class="progress-text"><span>${utils.formatMoney(used)}</span><span>${percent.toFixed(1)}%</span></div>
-                                                    <div class="progress-container"><div class="progress-bar" style="width: ${Math.min(percent, 100)}%; background-color: ${percent > 80 ? 'var(--warning)' : 'var(--brand-blue)'}"></div></div>
+                                                    <div class="progress-text"><span>${utils.formatMoney(used)}</span><span style="color:${percent > 80 ? 'var(--warning)' : 'var(--text)'};">${percent.toFixed(1)}%</span></div>
+                                                    <div class="progress-container"><div class="progress-bar" style="width:${Math.min(percent, 100)}%; background:${percent > 80 ? 'linear-gradient(90deg,var(--warning),#fdba74)' : 'linear-gradient(90deg,var(--brand),var(--cyan))'};"></div></div>
                                                 </td>
-                                                <td style="font-weight: 600; color: var(--success);">${utils.formatMoney(Math.max(allocated - used, 0))}</td>
-                                                <td><button class="btn btn-secondary" type="button" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'contratos')">Detalhamento</button></td>
+                                                <td style="font-weight:700; color:var(--success);">${utils.formatMoney(Math.max(allocated - used, 0))}</td>
+                                                <td>
+                                                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                                        <button class="btn btn-secondary" type="button" style="padding:7px 12px; font-size:11.5px;" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'contratos')"><i data-lucide="eye"></i> Detalhes</button>
+                                                        <button class="btn btn-ghost" type="button" style="padding:7px 12px; font-size:11.5px;" onclick="openContractPdf('${utils.escapeHtml(utils.getContractNumber(contract))}')"><i data-lucide="file-text"></i></button>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         `;
                                     }).join('')}
                                 </tbody>
                             </table>
-                        ` : '<div class="empty-state">Nenhum contrato cadastrado foi vinculado a esta unidade.</div>'}
+                        ` : '<div class="empty-state"><i data-lucide="building-2"></i><br>Nenhum contrato cadastrado foi vinculado a esta unidade.</div>'}
                     </div>
                 `;
+                refreshLucideIcons(this.content);
             },
 
             renderContratos() {
-                this.title.innerText = 'Gestão Global de Contratos';
+                this.title.innerText = 'Painel de Contratos';
+                this.subtitle.innerText = 'Gestão global da carteira — detalhamento automático do primeiro contrato';
                 if (!dashboardState.contratos.length) {
                     this.renderEmpty('Nenhum contrato cadastrado encontrado.');
                     return;
                 }
 
+                const listRows = (contracts) => {
+                    if (!contracts.length) {
+                        return '<div class="empty-state"><i data-lucide="search-x"></i><br>Nenhum contrato corresponde ao filtro.</div>';
+                    }
+                    return contracts.map((contract, index) => {
+                        const used = utils.getGlobalUsed(contract);
+                        const contractValue = utils.getContractValue(contract);
+                        const percentFinance = contractValue > 0 ? (used / contractValue) * 100 : 0;
+                        const progressTime = utils.calcProgressoData(contract);
+                        const daysRemaining = utils.calcDiasRestantes(contract);
+                        const status = utils.getStatus(contract);
+                        const units = utils.getUnitEntries(contract).map((entry) => utils.getUnitName(entry)).filter(Boolean);
+
+                        return `
+                            <tr data-contract-index="${index}">
+                                <td><strong style="color:#fff;">${utils.escapeHtml(utils.getContractNumber(contract))}</strong><br><span style="font-size:11px; color:var(--muted);">${utils.escapeHtml(utils.getCompanyName(contract))}</span></td>
+                                <td>
+                                    <div class="progress-text"><span>${utils.formatDate(utils.getEndDate(contract))}</span><span style="color:${daysRemaining !== null && daysRemaining <= 90 ? 'var(--danger)' : 'var(--muted)'}; font-weight:700;">${daysRemaining === null ? '-' : `${daysRemaining} dias`}</span></div>
+                                    <div class="progress-container"><div class="progress-bar" style="width:${Math.min(progressTime, 100)}%; background:${progressTime > 90 ? 'linear-gradient(90deg,var(--danger),#fca5a5)' : 'linear-gradient(90deg,var(--brand),var(--cyan))'};"></div></div>
+                                </td>
+                                <td>
+                                    <div class="progress-text"><span>${utils.formatMoney(used)}</span><span style="font-weight:700; color:${percentFinance > 80 ? 'var(--warning)' : 'var(--text)'};">${percentFinance.toFixed(1)}%</span></div>
+                                    <div class="progress-container"><div class="progress-bar" style="width:${Math.min(percentFinance, 100)}%; background:${percentFinance > 80 ? 'linear-gradient(90deg,var(--warning),#fdba74)' : 'linear-gradient(90deg,var(--brand),var(--cyan))'};"></div></div>
+                                </td>
+                                <td style="font-size:12px;">${units.length} vinculadas<br><span style="color:var(--muted);">${utils.escapeHtml(units.join(', ') || 'Sem unidade')}</span></td>
+                                <td><span class="badge ${utils.getBadgeClass(status)}"><i data-lucide="circle"></i> ${status}</span></td>
+                                <td>
+                                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                        <button class="btn btn-secondary" type="button" style="padding:7px 12px; font-size:11.5px;" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'contratos')"><i data-lucide="eye"></i> Detalhes</button>
+                                        <button class="btn btn-ghost" type="button" style="padding:7px 12px; font-size:11.5px;" onclick="openContractPdf('${utils.escapeHtml(utils.getContractNumber(contract))}')"><i data-lucide="file-text"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                };
+
                 this.content.innerHTML = `
                     <div class="card" id="contratosDetailsPanel">
                         <div class="card-header">
-                            <div class="card-title">DETALHAMENTO DO CONTRATO</div>
-                            <div class="summary-note">Detalhamento em destaque — primeira visualização do Painel de Contratos.</div>
+                            <div class="card-title"><i data-lucide="eye"></i> Detalhamento do Contrato</div>
+                            <span class="summary-note">Primeira visualização do painel — clique em "Detalhes" para trocar o contrato exibido.</span>
                         </div>
-                        <div id="contratosDetailsContent" class="details-scroll"><div class="loading-state">Carregando detalhamento do contrato...</div></div>
+                        <div id="contratosDetailsContent" class="details-scroll"><div class="loading-state"><i data-lucide="loader-2"></i><br>Carregando detalhamento do contrato...</div></div>
                     </div>
 
                     <div class="card">
                         <div class="card-header">
-                            <div class="card-title">Relação de Contratos Cadastrados</div>
-                            <div class="summary-note">Painel integrado ao módulo contratos.</div>
+                            <div class="card-title"><i data-lucide="files"></i> Relação de Contratos Cadastrados</div>
+                            <div class="contracts-filter-row">
+                                <i data-lucide="search"></i>
+                                <input class="form-control" id="contratosFilter" placeholder="Filtrar por nº, empresa, objeto ou unidade..." oninput="app.filterContratosTable(this.value)">
+                            </div>
                         </div>
-                        <table>
+                        <div class="summary-note" style="margin-bottom:12px;">Painel integrado ao módulo contratos — <strong id="contratosCount" style="color:var(--cyan);">${dashboardState.contratos.length}</strong> contrato(s) listado(s).</div>
+                        <table id="contratosTable">
                             <thead>
                                 <tr>
                                     <th>Nº / Empresa</th>
@@ -1211,36 +1696,12 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                ${dashboardState.contratos.map((contract) => {
-                                    const used = utils.getGlobalUsed(contract);
-                                    const contractValue = utils.getContractValue(contract);
-                                    const percentFinance = contractValue > 0 ? (used / contractValue) * 100 : 0;
-                                    const progressTime = utils.calcProgressoData(contract);
-                                    const daysRemaining = utils.calcDiasRestantes(contract);
-                                    const status = utils.getStatus(contract);
-                                    const units = utils.getUnitEntries(contract).map((entry) => utils.getUnitName(entry)).filter(Boolean);
-
-                                    return `
-                                        <tr>
-                                            <td><strong>${utils.escapeHtml(utils.getContractNumber(contract))}</strong><br><span style="font-size: 11px; color: var(--text-muted);">${utils.escapeHtml(utils.getCompanyName(contract))}</span></td>
-                                            <td>
-                                                <div class="progress-text"><span>${utils.formatDate(utils.getEndDate(contract))}</span><span style="color: ${daysRemaining !== null && daysRemaining <= 90 ? 'var(--danger)' : 'var(--text-muted)'}">${daysRemaining === null ? '-' : `${daysRemaining} dias`}</span></div>
-                                                <div class="progress-container"><div class="progress-bar" style="width: ${Math.min(progressTime, 100)}%; background-color: ${progressTime > 90 ? 'var(--danger)' : 'var(--info)'}"></div></div>
-                                            </td>
-                                            <td>
-                                                <div class="progress-text"><span>${utils.formatMoney(used)}</span><span>${percentFinance.toFixed(1)}%</span></div>
-                                                <div class="progress-container"><div class="progress-bar" style="width: ${Math.min(percentFinance, 100)}%"></div></div>
-                                            </td>
-                                            <td style="font-size:12px;">${units.length} vinculadas<br><span style="color:var(--text-muted)">${utils.escapeHtml(units.join(', ') || 'Sem unidade')}</span></td>
-                                            <td><span class="badge ${utils.getBadgeClass(status)}">${status}</span></td>
-                                            <td><button class="btn btn-secondary" type="button" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'contratos')"><i class="fa-solid fa-eye"></i> Detalhamento</button></td>
-                                        </tr>
-                                    `;
-                                }).join('')}
+                                ${listRows(dashboardState.contratos)}
                             </tbody>
                         </table>
                     </div>
                 `;
+                refreshLucideIcons(this.content);
 
                 const firstContract = dashboardState.contratos[0];
                 if (firstContract) {
@@ -1248,31 +1709,54 @@
                 }
             },
 
+            filterContratosTable(term) {
+                const query = String(term || '').trim().toLowerCase();
+                const count = document.getElementById('contratosCount');
+
+                const table = document.getElementById('contratosTable');
+                let visibleRows = 0;
+                dashboardState.contratos.forEach((contract, index) => {
+                    const row = table ? table.querySelector(`tbody tr[data-contract-index="${index}"]`) : null;
+                    if (!row) return;
+                    const haystack = JSON.stringify(contract).toLowerCase();
+                    const matches = !query || haystack.includes(query);
+                    row.classList.toggle('hidden', !matches);
+                    if (matches) visibleRows += 1;
+                });
+
+                if (count) count.innerText = String(visibleRows);
+            },
+
             renderBusca() {
                 this.title.innerText = 'Busca Inteligente';
+                this.subtitle.innerText = 'Localize qualquer informação dos contratos cadastrados';
                 this.content.innerHTML = `
-                    <div class="card" style="text-align: center; padding: 40px 20px;">
-                        <h2 style="margin-bottom: 20px; color: #fff;">Localize qualquer informação dos contratos cadastrados</h2>
-                        <div style="display: flex; gap: 10px; max-width: 700px; margin: 0 auto; flex-wrap: wrap;">
-                            <input type="text" id="searchInput" class="form-control" placeholder="Ex: nome da empresa, nº do contrato, objeto ou unidade" style="font-size: 16px; padding: 14px; flex: 1; min-width: 260px;">
-                            <button class="btn btn-primary" type="button" onclick="app.realizarBusca()" style="font-size: 16px; padding: 14px 24px;"><i class="fa-solid fa-magnifying-glass"></i> Pesquisar</button>
+                    <div class="card search-hero">
+                        <h2><i data-lucide="search" style="width:22px;height:22px; color:var(--cyan); vertical-align:-3px;"></i> Busca Inteligente de Contratos</h2>
+                        <p class="summary-note">Pesquise por empresa, nº do contrato, objeto, unidade ou qualquer termo cadastrado.</p>
+                        <div class="search-box">
+                            <i class="search-icon" data-lucide="search"></i>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Ex: empresa, nº do contrato, objeto ou unidade...">
+                            <button class="btn btn-primary" type="button" onclick="app.realizarBusca()"><i data-lucide="search"></i> Pesquisar</button>
                         </div>
                     </div>
                     <div id="searchResults"></div>
-                    <div class="card" id="searchDetailsPanel" style="display:none; margin-top: 16px;">
+                    <div class="card" id="searchDetailsPanel" style="display:none; margin-top:16px;">
                         <div class="card-header">
-                            <div class="card-title">Detalhes do Contrato</div>
-                            <button class="btn btn-secondary" type="button" onclick="document.getElementById('searchDetailsPanel').style.display='none'">Fechar</button>
+                            <div class="card-title"><i data-lucide="eye"></i> Detalhes do Contrato</div>
+                            <button class="btn btn-ghost" type="button" onclick="document.getElementById('searchDetailsPanel').style.display='none'"><i data-lucide="x"></i> Fechar</button>
                         </div>
                         <div id="searchDetailsContent" class="details-scroll"></div>
                     </div>
                 `;
+                refreshLucideIcons(this.content);
                 const input = document.getElementById('searchInput');
                 if (input) {
                     input.addEventListener('keypress', (event) => {
                         if (event.key === 'Enter') app.realizarBusca();
                     });
                 }
+                document.getElementById('searchInput').focus();
             },
 
             realizarBusca() {
@@ -1283,22 +1767,24 @@
                 const detailsContent = document.getElementById('searchDetailsContent');
                 if (!resultsContainer) return;
                 if (!term) {
-                    resultsContainer.innerHTML = '<div class="empty-state">Informe um termo para pesquisar.</div>';
+                    resultsContainer.innerHTML = '<div class="empty-state"><i data-lucide="search"></i><br>Informe um termo para pesquisar.</div>';
                     if (detailsPanel) detailsPanel.style.display = 'none';
                     if (detailsContent) detailsContent.innerHTML = '';
+                    refreshLucideIcons(resultsContainer);
                     return;
                 }
 
                 const resultados = dashboardState.contratos.filter((contract) => JSON.stringify(contract).toLowerCase().includes(term));
                 if (!resultados.length) {
-                    resultsContainer.innerHTML = '<div class="empty-state">Nenhum contrato corresponde ao termo pesquisado.</div>';
+                    resultsContainer.innerHTML = '<div class="empty-state"><i data-lucide="search-x"></i><br>Nenhum contrato corresponde ao termo pesquisado.</div>';
                     if (detailsPanel) detailsPanel.style.display = 'none';
                     if (detailsContent) detailsContent.innerHTML = '';
+                    refreshLucideIcons(resultsContainer);
                     return;
                 }
 
                 resultsContainer.innerHTML = `
-                    <h3 style="margin-bottom: 16px; color: var(--text-muted);">Resultados encontrados: ${resultados.length}</h3>
+                    <div style="margin-bottom:14px; color:var(--muted); font-size:13px; font-weight:600;"><i data-lucide="list-filter" style="width:14px;height:14px; color:var(--cyan); vertical-align:-2px;"></i> Resultados encontrados: <strong style="color:var(--cyan);">${resultados.length}</strong></div>
                     <div class="card">
                         <table>
                             <thead><tr><th>Contrato / Empresa</th><th>Objeto</th><th>Unidades</th><th>Status</th><th>Ação</th></tr></thead>
@@ -1308,11 +1794,11 @@
                                     const units = utils.getUnitEntries(contract).map((entry) => utils.getUnitName(entry)).filter(Boolean).join(', ');
                                     return `
                                         <tr>
-                                            <td><strong>${utils.escapeHtml(utils.getContractNumber(contract))}</strong><br><span style="font-size: 11px; color:var(--text-muted);">${utils.escapeHtml(utils.getCompanyName(contract))}</span></td>
+                                            <td><strong style="color:#fff;">${utils.escapeHtml(utils.getContractNumber(contract))}</strong><br><span style="font-size:11px; color:var(--muted);">${utils.escapeHtml(utils.getCompanyName(contract))}</span></td>
                                             <td>${utils.escapeHtml(utils.getContractObject(contract))}</td>
                                             <td>${utils.escapeHtml(units || '-')}</td>
-                                            <td><span class="badge ${utils.getBadgeClass(status)}">${status}</span></td>
-                                            <td><button class="btn btn-secondary" type="button" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'busca')">Detalhamento</button></td>
+                                            <td><span class="badge ${utils.getBadgeClass(status)}"><i data-lucide="circle"></i> ${status}</span></td>
+                                            <td><button class="btn btn-secondary" type="button" onclick="openDashboardContractDetails('${utils.escapeHtml(utils.getContractNumber(contract))}', 'busca')"><i data-lucide="eye"></i> Detalhamento</button></td>
                                         </tr>
                                     `;
                                 }).join('')}
@@ -1320,33 +1806,42 @@
                         </table>
                     </div>
                 `;
+                refreshLucideIcons(resultsContainer);
             },
 
             async reloadData() {
-                this.content.innerHTML = '<div class="loading-state">Atualizando contratos cadastrados...</div>';
+                dashboardState.lastView = dashboardState.lastView || 'dashboard';
+                this.content.innerHTML = '<div class="loading-state"><i data-lucide="loader-2"></i><br>Atualizando contratos cadastrados...</div>';
+                refreshLucideIcons(this.content);
                 try {
                     await loadDashboardContracts();
-                    this.navigate(dashboardState.lastView || 'dashboard');
+                    this.navigate(dashboardState.lastView);
                 } catch (error) {
                     console.error('Falha ao atualizar dashboard:', error);
-                    this.renderEmpty('Não foi possível atualizar os contratos do dashboard agora.');
+                    this.content.innerHTML = '<div class="empty-state"><i data-lucide="alert-triangle"></i><br>Não foi possível atualizar os contratos do dashboard agora.</div>';
+                    refreshLucideIcons(this.content);
                 }
             },
 
             async init() {
-                this.content.innerHTML = '<div class="loading-state">Carregando dados dos contratos cadastrados...</div>';
+                this.content.innerHTML = '<div class="loading-state"><i data-lucide="loader-2"></i><br>Carregando dados dos contratos cadastrados...</div>';
+                refreshLucideIcons(this.content);
                 await loadCurrentUser();
                 try {
                     await loadDashboardContracts();
                     this.navigate('dashboard');
                 } catch (error) {
                     console.error('Falha ao carregar dashboard:', error);
-                    this.renderEmpty('Não foi possível carregar os contratos cadastrados para o dashboard.');
+                    this.content.innerHTML = '<div class="empty-state"><i data-lucide="alert-triangle"></i><br>Não foi possível carregar os contratos cadastrados para o dashboard.</div>';
+                    refreshLucideIcons(this.content);
                 }
             }
         };
 
         window.addEventListener('load', () => {
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
             app.init();
         });
     </script>
