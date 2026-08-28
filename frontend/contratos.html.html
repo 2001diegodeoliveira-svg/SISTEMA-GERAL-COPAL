@@ -4051,7 +4051,7 @@ if (content) content.style.display = shouldShow ? '' : 'none';
 
             (units || []).forEach((unit) => {
                 const code = String(unit || '').trim().toUpperCase();
-                if (!code || seen.has(code)) return;
+                if (!code || code === 'COPAL' || seen.has(code)) return;
                 seen.add(code);
 
                 const label = document.createElement('label');
