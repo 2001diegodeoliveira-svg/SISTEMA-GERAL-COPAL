@@ -790,11 +790,10 @@
             </div>
         </div>
         <ul class="nav-menu">
-            <li class="nav-item" onclick="window.location.href = resolveFrontendPath('painel.html.html')"><i data-lucide="home"></i> Painel</li>
-            <li class="nav-item active" onclick="app.navigate('dashboard', this)"><i data-lucide="layout-dashboard"></i> Dashboard Executivo</li>
-            <li class="nav-item" onclick="app.navigate('unidades', this)"><i data-lucide="building-2"></i> Painel de Unidades</li>
-            <li class="nav-item" onclick="app.navigate('contratos', this)"><i data-lucide="files"></i> Painel de Contratos</li>
-            <li class="nav-item" onclick="app.navigate('busca', this)"><i data-lucide="search"></i> Busca Inteligente</li>
+            <li class="nav-item" onclick="window.location.href = resolveFrontendPath('painel.html.html')" data-view="painel"><i data-lucide="home"></i> Painel</li>
+            <li class="nav-item active" data-view="dashboard" onclick="app.navigate('dashboard', this)"><i data-lucide="layout-dashboard"></i> Dashboard Executivo</li>
+            <li class="nav-item" data-view="unidades" onclick="app.navigate('unidades', this)"><i data-lucide="building-2"></i> Painel de Unidades</li>
+            <li class="nav-item" data-view="busca" onclick="app.navigate('busca', this)"><i data-lucide="search"></i> Busca Inteligente</li>
         </ul>
         <div class="sidebar-footer">
             <i data-lucide="lock" style="width:12px;height:12px;margin-right:4px;"></i> Acesso autorizado somente à Monitoria SESP-MT
@@ -1331,9 +1330,7 @@
                     element.classList.add('active');
                     return;
                 }
-                const order = ['dashboard', 'unidades', 'contratos', 'busca'];
-                const index = order.indexOf(view);
-                const nav = document.querySelectorAll('.nav-item')[index];
+                const nav = document.querySelector(`.nav-item[data-view="${view}"]`);
                 if (nav) nav.classList.add('active');
             },
 
