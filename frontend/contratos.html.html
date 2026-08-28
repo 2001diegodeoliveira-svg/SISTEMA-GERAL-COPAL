@@ -1056,7 +1056,8 @@
                     </div>
                     <div class="form-group">
                         <label for="cep">CEP *</label>
-                        <input type="text" id="cep" oninput="maskCEP(this); lookupCepAddress(this.value)" maxlength="9" placeholder="78000-000">
+                        <input type="text" id="cep" oninput="maskCEP(this); lookupCepAddress(this.value)" maxlength="9" placeholder="00000-000">
+                        <div id="cepFeedback" class="info-box" style="display:none; margin-top: 10px;"></div>
                     </div>
                     <div class="form-group">
                         <label for="logradouro">Logradouro *</label>
@@ -3620,24 +3621,76 @@ if (content) content.style.display = shouldShow ? '' : 'none';
                 clearTimeout(cepLookupTimer);
             }
 
-            if (cep.length !== 8) {
-                return;
+            const feedback = document.getElementById('cepFeedback');
+            if (feedback) {
+                if (cep.length !== 8) {
+                    feedback.style.display = 'none';
+                    return;
+                }
+                feedback.style.display = 'block';
+                feedback.style.background = '#eff6ff';
+                feedback.style.borderColor = '#93c5fd';
+                feedback.style.color = '#1e40af';
+                feedback.innerHTML = '<strong>Consultando CEP...</strong>';
             }
 
             cepLookupTimer = setTimeout(async () => {
+                let data = null;
+
                 try {
                     const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-                    if (!response.ok) return;
-
-                    const data = await response.json();
-                    if (data?.erro) return;
-
-                    setAddressFieldValue('logradouro', data.logradouro || '');
-                    setAddressFieldValue('bairro', data.bairro || '');
-                    setAddressFieldValue('cidade', data.localidade || '');
-                    setAddressFieldValue('uf', data.uf || '');
+                    if (response.ok) {
+                        const viaData = await response.json();
+                        if (!viaData?.erro) {
+                            data = {
+                                logradouro: viaData.logradouro || '',
+                                bairro: viaData.bairro || '',
+                                cidade: viaData.localidade || '',
+                                uf: viaData.uf || ''
+                            };
+                        }
+                    }
                 } catch (error) {
-                    console.error('Falha ao consultar CEP:', error);
+                    console.error('ViaCEP falhou:', error);
+                }
+
+                if (!data) {
+                    try {
+                        const response = await fetch(`https://brasilapi.com.br/api/cep/v1/${cep}`);
+                        if (response.ok) {
+                            const apiData = await response.json();
+                            data = {
+                                logradouro: apiData.street || '',
+                                bairro: apiData.neighborhood || '',
+                                cidade: apiData.city || '',
+                                uf: apiData.state || ''
+                            };
+                        }
+                    } catch (error) {
+                        console.error('BrasilAPI CEP falhou:', error);
+                    }
+                }
+
+                if (!data) {
+                    if (feedback) {
+                        feedback.style.background = '#fef2f2';
+                        feedback.style.borderColor = '#fca5a5';
+                        feedback.style.color = '#b91c1c';
+                        feedback.innerHTML = '<strong>Atenção:</strong> CEP não localizado. Preencha o endereço manualmente.';
+                    }
+                    return;
+                }
+
+                setAddressFieldValue('logradouro', data.logradouro || '');
+                setAddressFieldValue('bairro', data.bairro || '');
+                setAddressFieldValue('cidade', data.cidade || '');
+                setAddressFieldValue('uf', data.uf || '');
+
+                if (feedback) {
+                    feedback.style.background = '#f0fdf4';
+                    feedback.style.borderColor = '#86efac';
+                    feedback.style.color = '#166534';
+                    feedback.innerHTML = `<strong>CEP localizado:</strong> ${data.logradouro || ''} — ${data.cidade || ''}/${data.uf || ''}`;
                 }
             }, 250);
         }
