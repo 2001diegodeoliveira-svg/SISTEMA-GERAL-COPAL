@@ -786,6 +786,14 @@
             return dashboardState.contratos.find((contract) => utils.getContractNumber(contract).toLowerCase() === target) || null;
         }
 
+        function handleDashboardUnitSelect(value) {
+            if (String(value || '').trim() === '__TODOS__') {
+                app.navigate('contratos');
+                return;
+            }
+            app.renderUnidades(value);
+        }
+
         async function fetchDashboardContractByNumber(numContrato) {
             const normalizedNumber = String(numContrato || '').trim();
             if (!normalizedNumber) return null;
@@ -1117,7 +1125,8 @@
                     <div class="card">
                         <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
                             <h3 style="white-space: nowrap; font-size: 14px; color: var(--text-muted);">SELECIONE A UNIDADE:</h3>
-                            <select class="form-control" style="max-width: 320px; font-weight: bold;" onchange="app.renderUnidades(this.value)">
+                            <select class="form-control" style="max-width: 320px; font-weight: bold;" onchange="handleDashboardUnitSelect(this.value)">
+                                <option value="__TODOS__">TODOS OS CONTRATOS</option>
                                 ${units.map((unit) => `<option value="${utils.escapeHtml(unit)}" ${unit === selectedUnit ? 'selected' : ''}>${utils.escapeHtml(unit)}</option>`).join('')}
                             </select>
                         </div>
@@ -1177,6 +1186,14 @@
                 }
 
                 this.content.innerHTML = `
+                    <div class="card" id="contratosDetailsPanel">
+                        <div class="card-header">
+                            <div class="card-title">DETALHAMENTO DO CONTRATO</div>
+                            <div class="summary-note">Detalhamento em destaque — primeira visualização do Painel de Contratos.</div>
+                        </div>
+                        <div id="contratosDetailsContent" class="details-scroll"><div class="loading-state">Carregando detalhamento do contrato...</div></div>
+                    </div>
+
                     <div class="card">
                         <div class="card-header">
                             <div class="card-title">Relação de Contratos Cadastrados</div>
@@ -1223,15 +1240,12 @@
                             </tbody>
                         </table>
                     </div>
-
-                    <div class="card" id="contratosDetailsPanel" style="display:none;">
-                        <div class="card-header">
-                            <div class="card-title">Detalhes do Contrato</div>
-                            <button class="btn btn-secondary" type="button" onclick="document.getElementById('contratosDetailsPanel').style.display='none'">Fechar</button>
-                        </div>
-                        <div id="contratosDetailsContent" class="details-scroll"></div>
-                    </div>
                 `;
+
+                const firstContract = dashboardState.contratos[0];
+                if (firstContract) {
+                    openDashboardContractDetails(utils.getContractNumber(firstContract), 'contratos');
+                }
             },
 
             renderBusca() {
