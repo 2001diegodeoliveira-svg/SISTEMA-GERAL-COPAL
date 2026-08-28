@@ -1047,7 +1047,8 @@
                     </div>
                     <div class="form-group">
                         <label for="cnpj">CNPJ *</label>
-                        <input type="text" id="cnpj" oninput="maskCNPJ(this)" placeholder="00.000.000/0000-00" maxlength="18" required>
+                        <input type="text" id="cnpj" oninput="maskCNPJ(this); consultarCnpj(this)" placeholder="00.000.000/0000-00" maxlength="18" required>
+                        <div id="cnpjFeedback" class="info-box" style="display:none; margin-top: 10px;"></div>
                     </div>
                     <div class="form-group">
                         <label for="inscricaoEstadual">Inscrição Estadual</label>
@@ -3639,6 +3640,73 @@ if (content) content.style.display = shouldShow ? '' : 'none';
                     console.error('Falha ao consultar CEP:', error);
                 }
             }, 250);
+        }
+
+        // CONSULTA AUTOMÁTICA DE CNPJ (BrasilAPI / dados públicos da Receita)
+        let cnpjLookupTimer = null;
+
+        function normalizeCnpj(value) {
+            return String(value || '').replace(/\D/g, '').trim();
+        }
+
+        async function consultarCnpj(inputRef) {
+            const cnpj = normalizeCnpj(inputRef?.value);
+            const feedback = document.getElementById('cnpjFeedback');
+            if (!feedback) return;
+
+            if (cnpj.length !== 14) {
+                feedback.style.display = 'none';
+                return;
+            }
+
+            if (cnpjLookupTimer) clearTimeout(cnpjLookupTimer);
+
+            cnpjLookupTimer = setTimeout(async () => {
+                feedback.style.display = 'block';
+                feedback.style.background = '#eff6ff';
+                feedback.style.borderColor = '#93c5fd';
+                feedback.style.color = '#1e40af';
+                feedback.innerHTML = '<strong>Consultando CNPJ...</strong>';
+
+                try {
+                    const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            throw new Error('CNPJ não localizado na base da Receita Federal.');
+                        }
+                        throw new Error('Falha na consulta do CNPJ. Tente novamente em instantes.');
+                    }
+
+                    const data = await response.json();
+
+                    setAddressFieldValue('razaoSocial', data.razao_social || '');
+                    const fantasia = (data.nome_fantasia || '').trim();
+                    setAddressFieldValue('nomeFantasia', (fantasia === '******' || fantasia.toUpperCase().includes('*') && fantasia.length <= 6) ? '' : fantasia);
+                    setAddressFieldValue('cep', (data.cep || '').replace(/^(\d{5})(\d)/, '$1-$2'));
+                    setAddressFieldValue('logradouro', data.logradouro || '');
+                    setAddressFieldValue('numEndereco', data.numero || '');
+                    setAddressFieldValue('bairro', data.bairro || '');
+                    setAddressFieldValue('cidade', data.municipio || '');
+                    setAddressFieldValue('uf', data.uf || '');
+                    setAddressFieldValue('complemento', data.complemento || '');
+
+                    const ddd = String(data.ddd_telefone_1 || '').replace(/\D/g, '');
+                    if (ddd.length >= 10) {
+                        setAddressFieldValue('telefoneFixo', `(${ddd.slice(0, 2)}) ${ddd.slice(2, 7)}-${ddd.slice(7)}`);
+                    }
+                    setAddressFieldValue('emailEmpresa', data.email || '');
+
+                    feedback.style.background = '#f0fdf4';
+                    feedback.style.borderColor = '#86efac';
+                    feedback.style.color = '#166534';
+                    feedback.innerHTML = `<strong>CNPJ localizado:</strong> ${data.razao_social || ''} — dados da empresa preenchidos automaticamente.`;
+                } catch (error) {
+                    feedback.style.background = '#fef2f2';
+                    feedback.style.borderColor = '#fca5a5';
+                    feedback.style.color = '#b91c1c';
+                    feedback.innerHTML = `<strong>Atenção:</strong> ${error.message}`;
+                }
+            }, 600);
         }
 
         function maskPhone(v) {
