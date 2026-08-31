@@ -1,4 +1,4 @@
-const CACHE_NAME = 'copal-sesp-v1';
+const CACHE_NAME = 'copal-sesp-v2';
 const STATIC_ASSETS = [
   '/',
   '/app-mobile/',
@@ -37,6 +37,23 @@ self.addEventListener('fetch', event => {
           status: 503
         });
       })
+    );
+    return;
+  }
+
+  const isAppShell = event.request.mode === 'navigate' || url.pathname.includes('/app-mobile/');
+
+  if (isAppShell) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          if (response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
     );
     return;
   }
