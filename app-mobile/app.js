@@ -11,13 +11,13 @@ const App = (() => {
   let deferredPrompt = null;
 
   const SVG = {
-    contract: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg>',
-    unit: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 21V8l8-5 8 5v13"/><path d="M9 21v-6h6v6"/></svg>',
-    contact: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 6-6 8-6s6.5 2 8 6"/></svg>',
-    asset: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h18"/></svg>',
-    requisition: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>',
-    chevron: '<svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>',
-    empty: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 15h8M9 9h.01M15 9h.01"/></svg>'
+    contract: '<i data-lucide="file-text"></i>',
+    unit: '<i data-lucide="building-2"></i>',
+    contact: '<i data-lucide="users-round"></i>',
+    asset: '<i data-lucide="package"></i>',
+    requisition: '<i data-lucide="clipboard-list"></i>',
+    chevron: '<i data-lucide="chevron-right" class="chevron"></i>',
+    empty: '<i data-lucide="inbox"></i>'
   };
 
   const ICON_COLORS = ['#16294f', '#374151', '#0e7490', '#b45309', '#4338ca', '#f2711c', '#16a34a', '#dc2626'];
@@ -26,6 +26,7 @@ const App = (() => {
     detectApiBase();
     setupLoginForm();
     setupPWA();
+    applyIcons();
     if (token) {
       checkAuth();
     } else {
@@ -176,6 +177,15 @@ const App = (() => {
     } catch { return d; }
   }
 
+  // ========== ÍCONES LUCIDE + ANIMAÇÃO ==========
+  function applyIcons() {
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function animDelay(i) {
+    return `style="animation-delay:${(i % 10) * 0.07}s"`;
+  }
+
   // ========== NORMALIZAÇÃO ==========
   function normalizeContrato(c) {
     if (!c || typeof c !== 'object') return c;
@@ -245,6 +255,7 @@ const App = (() => {
       return;
     }
     el.innerHTML = recent.map((c, i) => contratoCard(c, i, true)).join('');
+    applyIcons();
   }
 
   function renderChartUnidades() {
@@ -270,8 +281,9 @@ const App = (() => {
 
     el.innerHTML = sorted.map(([name, count]) => {
       const pct = Math.round((count / max) * 100);
-      return `<div class="bar-row"><div class="b-label">${name}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><div class="b-val">${count}</div></div>`;
+      return `<div class="bar-row anim-in" ${animDelay(0)}><div class="b-label">${name}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><div class="b-val">${count}</div></div>`;
     }).join('');
+    applyIcons();
   }
 
   // ========== CONTRATOS ==========
@@ -287,7 +299,7 @@ const App = (() => {
     const units = Array.isArray(c.unidades) ? c.unidades.map(u => typeof u === 'string' ? u : (u.code || u.nome || u.unidade)).join(', ') : '';
 
     return `
-    <div class="list-card" onclick="App.openContrato(${idx})">
+    <div class="list-card anim-in" ${animDelay(idx)} onclick="App.openContrato(${idx})">
       <div class="list-icon" style="background:${ICON_COLORS[idx % ICON_COLORS.length]};">${SVG.contract}</div>
       <div class="list-body">
         <div class="list-title">${num}</div>
@@ -327,6 +339,7 @@ const App = (() => {
 
     if (filtered.length === 0) {
       el.innerHTML = `<div class="empty-state">${SVG.empty}<div class="empty-title">Nenhum contrato encontrado</div><div class="empty-text">Tente outros filtros ou termos de busca.</div></div>`;
+      applyIcons();
       return;
     }
 
@@ -334,6 +347,7 @@ const App = (() => {
       const realIdx = allContratos.indexOf(c);
       return contratoCard(c, realIdx);
     }).join('');
+    applyIcons();
   }
 
   function setContratoFilter(filter) {
@@ -423,10 +437,11 @@ const App = (() => {
     const el = document.getElementById('unidades-list');
     if (allUnidades.length === 0) {
       el.innerHTML = `<div class="empty-state">${SVG.empty}<div class="empty-title">Nenhuma unidade encontrada</div></div>`;
+      applyIcons();
       return;
     }
     el.innerHTML = allUnidades.map((u, i) => `
-      <div class="list-card readonly">
+      <div class="list-card readonly anim-in" ${animDelay(i)}>
         <div class="list-icon" style="background:${ICON_COLORS[i % ICON_COLORS.length]};">${SVG.unit}</div>
         <div class="list-body">
           <div class="list-title">${u.code || '--'}</div>
@@ -438,6 +453,7 @@ const App = (() => {
         </div>
       </div>
     `).join('');
+    applyIcons();
   }
 
   // ========== CONTATOS ==========
@@ -463,11 +479,12 @@ const App = (() => {
     const el = document.getElementById('contatos-list');
     if (filtered.length === 0) {
       el.innerHTML = `<div class="empty-state">${SVG.empty}<div class="empty-title">Nenhum contato encontrado</div></div>`;
+      applyIcons();
       return;
     }
 
     el.innerHTML = filtered.map((c, i) => `
-      <div class="list-card readonly">
+      <div class="list-card readonly anim-in" ${animDelay(i)}>
         <div class="list-icon" style="background:${ICON_COLORS[i % ICON_COLORS.length]};">${SVG.contact}</div>
         <div class="list-body">
           <div class="list-title">${c.setor || '--'}</div>
@@ -479,6 +496,7 @@ const App = (() => {
         </div>
       </div>
     `).join('');
+    applyIcons();
   }
 
   function filterContatos() { renderContatos(); }
@@ -506,6 +524,7 @@ const App = (() => {
     const el = document.getElementById('patrimonio-list');
     if (filtered.length === 0) {
       el.innerHTML = `<div class="empty-state">${SVG.empty}<div class="empty-title">Nenhum item encontrado</div></div>`;
+      applyIcons();
       return;
     }
 
@@ -517,7 +536,7 @@ const App = (() => {
       else if (estado.includes('regular') || estado.includes('usado')) { statusClass = 'status-pendente'; }
 
       return `
-      <div class="list-card readonly">
+      <div class="list-card readonly anim-in" ${animDelay(i)}>
         <div class="list-icon" style="background:${ICON_COLORS[i % ICON_COLORS.length]};">${SVG.asset}</div>
         <div class="list-body">
           <div class="list-title">RP ${p.rp || '--'}</div>
@@ -529,6 +548,7 @@ const App = (() => {
         </div>
       </div>`;
     }).join('');
+    applyIcons();
   }
 
   function filterPatrimonio() { renderPatrimonio(); }
@@ -556,11 +576,12 @@ const App = (() => {
     const el = document.getElementById('requisicoes-list');
     if (filtered.length === 0) {
       el.innerHTML = `<div class="empty-state">${SVG.empty}<div class="empty-title">Nenhuma requisição encontrada</div><div class="empty-text">As requisições realizadas aparecerão aqui.</div></div>`;
+      applyIcons();
       return;
     }
 
     el.innerHTML = filtered.map((r, i) => `
-      <div class="list-card readonly">
+      <div class="list-card readonly anim-in" ${animDelay(i)}>
         <div class="list-icon" style="background:${ICON_COLORS[i % ICON_COLORS.length]};">${SVG.requisition}</div>
         <div class="list-body">
           <div class="list-title">${r.contractNumber || r.contract_num || r.req_contract_num || '--'}</div>
@@ -571,6 +592,7 @@ const App = (() => {
         </div>
       </div>
     `).join('');
+    applyIcons();
   }
 
   function filterRequisicoes() { renderRequisicoes(); }

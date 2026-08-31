@@ -184,7 +184,7 @@ html, body {
   cursor: pointer;
 }
 
-.header-back-btn svg { width: 16px; height: 16px; stroke: #fff; }
+.header-back-btn svg, .header-back-btn i { width: 16px; height: 16px; stroke: #fff; color: #fff; }
 
 .header-eyebrow {
   font-size: 9.5px;
@@ -312,7 +312,7 @@ html, body {
   color: #fff;
 }
 
-.list-icon svg { width: 18px; height: 18px; }
+.list-icon svg, .list-icon i { width: 18px; height: 18px; }
 
 .list-body { flex: 1; min-width: 0; }
 .list-title { font-weight: 700; font-size: 14px; color: var(--text-1); }
@@ -345,6 +345,7 @@ html, body {
 .status-encerrado { background: var(--gray-bg); color: var(--text-2); }
 
 .chevron { align-self: center; color: #b7bfd4; flex-shrink: 0; }
+.list-card > .chevron { width: 16px; height: 16px; }
 
 /* ========== SEARCH ========== */
 .search-bar {
@@ -358,7 +359,7 @@ html, body {
   margin-bottom: 14px;
 }
 
-.search-bar svg { width: 16px; height: 16px; stroke: var(--text-2); flex-shrink: 0; }
+.search-bar svg, .search-bar i { width: 16px; height: 16px; stroke: var(--text-2); color: var(--text-2); flex-shrink: 0; }
 
 .search-bar input {
   flex: 1;
@@ -531,9 +532,9 @@ html, body {
   transition: color 0.2s;
 }
 
-.nav-item svg { width: 22px; height: 22px; stroke: var(--text-2); fill: none; transition: stroke 0.2s; }
+.nav-item svg, .nav-item i { width: 22px; height: 22px; stroke: var(--text-2); color: var(--text-2); fill: none; transition: stroke 0.2s, color 0.2s; }
 .nav-item span { font-size: 10px; font-weight: 700; color: var(--text-2); transition: color 0.2s; }
-.nav-item.active svg { stroke: var(--indigo); }
+.nav-item.active svg, .nav-item.active i { stroke: var(--indigo); color: var(--indigo); }
 .nav-item.active span { color: var(--indigo); }
 
 /* ========== LOADING ========== */
@@ -603,7 +604,7 @@ html, body {
   color: var(--text-2);
 }
 
-.empty-state svg { width: 48px; height: 48px; stroke: var(--border); margin-bottom: 16px; }
+.empty-state svg, .empty-state i { width: 48px; height: 48px; stroke: var(--border); color: var(--border); margin-bottom: 16px; }
 .empty-state .empty-title { font-weight: 700; font-size: 15px; color: var(--text-1); margin-bottom: 6px; }
 .empty-state .empty-text { font-size: 12.5px; line-height: 1.5; }
 
@@ -635,6 +636,26 @@ html, body {
   font-weight: 700;
   font-size: 12px;
   cursor: pointer;
+}
+
+/* ========== ORIGINKIT-STYLE ENTRY ANIMATION ========== */
+@keyframes copalFadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.anim-in {
+  opacity: 0;
+  animation: copalFadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.kpi-grid .anim-in:nth-child(1) { animation-delay: 0.02s; }
+.kpi-grid .anim-in:nth-child(2) { animation-delay: 0.10s; }
+.kpi-grid .anim-in:nth-child(3) { animation-delay: 0.18s; }
+.kpi-grid .anim-in:nth-child(4) { animation-delay: 0.26s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-in { opacity: 1; animation: none; }
 }
 
 /* ========== RESPONSIVE ========== */

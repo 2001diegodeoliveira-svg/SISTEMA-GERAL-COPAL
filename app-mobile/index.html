@@ -72,10 +72,10 @@
 
         <div class="section-title">Indicadores</div>
         <div class="kpi-grid" id="kpi-grid">
-          <div class="kpi-card"><div class="kpi-label">Contratos</div><div class="kpi-value" id="kpi-contratos">--</div><div class="kpi-delta">carregando...</div></div>
-          <div class="kpi-card"><div class="kpi-label">Ativos</div><div class="kpi-value" id="kpi-ativos">--</div><div class="kpi-delta" id="kpi-ativos-sub">em execução</div></div>
-          <div class="kpi-card"><div class="kpi-label">Aditivos</div><div class="kpi-value" id="kpi-aditivos">--</div><div class="kpi-delta" id="kpi-aditivos-sub">registrados</div></div>
-          <div class="kpi-card"><div class="kpi-label">Valor Total</div><div class="kpi-value" id="kpi-valor">--</div><div class="kpi-delta" id="kpi-valor-sub">contratado</div></div>
+          <div class="kpi-card anim-in"><div class="kpi-label">Contratos</div><div class="kpi-value" id="kpi-contratos">--</div><div class="kpi-delta">carregando...</div></div>
+          <div class="kpi-card anim-in"><div class="kpi-label">Ativos</div><div class="kpi-value" id="kpi-ativos">--</div><div class="kpi-delta" id="kpi-ativos-sub">em execução</div></div>
+          <div class="kpi-card anim-in"><div class="kpi-label">Aditivos</div><div class="kpi-value" id="kpi-aditivos">--</div><div class="kpi-delta" id="kpi-aditivos-sub">registrados</div></div>
+          <div class="kpi-card anim-in"><div class="kpi-label">Valor Total</div><div class="kpi-value" id="kpi-valor">--</div><div class="kpi-delta" id="kpi-valor-sub">contratado</div></div>
         </div>
 
         <div class="section-title">Contratos por unidade</div>
@@ -97,7 +97,7 @@
       </div>
       <div class="scroll-area">
         <div class="search-bar">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <i data-lucide="search"></i>
           <input type="text" id="contratos-search" placeholder="Buscar por número, credor..." oninput="App.filterContratos()">
         </div>
         <div class="filter-row" id="contratos-filters">
@@ -115,7 +115,7 @@
       <div class="app-header">
         <div class="header-back">
           <button class="header-back-btn" onclick="App.closeDetail()">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            <i data-lucide="arrow-left"></i>
           </button>
           <div class="header-eyebrow" style="margin:0">DETALHE DO CONTRATO</div>
         </div>
@@ -192,7 +192,7 @@
       </div>
       <div class="scroll-area">
         <div class="search-bar">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <i data-lucide="search"></i>
           <input type="text" id="contatos-search" placeholder="Buscar contato..." oninput="App.filterContatos()">
         </div>
         <div id="contatos-list"></div>
@@ -210,7 +210,7 @@
       </div>
       <div class="scroll-area">
         <div class="search-bar">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <i data-lucide="search"></i>
           <input type="text" id="patrimonio-search" placeholder="Buscar por RP ou descrição..." oninput="App.filterPatrimonio()">
         </div>
         <div id="patrimonio-list"></div>
@@ -228,7 +228,7 @@
       </div>
       <div class="scroll-area">
         <div class="search-bar">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <i data-lucide="search"></i>
           <input type="text" id="requisicoes-search" placeholder="Buscar requisição..." oninput="App.filterRequisicoes()">
         </div>
         <div id="requisicoes-list"></div>
@@ -276,29 +276,30 @@
     <!-- ===== BOTTOM NAV ===== -->
     <div class="bottom-nav">
       <div class="nav-item active" data-view="dashboard" onclick="App.navigate('dashboard')">
-        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+        <i data-lucide="home"></i>
         <span>Início</span>
       </div>
       <div class="nav-item" data-view="contratos" onclick="App.navigate('contratos')">
-        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg>
+        <i data-lucide="file-text"></i>
         <span>Contratos</span>
       </div>
       <div class="nav-item" data-view="unidades" onclick="App.navigate('unidades')">
-        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M4 21V8l8-5 8 5v13"/><path d="M9 21v-6h6v6"/></svg>
+        <i data-lucide="building-2"></i>
         <span>Unidades</span>
       </div>
       <div class="nav-item" data-view="contatos" onclick="App.navigate('contatos')">
-        <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 6-6 8-6s6.5 2 8 6"/></svg>
+        <i data-lucide="users-round"></i>
         <span>Contatos</span>
       </div>
       <div class="nav-item" data-view="perfil" onclick="App.navigate('perfil')">
-        <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 6-6 8-6s6.5 2 8 6"/></svg>
+        <i data-lucide="user-round"></i>
         <span>Perfil</span>
       </div>
     </div>
   </div>
 </div>
 
+<script src="https://unpkg.com/lucide@latest"></script>
 <script src="app.js"></script>
 </body>
 </html>
