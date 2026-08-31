@@ -2096,12 +2096,16 @@
                 const allocated = Number(item.quantidade || 0);
                 const used = consumed[index] || 0;
                 const available = Math.max(0, allocated - used);
+                const totalItemValue = parseMoneyValue(item.valorTotal);
+                const unitPrice = allocated > 0 ? totalItemValue / allocated : 0;
+                const usedValue = used * unitPrice;
+                const remainingValue = Math.max(0, totalItemValue - usedValue);
                 row.innerHTML = `
                     <td><select class="item-contract-index" required><option value="${index}">${item.loteNome || `Item ${index + 1}`}</option></select></td>
-                    <td><span class="item-saldo-atual" style="font-weight:700; color:${available > 0 ? '#15803d' : '#dc2626'}">${available}</span><input type="hidden" class="item-saldo-value" value="${available}"></td>
+                    <td><span class="item-saldo-atual" style="font-weight:700; color:${remainingValue > 0 ? '#15803d' : '#dc2626'}" title="Saldo financeiro do item">${formatMoneyValue(remainingValue)}</span><input type="hidden" class="item-saldo-value" value="${remainingValue}"><div style="font-size:0.7rem;color:#64748b;">${available} un.</div></td>
                     <td><input type="number" class="item-qty" value="0" min="0" max="${available}" step="1" onchange="calculateTotals()"></td>
                     <td><input type="text" class="item-desc" value="${item.loteNome || `Item ${index + 1}`}" readonly></td>
-                    <td><input type="number" class="item-price" value="${parseMoneyValue(item.valorTotal) / Math.max(allocated, 1)}" readonly></td>
+                    <td><input type="number" class="item-price" value="${unitPrice}" readonly></td>
                     <td><input type="text" class="item-total" value="R$ 0,00" readonly></td>
                     <td><button type="button" class="btn-table-action" onclick="removeReqRow(this)"><i data-lucide="trash-2" style="width: 16px;"></i></button></td>`;
                 tbody.appendChild(row);
