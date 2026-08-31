@@ -407,6 +407,14 @@
             font-size: 0.8rem;
             font-weight: 700;
             color: var(--sesp-dark-blue);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .permission-details h4 i {
+            color: var(--sesp-light-blue);
+            flex: none;
         }
 
         .permission-details p {
@@ -637,7 +645,8 @@
         .work-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; background: #fff; box-shadow: var(--shadow-sm); }
         .work-card + .work-card { margin-top: 1.25rem; }
         .work-card-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.9rem; }
-        .work-card-header h3 { color: var(--sesp-blue); font-size: 0.9rem; }
+        .work-card-header h3 { color: var(--sesp-blue); font-size: 0.9rem; display: flex; align-items: center; gap: 0.45rem; }
+        .work-card-header h3 i { color: var(--sesp-light-blue); flex: none; }
         .work-card-header span { color: #64748b; font-size: 0.72rem; }
         .profile-form-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 0.8rem; }
         .avatar-upload { display: flex; align-items: center; gap: 0.5rem; }
@@ -1014,56 +1023,56 @@
                                 <label class="permission-card">
                                     <input type="checkbox" id="perm-processos" checked>
                                     <div class="permission-details">
-                                        <h4>Processos</h4>
+                                        <h4><i data-lucide="folder" style="width: 14px;"></i>Processos</h4>
                                         <p>Gerenciar processos</p>
                                     </div>
                                 </label>
                                 <label class="permission-card">
                                     <input type="checkbox" id="perm-unidade" checked>
                                     <div class="permission-details">
-                                        <h4>Unidade</h4>
+                                        <h4><i data-lucide="building-2" style="width: 14px;"></i>Unidade</h4>
                                         <p>Gerenciar unidades</p>
                                     </div>
                                 </label>
                                 <label class="permission-card">
                                     <input type="checkbox" id="perm-cadastro-inicial" checked>
                                     <div class="permission-details">
-                                        <h4>Cadastro Inicial</h4>
+                                        <h4><i data-lucide="file-plus-2" style="width: 14px;"></i>Cadastro Inicial</h4>
                                         <p>Gerenciar cadastro inicial</p>
                                     </div>
                                 </label>
                                 <label class="permission-card">
                                     <input type="checkbox" id="perm-aditivos" checked>
                                     <div class="permission-details">
-                                        <h4>Aditivos & Atualizações</h4>
+                                        <h4><i data-lucide="file-plus" style="width: 14px;"></i>Aditivos & Atualizações</h4>
                                         <p>Gerenciar aditivos e atualizações</p>
                                     </div>
                                 </label>
                                 <label class="permission-card">
                                     <input type="checkbox" id="perm-empenho">
                                     <div class="permission-details">
-                                        <h4>Empenho</h4>
+                                        <h4><i data-lucide="file-text" style="width: 14px;"></i>Empenho</h4>
                                         <p>Gerenciar empenhos</p>
                                     </div>
                                 </label>
                                 <label class="permission-card">
                                     <input type="checkbox" id="perm-overview">
                                     <div class="permission-details">
-                                        <h4>Visão Geral</h4>
+                                        <h4><i data-lucide="layout-dashboard" style="width: 14px;"></i>Visão Geral</h4>
                                         <p>Autorizar acesso à aba Visão Geral em Contratos</p>
                                     </div>
                                 </label>
                                 <label class="permission-card">
                                     <input type="checkbox" id="perm-questionario-docs">
                                     <div class="permission-details">
-                                        <h4>Questionário Docs</h4>
+                                        <h4><i data-lucide="file-question" style="width: 14px;"></i>Questionário Docs</h4>
                                         <p>Gerenciar questionários e documentos</p>
                                     </div>
                                 </label>
                                 <label class="permission-card">
                                     <input type="checkbox" id="perm-execucao-pagamento">
                                     <div class="permission-details">
-                                        <h4>Execução & Pagamento</h4>
+                                        <h4><i data-lucide="credit-card" style="width: 14px;"></i>Execução & Pagamento</h4>
                                         <p>Gerenciar execução e pagamento</p>
                                     </div>
                                 </label>
@@ -1109,13 +1118,13 @@
                     </div>
                     <div class="profile-grid">
                         <div>
-                            <div class="work-card"><div class="work-card-header"><h3>Meu perfil</h3><span>Dados editáveis</span></div><form id="perfilForm"><div class="form-row"><div class="form-group"><label for="perfilNome">Nome completo</label><input type="text" id="perfilNome" required></div><div class="form-group"><label for="perfilCargo">Cargo</label><input type="text" id="perfilCargo" placeholder="Ex.: Analista administrativo"></div></div><div class="form-row"><div class="form-group"><label for="perfilTelefone">Telefone de contato</label><input type="tel" id="perfilTelefone" placeholder="(65) 00000-0000"></div><div class="form-group"><label for="perfilEmail">E-mail</label><input type="email" id="perfilEmail" readonly></div></div><div class="profile-form-actions"><button class="btn-submit" type="submit"><i data-lucide="save" style="width: 15px;"></i> Salvar perfil</button></div></form></div>
-                            <div class="work-card"><div class="work-card-header"><h3>Feed de trabalho</h3><span>Atualizações da equipe</span></div><form class="feed-form" id="feedForm"><div class="form-group"><label for="feedText">Compartilhe o andamento do seu trabalho</label><textarea id="feedText" placeholder="Ex.: Concluí a análise do processo 123/2026." required></textarea></div><div class="profile-form-actions"><button class="btn-submit" type="submit"><i data-lucide="send" style="width: 15px;"></i> Publicar atualização</button></div></form><div id="feedList" style="margin-top: 1rem;"></div></div>
-                            <div class="work-card"><div class="work-card-header"><h3>Chat interno</h3><span>Histórico desta sessão</span></div><div class="chat-layout"><div class="chat-channels" id="chatChannels"></div><div class="chat-main"><div class="chat-messages" id="chatMessages"></div><div class="chat-recipient"><label for="chatRecipient">Enviar mensagem para</label><select id="chatRecipient"><option value="general">Canal geral</option></select></div><form class="chat-compose" id="chatForm"><input id="chatText" placeholder="Escreva uma mensagem..." autocomplete="off" required><button class="btn-submit" type="submit" title="Enviar mensagem"><i data-lucide="send" style="width: 15px;"></i></button></form></div></div></div>
+                            <div class="work-card"><div class="work-card-header"><h3><i data-lucide="user-circle" style="width: 15px;"></i>Meu perfil</h3><span>Dados editáveis</span></div><form id="perfilForm"><div class="form-row"><div class="form-group"><label for="perfilNome">Nome completo</label><input type="text" id="perfilNome" required></div><div class="form-group"><label for="perfilCargo">Cargo</label><input type="text" id="perfilCargo" placeholder="Ex.: Analista administrativo"></div></div><div class="form-row"><div class="form-group"><label for="perfilTelefone">Telefone de contato</label><input type="tel" id="perfilTelefone" placeholder="(65) 00000-0000"></div><div class="form-group"><label for="perfilEmail">E-mail</label><input type="email" id="perfilEmail" readonly></div></div><div class="profile-form-actions"><button class="btn-submit" type="submit"><i data-lucide="save" style="width: 15px;"></i> Salvar perfil</button></div></form></div>
+                            <div class="work-card"><div class="work-card-header"><h3><i data-lucide="rss" style="width: 15px;"></i>Feed de trabalho</h3><span>Atualizações da equipe</span></div><form class="feed-form" id="feedForm"><div class="form-group"><label for="feedText">Compartilhe o andamento do seu trabalho</label><textarea id="feedText" placeholder="Ex.: Concluí a análise do processo 123/2026." required></textarea></div><div class="profile-form-actions"><button class="btn-submit" type="submit"><i data-lucide="send" style="width: 15px;"></i> Publicar atualização</button></div></form><div id="feedList" style="margin-top: 1rem;"></div></div>
+                            <div class="work-card"><div class="work-card-header"><h3><i data-lucide="message-square" style="width: 15px;"></i>Chat interno</h3><span>Histórico desta sessão</span></div><div class="chat-layout"><div class="chat-channels" id="chatChannels"></div><div class="chat-main"><div class="chat-messages" id="chatMessages"></div><div class="chat-recipient"><label for="chatRecipient">Enviar mensagem para</label><select id="chatRecipient"><option value="general">Canal geral</option></select></div><form class="chat-compose" id="chatForm"><input id="chatText" placeholder="Escreva uma mensagem..." autocomplete="off" required><button class="btn-submit" type="submit" title="Enviar mensagem"><i data-lucide="send" style="width: 15px;"></i></button></form></div></div></div>
                         </div>
                         <div>
-                            <div class="work-card" id="taskManagementCard"><div class="work-card-header"><h3>Minhas tarefas</h3><span id="taskAccessLabel">Designação e acompanhamento</span></div><form id="taskForm"><div class="form-group"><label for="taskTitle">Nova tarefa</label><input id="taskTitle" placeholder="Título da tarefa" required></div><div class="form-row" style="margin-top: 0.8rem;"><div class="form-group"><label for="taskAssignee">Responsável</label><input id="taskAssignee" placeholder="Nome do colaborador" required></div><div class="form-group"><label for="taskStatus">Status</label><select id="taskStatus"><option value="Pendente">Pendente</option><option value="Em andamento">Em andamento</option></select></div></div><div class="profile-form-actions"><button class="btn-submit" type="submit"><i data-lucide="clipboard-plus" style="width: 15px;"></i> Designar tarefa</button></div></form><div class="task-list" id="taskList" style="margin-top: 1rem;"></div></div>
-                            <div class="work-card"><div class="work-card-header"><h3>Histórico de movimentação</h3><span>Auditoria local</span></div><div class="audit-table"><table class="system-table"><thead><tr><th>Usuário</th><th>Ação</th><th>Data / Hora</th></tr></thead><tbody id="auditList"></tbody></table></div></div>
+                            <div class="work-card" id="taskManagementCard"><div class="work-card-header"><h3><i data-lucide="clipboard-list" style="width: 15px;"></i>Minhas tarefas</h3><span id="taskAccessLabel">Designação e acompanhamento</span></div><form id="taskForm"><div class="form-group"><label for="taskTitle">Nova tarefa</label><input id="taskTitle" placeholder="Título da tarefa" required></div><div class="form-row" style="margin-top: 0.8rem;"><div class="form-group"><label for="taskAssignee">Responsável</label><input id="taskAssignee" placeholder="Nome do colaborador" required></div><div class="form-group"><label for="taskStatus">Status</label><select id="taskStatus"><option value="Pendente">Pendente</option><option value="Em andamento">Em andamento</option></select></div></div><div class="profile-form-actions"><button class="btn-submit" type="submit"><i data-lucide="clipboard-plus" style="width: 15px;"></i> Designar tarefa</button></div></form><div class="task-list" id="taskList" style="margin-top: 1rem;"></div></div>
+                            <div class="work-card"><div class="work-card-header"><h3><i data-lucide="history" style="width: 15px;"></i>Histórico de movimentação</h3><span>Auditoria local</span></div><div class="audit-table"><table class="system-table"><thead><tr><th>Usuário</th><th>Ação</th><th>Data / Hora</th></tr></thead><tbody id="auditList"></tbody></table></div></div>
                         </div>
                     </div>
                 </div>
