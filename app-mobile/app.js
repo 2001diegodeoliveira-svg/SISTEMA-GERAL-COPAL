@@ -164,6 +164,8 @@ const App = (() => {
 
   function formatCurrency(val) {
     if (!val && val !== 0) return '--';
+    const str = String(val).trim();
+    if (str.startsWith('R$')) return str;
     const num = parseFloat(val);
     if (isNaN(num)) return '--';
     return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
