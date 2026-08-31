@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0c1a37">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="COPAL SESP - Sistema de Gestão de Contratos e Licitações do Governo de Mato Grosso">
+  <title>COPAL SESP</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.svg">
+  <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ==================== LOGIN ==================== -->
+  <div class="login-screen" id="login-screen">
+    <div class="login-logo">CP</div>
+    <div class="login-title">COPAL SESP</div>
+    <div class="login-subtitle">Sistema de Gestão de Contratos<br>Governo de Mato Grosso</div>
+    <div class="login-error" id="login-error"></div>
+    <form class="login-form" id="login-form">
+      <div class="form-group">
+        <label>Matrícula ou E-mail</label>
+        <input type="text" id="login-matricula" placeholder="Digite sua matrícula ou e-mail" required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="login-senha" placeholder="Digite sua senha" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="login-btn" id="login-btn">Entrar</button>
+    </form>
+    <div class="login-footer">
+      COPAL SESP &copy; 2026 &middot; Coordenadoria de Aquisições e Licitações<br>
+      Secretaria de Estado de Segurança Pública de Mato Grosso
+    </div>
+  </div>
+
+  <!-- ==================== MAIN APP ==================== -->
+  <div id="main-app" style="display:none; height:100%; flex-direction:column;">
+
+    <!-- LOADING -->
+    <div class="loading-overlay" id="loading" style="display:none;">
+      <div class="spinner"></div>
+      <div class="loading-text">Carregando...</div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="view active" id="view-dashboard">
+      <div class="app-header">
+        <div class="header-eyebrow">SECRETARIA DE SEGURANÇA PÚBLICA</div>
+        <div class="header-title-row">
+          <div class="header-title">Painel Geral</div>
+          <div class="header-badge" id="user-badge">COPAL</div>
+        </div>
+      </div>
+      <div class="scroll-area">
+        <div class="install-banner" id="install-banner">
+          <div class="install-banner-text">
+            <div class="install-banner-title">Instalar App COPAL</div>
+            <div class="install-banner-sub">Adicione à tela inicial para acesso rápido</div>
+          </div>
+          <button class="install-banner-btn" id="install-btn">Instalar</button>
+        </div>
+
+        <div class="section-title">Indicadores</div>
+        <div class="kpi-grid" id="kpi-grid">
+          <div class="kpi-card"><div class="kpi-label">Contratos</div><div class="kpi-value" id="kpi-contratos">--</div><div class="kpi-delta">carregando...</div></div>
+          <div class="kpi-card"><div class="kpi-label">Ativos</div><div class="kpi-value" id="kpi-ativos">--</div><div class="kpi-delta" id="kpi-ativos-sub">em execução</div></div>
+          <div class="kpi-card"><div class="kpi-label">Aditivos</div><div class="kpi-value" id="kpi-aditivos">--</div><div class="kpi-delta" id="kpi-aditivos-sub">registrados</div></div>
+          <div class="kpi-card"><div class="kpi-label">Valor Total</div><div class="kpi-value" id="kpi-valor">--</div><div class="kpi-delta" id="kpi-valor-sub">contratado</div></div>
+        </div>
+
+        <div class="section-title">Contratos por unidade</div>
+        <div class="chart-card" id="chart-unidades"></div>
+
+        <div class="section-title">Últimos contratos <span class="link" onclick="App.navigate('contratos')">ver todos</span></div>
+        <div id="dash-recent"></div>
+      </div>
+    </div>
+
+    <!-- ===== CONTRATOS ===== -->
+    <div class="view" id="view-contratos">
+      <div class="app-header">
+        <div class="header-eyebrow">CONSULTA</div>
+        <div class="header-title-row">
+          <div class="header-title">Contratos</div>
+          <div class="header-badge" id="contratos-count">0</div>
+        </div>
+      </div>
+      <div class="scroll-area">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="contratos-search" placeholder="Buscar por número, credor..." oninput="App.filterContratos()">
+        </div>
+        <div class="filter-row" id="contratos-filters">
+          <div class="filter-chip active" data-filter="todos" onclick="App.setContratoFilter('todos')">Todos</div>
+          <div class="filter-chip" data-filter="ativo" onclick="App.setContratoFilter('ativo')">Ativos</div>
+          <div class="filter-chip" data-filter="em_andamento" onclick="App.setContratoFilter('em_andamento')">Em andamento</div>
+          <div class="filter-chip" data-filter="encerrado" onclick="App.setContratoFilter('encerrado')">Encerrados</div>
+        </div>
+        <div id="contratos-list"></div>
+      </div>
+    </div>
+
+    <!-- ===== DETALHE CONTRATO ===== -->
+    <div class="view" id="view-detalhe">
+      <div class="app-header">
+        <div class="header-back">
+          <button class="header-back-btn" onclick="App.closeDetail()">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="header-eyebrow" style="margin:0">DETALHE DO CONTRATO</div>
+        </div>
+        <div class="header-title-row" style="margin-top:6px;">
+          <div class="header-title" id="det-numero">--</div>
+        </div>
+      </div>
+      <div class="scroll-area">
+        <div class="detail-block">
+          <div class="db-title">Identificação</div>
+          <div class="field-row"><span class="f-label">Nº Contrato</span><span class="f-val" id="det-num">--</span></div>
+          <div class="field-row"><span class="f-label">Processo</span><span class="f-val" id="det-processo">--</span></div>
+          <div class="field-row"><span class="f-label">Objeto</span><span class="f-val" id="det-objeto">--</span></div>
+          <div class="field-row"><span class="f-label">Status</span><span class="f-val" id="det-status">--</span></div>
+        </div>
+        <div class="detail-block">
+          <div class="db-title">Contratada</div>
+          <div class="field-row"><span class="f-label">Credor</span><span class="f-val" id="det-credor">--</span></div>
+          <div class="field-row"><span class="f-label">Razão Social</span><span class="f-val" id="det-razao">--</span></div>
+          <div class="field-row"><span class="f-label">CNPJ</span><span class="f-val" id="det-cnpj">--</span></div>
+          <div class="field-row"><span class="f-label">Telefone</span><span class="f-val" id="det-telefone">--</span></div>
+          <div class="field-row"><span class="f-label">WhatsApp</span><span class="f-val" id="det-whatsapp">--</span></div>
+          <div class="field-row"><span class="f-label">E-mail</span><span class="f-val" id="det-email-empresa">--</span></div>
+        </div>
+        <div class="detail-block">
+          <div class="db-title">Endereço</div>
+          <div class="field-row"><span class="f-label">CEP</span><span class="f-val" id="det-cep">--</span></div>
+          <div class="field-row"><span class="f-label">Logradouro</span><span class="f-val" id="det-logradouro">--</span></div>
+          <div class="field-row"><span class="f-label">Bairro</span><span class="f-val" id="det-bairro">--</span></div>
+          <div class="field-row"><span class="f-label">Cidade/UF</span><span class="f-val" id="det-cidade">--</span></div>
+        </div>
+        <div class="detail-block">
+          <div class="db-title">Valores e Vigência</div>
+          <div class="field-row"><span class="f-label">Valor Global</span><span class="f-val" id="det-valor">--</span></div>
+          <div class="field-row"><span class="f-label">Data Inicial</span><span class="f-val" id="det-dt-inicial">--</span></div>
+          <div class="field-row"><span class="f-label">Data Final</span><span class="f-val" id="det-dt-final">--</span></div>
+          <div class="field-row"><span class="f-label">Prazo Entrega</span><span class="f-val" id="det-prazo">--</span></div>
+        </div>
+        <div class="detail-block" id="det-lotes-block" style="display:none;">
+          <div class="db-title">Lotes</div>
+          <div id="det-lotes"></div>
+        </div>
+        <div class="detail-block" id="det-aditivos-block" style="display:none;">
+          <div class="db-title">Aditivos</div>
+          <div id="det-aditivos"></div>
+        </div>
+        <div class="detail-block" id="det-empenhos-block" style="display:none;">
+          <div class="db-title">Empenhos</div>
+          <div id="det-empenhos"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== UNIDADES ===== -->
+    <div class="view" id="view-unidades">
+      <div class="app-header">
+        <div class="header-eyebrow">CONSULTA</div>
+        <div class="header-title-row">
+          <div class="header-title">Unidades</div>
+          <div class="header-badge" id="unidades-count">0</div>
+        </div>
+      </div>
+      <div class="scroll-area" id="unidades-list"></div>
+    </div>
+
+    <!-- ===== CONTATOS ===== -->
+    <div class="view" id="view-contatos">
+      <div class="app-header">
+        <div class="header-eyebrow">AGENDA</div>
+        <div class="header-title-row">
+          <div class="header-title">Contatos</div>
+          <div class="header-badge" id="contatos-count">0</div>
+        </div>
+      </div>
+      <div class="scroll-area">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="contatos-search" placeholder="Buscar contato..." oninput="App.filterContatos()">
+        </div>
+        <div id="contatos-list"></div>
+      </div>
+    </div>
+
+    <!-- ===== PATRIMÔNIO ===== -->
+    <div class="view" id="view-patrimonio">
+      <div class="app-header">
+        <div class="header-eyebrow">INVENTÁRIO</div>
+        <div class="header-title-row">
+          <div class="header-title">Patrimônio</div>
+          <div class="header-badge" id="patrimonio-count">0</div>
+        </div>
+      </div>
+      <div class="scroll-area">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="patrimonio-search" placeholder="Buscar por RP ou descrição..." oninput="App.filterPatrimonio()">
+        </div>
+        <div id="patrimonio-list"></div>
+      </div>
+    </div>
+
+    <!-- ===== REQUISIÇÕES ===== -->
+    <div class="view" id="view-requisicoes">
+      <div class="app-header">
+        <div class="header-eyebrow">MOVIMENTAÇÃO</div>
+        <div class="header-title-row">
+          <div class="header-title">Requisições</div>
+          <div class="header-badge" id="requisicoes-count">0</div>
+        </div>
+      </div>
+      <div class="scroll-area">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="requisicoes-search" placeholder="Buscar requisição..." oninput="App.filterRequisicoes()">
+        </div>
+        <div id="requisicoes-list"></div>
+      </div>
+    </div>
+
+    <!-- ===== PERFIL ===== -->
+    <div class="view" id="view-perfil">
+      <div class="app-header">
+        <div class="header-eyebrow">CONTA</div>
+        <div class="header-title-row">
+          <div class="header-title">Perfil</div>
+          <div class="header-badge">LOGADO</div>
+        </div>
+      </div>
+      <div class="scroll-area">
+        <div class="profile-card">
+          <div class="avatar" id="profile-avatar">--</div>
+          <div class="profile-name" id="profile-name">--</div>
+          <div class="profile-role" id="profile-role">--</div>
+        </div>
+
+        <div class="section-title">Dados da Conta</div>
+        <div class="detail-block">
+          <div class="field-row"><span class="f-label">E-mail</span><span class="f-val" id="profile-email">--</span></div>
+          <div class="field-row"><span class="f-label">Matrícula</span><span class="f-val" id="profile-matricula">--</span></div>
+          <div class="field-row"><span class="f-label">Unidade</span><span class="f-val" id="profile-unidade">--</span></div>
+          <div class="field-row"><span class="f-label">Perfil</span><span class="f-val" id="profile-perfil">--</span></div>
+          <div class="field-row"><span class="f-label">CPF</span><span class="f-val" id="profile-cpf">--</span></div>
+          <div class="field-row"><span class="f-label">Telefone</span><span class="f-val" id="profile-phone">--</span></div>
+          <div class="field-row"><span class="f-label">Cargo</span><span class="f-val" id="profile-cargo">--</span></div>
+        </div>
+
+        <div class="section-title">Sobre o App</div>
+        <div class="info-note">
+          <strong>COPAL SESP Mobile v1.0</strong><br><br>
+          Aplicativo oficial do Sistema de Gestão COPAL SESP - Coordenadoria de Aquisições e Licitações da Secretaria de Estado de Segurança Pública de Mato Grosso.<br><br>
+          Consulte contratos, unidades, contatos, patrimônio e requisições diretamente do seu dispositivo móvel.
+        </div>
+
+        <button class="logout-btn" onclick="App.logout()">Sair da Conta</button>
+      </div>
+    </div>
+
+    <!-- ===== BOTTOM NAV ===== -->
+    <div class="bottom-nav">
+      <div class="nav-item active" data-view="dashboard" onclick="App.navigate('dashboard')">
+        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+        <span>Início</span>
+      </div>
+      <div class="nav-item" data-view="contratos" onclick="App.navigate('contratos')">
+        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg>
+        <span>Contratos</span>
+      </div>
+      <div class="nav-item" data-view="unidades" onclick="App.navigate('unidades')">
+        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M4 21V8l8-5 8 5v13"/><path d="M9 21v-6h6v6"/></svg>
+        <span>Unidades</span>
+      </div>
+      <div class="nav-item" data-view="contatos" onclick="App.navigate('contatos')">
+        <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 6-6 8-6s6.5 2 8 6"/></svg>
+        <span>Contatos</span>
+      </div>
+      <div class="nav-item" data-view="perfil" onclick="App.navigate('perfil')">
+        <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 6-6 8-6s6.5 2 8 6"/></svg>
+        <span>Perfil</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -274,6 +274,27 @@
             box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.15);
         }
 
+        /* ESTADO DE ERRO */
+        .form-group.invalid input,
+        .form-group.invalid select,
+        .form-group.invalid textarea {
+            border-color: var(--required-red);
+            box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.15);
+        }
+        .form-group.invalid label {
+            color: var(--required-red);
+        }
+        .field-error {
+            display: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--required-red);
+            margin-top: 0.1rem;
+        }
+        .form-group.invalid .field-error {
+            display: block;
+        }
+
         /* CAMPO SENHA */
         .password-container {
             position: relative;
@@ -858,9 +879,10 @@
                                 </div>
 
                                 <div class="form-row">
-                                    <div class="form-group">
+                                    <div class="form-group" id="email-group">
                                         <label for="email">E-mail Institucional <span>*</span></label>
-                                        <input type="email" id="email" placeholder="usuario@sesp.mt.gov.br" required>
+                                        <input type="email" id="email" placeholder="usuario@sesp.mt.gov.br" required oninput="clearEmailError()">
+                                        <span class="field-error" id="email-error"></span>
                                     </div>
                                     <div class="form-group">
                                         <label for="telefone">Telefone</label>
@@ -1985,11 +2007,43 @@
             }
         }
 
+        function clearEmailError() {
+            const group = document.getElementById('email-group');
+            if (group) group.classList.remove('invalid');
+            const errorMsg = document.getElementById('email-error');
+            if (errorMsg) errorMsg.textContent = '';
+        }
+
+        function setEmailError(message) {
+            clearEmailError();
+            const group = document.getElementById('email-group');
+            if (group) group.classList.add('invalid');
+            const errorMsg = document.getElementById('email-error');
+            if (errorMsg) errorMsg.textContent = message || 'E-mail inválido.';
+        }
+
+        function isValidEmail(value) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(value || '').trim());
+        }
+
         document.getElementById('cadastroForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
+            const submitBtn = this.querySelector('button[type="submit"]');
+
             const pass1 = document.getElementById('senha').value;
             const pass2 = document.getElementById('confirmar-senha').value;
+
+            const emailInput = document.getElementById('email');
+            const email = emailInput.value.trim();
+
+            clearEmailError();
+
+            if (!isValidEmail(email)) {
+                setEmailError('Informe um e-mail válido (ex.: usuario@sesp.mt.gov.br).');
+                emailInput.focus();
+                return;
+            }
 
             if (pass1 !== pass2) {
                 alert('As senhas não coincidem!');
@@ -2008,7 +2062,7 @@
             };
 
             const payload = {
-                email: document.getElementById('email').value.trim(),
+                email: email,
                 password: pass1,
                 name: document.getElementById('nome').value.trim(),
                 unidade: document.getElementById('unidade-setor').value,
@@ -2025,23 +2079,33 @@
                 observacoes: document.getElementById('observacoes').value.trim()
             };
 
+            if (submitBtn) submitBtn.disabled = true;
             try {
                 const res = await fetch('/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                const data = await res.json();
+                const data = await res.json().catch(() => ({}));
 
                 if (res.ok) {
                     alert('Solicitação de cadastro enviada com sucesso! Aguarde aprovação.');
                     resetForm();
+                    return;
+                }
+
+                const msg = data.message || 'Erro ao enviar solicitação.';
+                if (/j[áa] cadastrado|j[áa] existe|duplicado/i.test(msg)) {
+                    setEmailError('Este e-mail já está cadastrado no sistema. Use outro e-mail ou verifique se já existia um cadastro pendente.');
+                    emailInput.focus();
                 } else {
-                    alert(data.message || 'Erro ao enviar solicitação.');
+                    alert(msg);
                 }
             } catch (error) {
                 console.error(error);
-                alert('Erro de conexão ao servidor.');
+                alert('Erro de conexão ao servidor. Verifique sua internet e tente novamente.');
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
             }
         });
 

@@ -4,8 +4,8 @@ const fs = require('fs');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
-const nodemailer = require('nodemailer');
 const dns = require('dns');
+const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const { createDatabase } = require('./config/database');
@@ -505,6 +505,7 @@ app.use(cors({
 }));
 
 app.use('/uploads', express.static(UPLOAD_DIR));
+app.use('/app-mobile', express.static(path.join(ROOT_DIR, 'app-mobile')));
 app.use(express.static(FRONTEND_DIR));
 
 app.get('/', (req, res) => {
@@ -1034,8 +1035,6 @@ COPAL SESP`,
       message: 'Envio de e-mail indisponível no momento. Código de validação exibido abaixo.',
       code,
       devOtpCode: code,
-      fallback: true,
-      expiresAt,
     });
   } catch (error) {
     console.error('Erro ao gerar código de requisição:', error);

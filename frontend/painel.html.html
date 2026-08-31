@@ -732,6 +732,144 @@
       .fact-wide { grid-column: span 1; }
       .brand h1 { font-size: 26px; }
     }
+
+    /* ===== Pontencialização visual (inspirada em animações premium) ===== */
+
+    @keyframes ok-pulse-border {
+      0% { box-shadow: inset 0 0 0 1px rgba(46, 242, 255, 0.2), 0 0 20px rgba(46, 242, 255, 0.16), 0 0 0 0 rgba(46, 242, 255, 0.45); }
+      70% { box-shadow: inset 0 0 0 1px rgba(46, 242, 255, 0.2), 0 0 20px rgba(46, 242, 255, 0.16), 0 0 0 9px rgba(46, 242, 255, 0); }
+      100% { box-shadow: inset 0 0 0 1px rgba(46, 242, 255, 0.2), 0 0 20px rgba(46, 242, 255, 0.16), 0 0 0 0 rgba(46, 242, 255, 0); }
+    }
+
+    @keyframes ok-pulse-warning {
+      0% { box-shadow: inset 0 0 0 1px rgba(246, 200, 95, 0.28), 0 0 20px rgba(246, 200, 95, 0.16), 0 0 0 0 rgba(246, 200, 95, 0.5); }
+      70% { box-shadow: inset 0 0 0 1px rgba(246, 200, 95, 0.28), 0 0 20px rgba(246, 200, 95, 0.16), 0 0 0 9px rgba(246, 200, 95, 0); }
+      100% { box-shadow: inset 0 0 0 1px rgba(246, 200, 95, 0.28), 0 0 20px rgba(246, 200, 95, 0.16), 0 0 0 0 rgba(246, 200, 95, 0); }
+    }
+
+    .kpi.pulse {
+      animation: floatCard 5.5s ease-in-out infinite, ok-pulse-border 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .kpi.pulse-warning {
+      animation: floatCard 5.5s ease-in-out infinite, ok-pulse-warning 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes ok-border-spin {
+      0% { transform: translateX(-100%); opacity: 0; }
+      12% { opacity: 1; }
+      100% { transform: translateX(100%); opacity: 0; }
+    }
+
+    .glass {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .glass::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      z-index: 2;
+      background: linear-gradient(90deg, transparent, rgba(46, 242, 255, 0.78), rgba(62, 167, 255, 0.55), transparent);
+      transform: translateX(-100%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .glass:hover::after {
+      animation: ok-border-spin 1.2s ease forwards;
+    }
+
+    .panel-hd h3 svg {
+      transition: filter 0.3s ease, transform 0.3s ease;
+      filter: drop-shadow(0 0 6px rgba(46, 242, 255, 0.55));
+    }
+
+    .glass:hover .panel-hd h3 svg {
+      filter: drop-shadow(0 0 12px rgba(46, 242, 255, 0.85));
+      transform: scale(1.12);
+    }
+
+    .logo {
+      animation: ok-logo-float 6s ease-in-out infinite;
+    }
+
+    @keyframes ok-logo-float {
+      0%, 100% { transform: translateY(0); box-shadow: 0 0 22px rgba(62, 167, 255, 0.35); }
+      50% { transform: translateY(-3px); box-shadow: 0 0 30px rgba(46, 242, 255, 0.55); }
+    }
+
+    @keyframes ok-rise-in {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .glass {
+      animation: ok-rise-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .glass:nth-of-type(2) { animation-delay: 0.07s; }
+    .glass:nth-of-type(3) { animation-delay: 0.14s; }
+    .glass:nth-of-type(4) { animation-delay: 0.21s; }
+    .glass:nth-of-type(5) { animation-delay: 0.28s; }
+    .glass:nth-of-type(6) { animation-delay: 0.35s; }
+
+    .kpi-icon {
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .kpi:hover .kpi-icon {
+      transform: scale(1.14) rotate(-5deg);
+    }
+
+    .kpi-value {
+      transition: color 0.25s ease, text-shadow 0.25s ease;
+    }
+
+    .kpi:hover .kpi-value {
+      text-shadow: 0 0 14px rgba(46, 242, 255, 0.5);
+    }
+
+    .fact:hover {
+      border-color: rgba(90, 194, 255, 0.5);
+      background: rgba(18, 36, 66, 0.85);
+      box-shadow: 0 0 18px rgba(62, 167, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .fact {
+      transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+    }
+
+    .meta-item b {
+      transition: color 0.25s ease, text-shadow 0.25s ease;
+    }
+
+    .meta-item:hover b {
+      color: var(--cyan);
+      text-shadow: 0 0 12px rgba(46, 242, 255, 0.6);
+    }
+
+    .conn-dot {
+      animation: microPulse 2s ease-in-out infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .glass,
+      .logo,
+      .kpi.pulse,
+      .kpi.pulse-warning {
+        animation: none;
+      }
+      .glass::after {
+        animation: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -750,7 +888,7 @@
       <div class="header-meta">
         <div class="meta-item"><span>Sincronização</span><b class="conn-status" id="syncStatus"><span class="conn-dot"></span> Conectado</b></div>
         <div class="meta-item"><span>Última atualização</span><b id="clock" style="font-size:18px">--/--/---- --:--:--</b></div>
-        <div class="meta-item"><span>Contratos em alerta</span><b id="criticalAlerts" style="color:#6f87a8">0</b></div>
+        <div class="meta-item"><span>Contratos em alerta</span><b id="criticalAlerts" style="color:#6f87a8">0</b><small class="alert-breakdown" style="font-size:10px; color:#8eafd1; line-height:1.2"><span id="alVencendo" style="color:#f6c85f">0 vencendo</span> · <span id="alExec" style="color:#ff9dab">0 exec. ≥90%</span></small></div>
       </div>
 
       <a class="home-cta" href="home.html.html" aria-label="Ir para a página inicial">
@@ -919,8 +1057,20 @@
       return parseMoney(contract?.valorGlobal || contract?.valor || 0);
     }
 
+    function getUniqueEmpenhos(contract) {
+      const list = Array.isArray(contract?.empenhos) ? contract.empenhos : [];
+      const seen = new Map();
+      return list.filter((item) => {
+        const key = String(item?.numEmpenho || item?.numero || '').trim();
+        if (!key) return true;
+        if (seen.has(key)) return false;
+        seen.set(key, true);
+        return true;
+      });
+    }
+
     function getGlobalUsed(contract) {
-      return (Array.isArray(contract?.empenhos) ? contract.empenhos : []).reduce((sum, item) => sum + parseMoney(item?.valorEmpenho || 0), 0);
+      return getUniqueEmpenhos(contract).reduce((sum, item) => sum + parseMoney(item?.valorEmpenho || 0), 0);
     }
 
     function getStartDate(contract) {
@@ -931,13 +1081,8 @@
       return contract?.dtFinal || contract?.dataFim || '';
     }
 
-    function getValidDate(dateValue) {
-      const date = new Date(dateValue || '');
-      return Number.isNaN(date.getTime()) ? null : date;
-    }
-
     function calcDiasRestantes(contract) {
-      const endDate = getValidDate(getEndDate(contract));
+      const endDate = parseSmartDate(getEndDate(contract));
       if (!endDate) return null;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -1012,7 +1157,7 @@
         valorTotal += getContractValue(contract);
         valorUsado += getGlobalUsed(contract);
         totalAditivos += (Array.isArray(contract.aditivos) ? contract.aditivos : []).length;
-        totalEmpenhos += (Array.isArray(contract.empenhos) ? contract.empenhos : []).length;
+        totalEmpenhos += getUniqueEmpenhos(contract).length;
       });
 
       const saldo = Math.max(valorTotal - valorUsado, 0);
@@ -1039,8 +1184,10 @@
         { title: 'Movimentações', value: String(d.movimentacoes), trend: `${d.unidades} unidades vinculadas`, neon: 'purple', icon: 'file-plus-2', iconClass: 'purple', bar: d.total > 0 ? Math.min(Math.round((d.movimentacoes / Math.max(d.total, 1)) * 100), 100) : 0 },
       ];
 
-      document.getElementById("kpis").innerHTML = kpis.map((item) => `
-        <article class="kpi" data-neon="${item.neon}">
+      document.getElementById("kpis").innerHTML = kpis.map((item, index) => {
+        const pulseCls = index === 0 ? ' pulse' : (index === 1 ? ' pulse-warning' : '');
+        return `
+        <article class="kpi${pulseCls}" data-neon="${item.neon}">
           <div class="kpi-head">
             <div class="kpi-title">${item.title}</div>
             <div class="kpi-icon ${item.iconClass}"><i data-lucide="${item.icon}"></i></div>
@@ -1049,14 +1196,15 @@
           <div class="kpi-trend">${item.trend}</div>
           <div class="kpi-bar"><i style="--w:${item.bar}%"></i></div>
         </article>
-      `).join("");
+        `;
+      }).join("");
       refreshIcons(document.getElementById("kpis"));
     }
 
     function computeFlowStep(contract) {
       const status = getStatus(contract);
       const aditivos = Array.isArray(contract?.aditivos) ? contract.aditivos.length : 0;
-      const empenhos = Array.isArray(contract?.empenhos) ? contract.empenhos.length : 0;
+      const empenhos = getUniqueEmpenhos(contract).length;
       const contractValue = getContractValue(contract);
       const used = getGlobalUsed(contract);
       const execPercent = contractValue > 0 ? (used / contractValue) * 100 : 0;
@@ -1166,26 +1314,33 @@
         const dias = calcDiasRestantes(contract);
 
         if (status === 'Vencendo') {
-          alerts.push({ icon: 'clock', color: '#f6c85f', titulo: `${num} vence em ${dias} dias`, texto: `Contrato ${escapeHtml(getCompanyName(contract))} próximo do vencimento.` });
+          alerts.push({ key: num, icon: 'clock', color: '#f6c85f', titulo: `${num} vence em ${dias === null ? 'data não informada' : dias + ' dias'}`, texto: `Contrato ${escapeHtml(getCompanyName(contract))} próximo do vencimento.` });
         }
         if (status === 'Encerrado') {
-          alerts.push({ icon: 'archive', color: '#b7c6da', titulo: `${num} encerrado`, texto: 'Vigência expirada conforme cadastro.' });
+          alerts.push({ key: num, icon: 'archive', color: '#b7c6da', titulo: `${num} encerrado`, texto: 'Vigência expirada conforme cadastro.' });
         }
         if (execPercent >= 90 && status !== 'Encerrado') {
-          alerts.push({ icon: 'trending-up', color: '#ff9dab', titulo: `${num} com ${execPercent.toFixed(0)}% de execução`, texto: 'Saldo financeiro quase totalmente empenhado.' });
+          alerts.push({ key: num, icon: 'trending-up', color: '#ff9dab', titulo: `${num} com ${execPercent.toFixed(0)}% de execução`, texto: 'Saldo financeiro quase totalmente empenhado.' });
         }
-        if (!(Array.isArray(contract?.empenhos) ? contract.empenhos.length : 0) && status === 'Ativo') {
+        if (getUniqueEmpenhos(contract).length === 0 && status === 'Ativo') {
           const hasAny = (Array.isArray(contract?.aditivos) ? contract.aditivos.length : 0) > 0;
           if (!hasAny) {
-            alerts.push({ icon: 'file-x', color: '#8ea4c2', titulo: `${num} sem movimentações`, texto: 'Nenhum aditivo ou empenho registrado ainda.' });
+            alerts.push({ key: num, icon: 'file-x', color: '#8ea4c2', titulo: `${num} sem movimentações`, texto: 'Nenhum aditivo ou empenho registrado ainda.' });
           }
         }
       });
 
-      const criticalCount = alerts.filter((a) => a.color === '#f6c85f' || a.color === '#ff9dab').length;
+      const criticalNum = new Set(alerts.filter((a) => a.color === '#f6c85f' || a.color === '#ff9dab').map((a) => a.key)).size;
       const criticalEl = document.getElementById("criticalAlerts");
-      criticalEl.textContent = String(criticalCount);
-      criticalEl.style.color = criticalCount > 0 ? '#ff7f96' : '#6f87a8';
+      criticalEl.textContent = String(criticalNum);
+      criticalEl.style.color = criticalNum > 0 ? '#ff7f96' : '#6f87a8';
+
+      const vencendoNums = new Set(alerts.filter((a) => a.color === '#f6c85f').map((a) => a.key)).size;
+      const execNums = new Set(alerts.filter((a) => a.color === '#ff9dab').map((a) => a.key)).size;
+      const alVencendo = document.getElementById("alVencendo");
+      const alExec = document.getElementById("alExec");
+      if (alVencendo) alVencendo.textContent = `${vencendoNums} vencendo`;
+      if (alExec) alExec.textContent = `${execNums} exec. ≥90%`;
 
       if (!alerts.length) {
         host.innerHTML = '<div class="item"><b><i data-lucide="flag" style="color:#6f87a8"></i> Sem alertas</b><div style="margin-top:3px">Tudo em dia na carteira.</div><small>--</small></div>';
@@ -1234,26 +1389,31 @@
       document.getElementById("chartStatusBadge").textContent = `${d.total} contratos`;
 
       const monthLabels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-      const monthly = new Array(12).fill(0);
+      const monthly = new Map();
 
       STATE.contratos.forEach((contract) => {
-        const start = getValidDate(getStartDate(contract));
-        if (start) {
-          monthly[start.getMonth()] += getContractValue(contract);
-        }
-        (Array.isArray(contract?.empenhos) ? contract.empenhos : []).forEach((e) => {
-          const date = parseSmartDate(e?.dataLancamento || e?.data || e?.dtEmpenho);
-          if (date) monthly[date.getMonth()] += 0;
+        getUniqueEmpenhos(contract).forEach((e) => {
+          const date = parseSmartDate(e?.dataLancamento || e?.data || e?.dtEmpenho || e?.dataEmpenho);
+          if (!date) return;
+          const key = `${date.getFullYear()}-${date.getMonth()}`;
+          monthly.set(key, (monthly.get(key) || 0) + parseMoney(e?.valorEmpenho || 0));
         });
       });
+
+      const sorted = Array.from(monthly.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+      const labels = sorted.map(([key]) => {
+        const [year, month] = key.split('-').map(Number);
+        return `${monthLabels[month]}/${String(year).slice(2)}`;
+      });
+      const values = sorted.map(([, val]) => Math.round(val / 1000));
 
       new Chart(document.getElementById("chartValores"), {
         type: "bar",
         data: {
-          labels: monthLabels,
+          labels: labels.length ? labels : [monthLabels[new Date().getMonth()]],
           datasets: [{
-            label: "Valor contratado (R$)",
-            data: monthly.map((v) => Math.round(v / 1000)),
+            label: "Empenhado por mês (R$)",
+            data: values.length ? values : [0],
             borderRadius: 7,
             borderSkipped: false,
             backgroundColor: (ctx) => {
@@ -1276,7 +1436,8 @@
         }
       });
 
-      document.getElementById("chartValoresBadge").textContent = `${monthLabels[new Date().getMonth()]} atual`;
+      const monthlyTotal = Array.from(monthly.values()).reduce((s, v) => s + v, 0);
+      document.getElementById("chartValoresBadge").textContent = monthlyTotal > 0 ? `${formatMoneyCompact(monthlyTotal)} empenhado` : 'sem empenhos';
 
       const execContracts = STATE.contratos.slice(0, 8).map((contract) => {
         const contractValue = getContractValue(contract);
@@ -1293,7 +1454,7 @@
           labels: execContracts.map((item) => item.label),
           datasets: [{
             label: "Execução (%)",
-            data: execContracts.map((item) => Math.min(item.percent.toFixed(1), 100)),
+            data: execContracts.map((item) => Math.round(item.percent * 10) / 10),
             borderRadius: 6,
             borderSkipped: false,
             backgroundColor: (ctx) => {
@@ -1338,9 +1499,24 @@
         }
       });
 
-      document.getElementById("financeBadge").textContent = d.valorTotal > 0 ? formatMoneyCompact(d.valorTotal) : 'R$ 0,0M';
-      document.getElementById("legEmpenhado").textContent = `${d.execPercent.toFixed(1)}%`;
-      document.getElementById("legSaldo").textContent = `${(100 - d.execPercent).toFixed(1)}%`;
+      document.getElementById("financeBadge").textContent = d.valorTotal > 0 ? formatMoneyCompact(d.valorTotal) : 'R$ 0,00';
+
+      const usableTotal = d.valorUsado + d.saldo;
+      let execDisplay;
+      let saldoDisplay;
+      if (usableTotal > 0) {
+        execDisplay = Math.min(Math.max((d.valorUsado / usableTotal) * 100, 0), 100);
+        saldoDisplay = Math.max(100 - execDisplay, 0);
+      } else {
+        execDisplay = 0;
+        saldoDisplay = 0;
+      }
+      const empenhadoEl = document.getElementById("legEmpenhado");
+      const saldoEl = document.getElementById("legSaldo");
+      empenhadoEl.textContent = `${execDisplay.toFixed(1)}%`;
+      saldoEl.textContent = `${saldoDisplay.toFixed(1)}%`;
+      empenhadoEl.style.color = execDisplay >= 90 ? '#ff9dab' : '#9fffd9';
+      saldoEl.style.color = saldoDisplay > 0 ? '#9ec7ec' : '#6f87a8';
     }
 
     async function loadAll() {
