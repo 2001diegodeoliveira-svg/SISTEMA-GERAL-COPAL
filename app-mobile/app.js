@@ -176,23 +176,51 @@ const App = (() => {
     } catch { return d; }
   }
 
+  // ========== NORMALIZAÇÃO ==========
+  function normalizeContrato(c) {
+    if (!c || typeof c !== 'object') return c;
+    return {
+      ...c,
+      numContrato: c.numcontrato || c.numContrato,
+      numProcesso: c.numprocesso || c.numProcesso,
+      razaoSocial: c.razaosocial || c.razaoSocial,
+      valorGlobal: c.valorglobal || c.valorGlobal,
+      objeto: c.objeto,
+      dtInicial: c.dtinicial || c.dtInicial,
+      dtFinal: c.dtfinal || c.dtFinal,
+      prazoEntrega: c.prazoentrega || c.prazoEntrega,
+      telefoneFixo: c.telefonefixo || c.telefoneFixo,
+      telefoneWhatsapp: c.telefonewhatsapp || c.telefoneWhatsapp,
+      emailEmpresa: c.emailempresa || c.emailEmpresa,
+      numEndereco: c.numendereco || c.numEndereco,
+      status: c.status
+    };
+  }
+
   // ========== DASHBOARD ==========
   async function loadDashboard() {
     showLoading('Carregando painel...');
     try {
       const [kpis, contracts] = await Promise.all([
         apiJson('/api/kpis').catch(() => null),
-        apiJson('/api/contracts').catch(() => [])
+        apiJson('/api/contracts').catch(() => ({}))
       ]);
 
       if (kpis) {
-        document.getElementById('kpi-contratos').textContent = kpis.total_contratos || 0;
-        document.getElementById('kpi-ativos').textContent = kpis.contratos_ativos || 0;
-        document.getElementById('kpi-aditivos').textContent = kpis.total_aditivos || 0;
-        document.getElementById('kpi-valor').textContent = formatCurrency(kpis.valor_total_contratos);
+        const kArr = Array.isArray(kpis) ? kpis : [];
+        const getKpi = (t) => {
+          const f = kArr.find(k => (k.title || '').toLowerCase().includes(t));
+          return f ? f.value : null;
+        };
+        const ativos = getKpi('contratos ativos');
+        document.getElementById('kpi-contratos').textContent = ativos || '--';
+        document.getElementById('kpi-ativos').textContent = ativos || '--';
+        document.getElementById('kpi-aditivos').textContent = getKpi('aditivos') || '--';
+        document.getElementById('kpi-valor').textContent = getKpi('valor total') || '--';
       }
 
-      allContratos = Array.isArray(contracts) ? contracts : [];
+      const cObj = contracts && !Array.isArray(contracts) ? contracts : {};
+      allContratos = (Array.isArray(cObj.contracts) ? cObj.contracts : []).map(normalizeContrato);
       document.getElementById('contratos-count').textContent = allContratos.length;
 
       renderContratosDash();
@@ -225,7 +253,7 @@ const App = (() => {
       const units = c.unidades;
       if (Array.isArray(units)) {
         units.forEach(u => {
-          const code = typeof u === 'string' ? u : (u.code || u.nome || 'Outro');
+          const code = typeof u === 'string' ? u : (u.code || u.nome || u.unidade || 'Outro');
           counts[code] = (counts[code] || 0) + 1;
         });
       }
@@ -256,7 +284,7 @@ const App = (() => {
 
     const num = c.numContrato || c.numero || '--';
     const credor = c.credor || c.razaoSocial || '--';
-    const units = Array.isArray(c.unidades) ? c.unidades.map(u => typeof u === 'string' ? u : (u.code || u.nome)).join(', ') : '';
+    const units = Array.isArray(c.unidades) ? c.unidades.map(u => typeof u === 'string' ? u : (u.code || u.nome || u.unidade)).join(', ') : '';
 
     return `
     <div class="list-card" onclick="App.openContrato(${idx})">
@@ -347,7 +375,7 @@ const App = (() => {
     if (Array.isArray(c.lotes) && c.lotes.length > 0) {
       lotesBlock.style.display = 'block';
       lotesEl.innerHTML = c.lotes.map(l => `
-        <div class="field-row"><span class="f-label">${l.numero || l.nome || 'Lote'}</span><span class="f-val">${l.descricao || l.valor ? formatCurrency(l.valor) : '--'}</span></div>
+        <div class="field-row"><span class="f-label">${l.numero || l.nome || l.lote || l.item || 'Lote'}</span><span class="f-val">${l.descricao || (l.valor ? formatCurrency(l.valor) : '--')}</span></div>
       `).join('');
     } else { lotesBlock.style.display = 'none'; }
 
@@ -365,7 +393,7 @@ const App = (() => {
     if (Array.isArray(c.empenhos) && c.empenhos.length > 0) {
       empenhosBlock.style.display = 'block';
       empenhosEl.innerHTML = c.empenhos.map(e => `
-        <div class="field-row"><span class="f-label">${e.num_empenho || e.numero || 'Empenho'}</span><span class="f-val">${e.valor_empenho ? formatCurrency(e.valor_empenho) : '--'}</span></div>
+        <div class="field-row"><span class="f-label">${e.numEmpenho || e.num_empenho || e.numero || 'Empenho'}</span><span class="f-val">${e.valorEmpenho || e.valor_empenho ? formatCurrency(e.valorEmpenho || e.valor_empenho) : '--'}</span></div>
       `).join('');
     } else { empenhosBlock.style.display = 'none'; }
 
@@ -385,7 +413,7 @@ const App = (() => {
   async function loadUnidades() {
     try {
       const data = await apiJson('/api/units');
-      allUnidades = Array.isArray(data) ? data : [];
+      allUnidades = Array.isArray(data) ? data : (data.units || []);
       document.getElementById('unidades-count').textContent = allUnidades.length;
       renderUnidades();
     } catch { renderUnidades(); }
@@ -416,7 +444,7 @@ const App = (() => {
   async function loadContatos() {
     try {
       const data = await apiJson('/api/contacts');
-      allContatos = Array.isArray(data) ? data : [];
+      allContatos = Array.isArray(data) ? data : (data.contacts || []);
       document.getElementById('contatos-count').textContent = allContatos.length;
       renderContatos();
     } catch { renderContatos(); }
@@ -459,7 +487,7 @@ const App = (() => {
   async function loadPatrimonio() {
     try {
       const data = await apiJson('/api/patrimonio');
-      allPatrimonio = Array.isArray(data) ? data : [];
+      allPatrimonio = Array.isArray(data) ? data : (data.items || []);
       document.getElementById('patrimonio-count').textContent = allPatrimonio.length;
       renderPatrimonio();
     } catch { renderPatrimonio(); }
@@ -509,7 +537,7 @@ const App = (() => {
   async function loadRequisicoes() {
     try {
       const data = await apiJson('/api/requisition-consumption');
-      allRequisicoes = Array.isArray(data) ? data : [];
+      allRequisicoes = Array.isArray(data) ? data : (data.requisitions || []);
       document.getElementById('requisicoes-count').textContent = allRequisicoes.length;
       renderRequisicoes();
     } catch { renderRequisicoes(); }
@@ -520,7 +548,7 @@ const App = (() => {
     const search = (document.getElementById('requisicoes-search')?.value || '').toLowerCase();
     if (search) {
       filtered = filtered.filter(r => {
-        const text = `${r.contract_num || r.req_contract_num || ''} ${r.unit || r.req_unit_demand || ''}`.toLowerCase();
+        const text = `${r.contractNumber || r.contract_num || r.req_contract_num || ''} ${r.unitCode || r.unit || r.req_unit_demand || ''}`.toLowerCase();
         return text.includes(search);
       });
     }
@@ -535,8 +563,8 @@ const App = (() => {
       <div class="list-card readonly">
         <div class="list-icon" style="background:${ICON_COLORS[i % ICON_COLORS.length]};">${SVG.requisition}</div>
         <div class="list-body">
-          <div class="list-title">${r.contract_num || r.req_contract_num || '--'}</div>
-          <div class="list-sub">${r.unit || r.req_unit_demand || '--'}</div>
+          <div class="list-title">${r.contractNumber || r.contract_num || r.req_contract_num || '--'}</div>
+          <div class="list-sub">${r.unitCode || r.unit || r.req_unit_demand || '--'}</div>
           <div class="list-meta">
             <span class="value-tag">${r.items_count || (Array.isArray(r.items) ? r.items.length : 0)} itens</span>
           </div>
