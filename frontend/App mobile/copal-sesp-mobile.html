@@ -597,7 +597,7 @@ loadMobileData();
 
   const origin = window.location.origin && window.location.protocol !== 'file:' ? window.location.origin : 'https://sistema-geral-copal.vercel.app';
   const downloadUrl = `${origin}/frontend/App%20mobile/download.html`;
-  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(downloadUrl)}`;
+  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(downloadUrl)}&bgcolor=ffffff&color=0c1a37`;
 })();
 
 function showTab(name){

@@ -1,0 +1,6 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="40" fill="#0c1a37"/>
+  <text x="96" y="80" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="48" fill="#fff">CP</text>
+  <text x="96" y="120" text-anchor="middle" font-family="Arial,sans-serif" font-weight="600" font-size="18" fill="#7fa8ff">SESP</text>
+  <rect x="30" y="140" width="132" height="3" rx="1.5" fill="#635bff" opacity="0.5"/>
+</svg>

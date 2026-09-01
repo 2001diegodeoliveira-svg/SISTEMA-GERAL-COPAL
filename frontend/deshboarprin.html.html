@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.1/dist/apexcharts.min.js"></script>
     <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
     <style>
         :root {
@@ -407,8 +407,156 @@
         }
 
         .chart-box {
-            height: 280px;
+            height: 300px;
             position: relative;
+        }
+
+        .chart-box-sm {
+            height: 320px;
+            position: relative;
+        }
+
+        .chart-center-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .chart-center-text .center-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+
+        .chart-center-text .center-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 4px;
+        }
+
+        .charts-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+            margin-bottom: 22px;
+        }
+
+        .chart-legend-custom {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .chart-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .chart-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .chart-legend-value {
+            font-weight: 800;
+            color: var(--text);
+            margin-left: 2px;
+        }
+
+        .pie-tooltip {
+            position: fixed;
+            pointer-events: none;
+            z-index: 50;
+            background: rgba(10, 15, 30, 0.96);
+            border: 1px solid rgba(34, 211, 238, 0.3);
+            border-radius: 12px;
+            padding: 10px 14px;
+            box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(6px);
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            font-size: 12px;
+            min-width: 120px;
+        }
+
+        .pie-tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .pie-tooltip .tt-title {
+            font-weight: 800;
+            color: #fff;
+            font-size: 12.5px;
+            margin-bottom: 4px;
+        }
+
+        .pie-tooltip .tt-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .pie-tooltip .tt-row b {
+            color: #e6edf7;
+            font-weight: 800;
+        }
+
+        .bar-tooltip {
+            position: fixed;
+            pointer-events: none;
+            z-index: 50;
+            background: rgba(10, 15, 30, 0.96);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 10px 14px;
+            box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(6px);
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            font-size: 13px;
+        }
+
+        .bar-tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .bar-tooltip .tt-title {
+            font-weight: 800;
+            color: #fff;
+            font-size: 12px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--muted);
+        }
+
+        .bar-tooltip .tt-value {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--cyan);
         }
 
         table {
@@ -754,7 +902,8 @@
                 display: none;
             }
 
-            .charts-grid {
+            .charts-grid,
+            .charts-grid-3 {
                 grid-template-columns: 1fr;
             }
         }
@@ -778,6 +927,199 @@
                 grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             }
         }
+
+        /* ===== OriginKit / Skiper UI inspired effects (recreated natively) ===== */
+
+        @keyframes ok-pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.35), 0 20px 40px -24px rgba(0, 0, 0, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(34, 211, 238, 0), 0 20px 40px -24px rgba(0, 0, 0, 0.7); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0), 0 20px 40px -24px rgba(0, 0, 0, 0.7); }
+        }
+
+        @keyframes ok-pulse-warning {
+            0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4), 0 20px 40px -24px rgba(0, 0, 0, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(251, 191, 36, 0), 0 20px 40px -24px rgba(0, 0, 0, 0.7); }
+            100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0), 0 20px 40px -24px rgba(0, 0, 0, 0.7); }
+        }
+
+        .kpi-card.pulse {
+            animation: ok-pulse-border 2.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .kpi-card.pulse-warning {
+            animation: ok-pulse-warning 2.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes ok-float-slower {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.35; }
+            50% { transform: translate(-50px, 40px) scale(1.15); opacity: 0.75; }
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(2px 2px at 20% 30%, rgba(34, 211, 238, 0.45), transparent),
+                radial-gradient(2px 2px at 70% 20%, rgba(59, 130, 246, 0.4), transparent),
+                radial-gradient(2px 2px at 40% 70%, rgba(34, 211, 238, 0.35), transparent),
+                radial-gradient(2px 2px at 85% 60%, rgba(167, 139, 250, 0.35), transparent),
+                radial-gradient(2px 2px at 10% 85%, rgba(59, 130, 246, 0.3), transparent),
+                radial-gradient(2px 2px at 55% 45%, rgba(34, 211, 238, 0.3), transparent),
+                radial-gradient(1.5px 1.5px at 30% 55%, rgba(167, 139, 250, 0.4), transparent),
+                radial-gradient(1.5px 1.5px at 90% 90%, rgba(34, 211, 238, 0.35), transparent);
+            background-repeat: no-repeat;
+            opacity: 0.7;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(600px 380px at 15% 85%, rgba(34, 211, 238, 0.08), transparent 60%),
+                radial-gradient(700px 420px at 88% 15%, rgba(167, 139, 250, 0.09), transparent 60%);
+            mix-blend-mode: screen;
+            animation: ok-float-slower 26s ease-in-out infinite;
+        }
+
+        .sidebar,
+        .topbar,
+        .main-content,
+        .content-area {
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes ok-border-spin {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .card {
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            z-index: 1;
+            background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.7), rgba(59, 130, 246, 0.5), transparent);
+            transform: translateX(-100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+            animation: ok-border-spin 1.4s ease forwards;
+        }
+
+        @keyframes ok-kpi-in {
+            0% { opacity: 0; transform: translateY(14px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .kpi-card {
+            animation: ok-kpi-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        .kpi-card:nth-child(1) { animation-delay: 0.05s; }
+        .kpi-card:nth-child(2) { animation-delay: 0.12s; }
+        .kpi-card:nth-child(3) { animation-delay: 0.19s; }
+        .kpi-card:nth-child(4) { animation-delay: 0.26s; }
+
+        @keyframes ok-card-in {
+            0% { opacity: 0; transform: translateY(18px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            animation: ok-card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        .card:nth-of-type(2) { animation-delay: 0.1s; }
+        .card:nth-of-type(3) { animation-delay: 0.2s; }
+        .card:nth-of-type(4) { animation-delay: 0.3s; }
+
+        .kpi-icon {
+            transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .kpi-card:hover .kpi-icon {
+            transform: scale(1.12) rotate(-4deg);
+        }
+
+        .kpi-value {
+            transition: color 0.25s ease;
+        }
+
+        .kpi-card:hover .kpi-value {
+            color: var(--cyan);
+        }
+
+        @keyframes ok-shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .card-title svg {
+            filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.45));
+            transition: filter 0.3s ease;
+        }
+
+        .card:hover .card-title svg {
+            filter: drop-shadow(0 0 10px rgba(34, 211, 238, 0.7));
+        }
+
+        .empty-state,
+        .loading-state {
+            transition: border-color 0.3s ease, background 0.3s ease;
+        }
+
+        .empty-state:hover,
+        .loading-state:hover {
+            border-color: rgba(34, 211, 238, 0.3);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .kpi-card,
+            .card {
+                animation: none;
+            }
+            .card::before,
+            .kpi-card.pulse,
+            .kpi-card.pulse-warning {
+                animation: none;
+            }
+            body::after {
+                animation: none;
+            }
+        }
+
+        .apex-tooltip {
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            color: #e6edf7;
+        }
+        .apex-tt-title {
+            font-size: 12px; font-weight: 700; letter-spacing: 0.2px; color: var(--cyan); margin-bottom: 6px;
+        }
+        .apex-tt-value { font-size: 14px; font-weight: 800; color: #fff; }
+        .apex-tt-row { display: flex; justify-content: space-between; gap: 16px; margin-top: 6px; font-size: 11.5px; font-weight: 700; color: var(--muted); }
+        .apex-tt-row b { color: var(--text); }
+
     </style>
 </head>
 <body>
@@ -839,6 +1181,38 @@
             if (typeof lucide === 'undefined' || !lucide.createIcons) return;
             const root = (container && container.querySelector) ? container : document;
             lucide.createIcons({ root });
+        }
+
+        function ensureTooltipElement(id, className) {
+            let el = document.getElementById(id);
+            if (!el) {
+                el = document.createElement('div');
+                el.id = id;
+                el.className = className;
+                document.body.appendChild(el);
+            }
+            return el;
+        }
+
+        function showExternalTooltip(caretX, caretY, canvasRect, tooltipEl) {
+            if (!tooltipEl.classList.contains('visible')) return;
+            const pos = tooltipEl.getBoundingClientRect();
+            let left = caretX + canvasRect.left + 14;
+            let top = caretY + canvasRect.top + 14;
+            if (left + pos.width > window.innerWidth - 8) left = caretX + canvasRect.left - pos.width - 14;
+            if (top + pos.height > window.innerHeight - 8) top = caretY + canvasRect.top - pos.height - 14;
+            tooltipEl.style.left = `${left}px`;
+            tooltipEl.style.top = `${top}px`;
+        }
+
+        function renderExternalTooltip(t, tooltipEl, buildContent, appendContent) {
+            if (!t || t.opacity === 0 || !t.body || !t.dataPoints.length) {
+                tooltipEl.classList.remove('visible');
+                return;
+            }
+            tooltipEl.innerHTML = buildContent(t.dataPoints[0], t);
+            if (appendContent) appendContent(tooltipEl);
+            if (!tooltipEl.classList.contains('visible')) tooltipEl.classList.add('visible');
         }
 
         function openHomePage() {
@@ -1054,8 +1428,19 @@
                 if (entries.length === 1) return this.getContractValue(contract);
                 return 0;
             },
+            getUniqueEmpenhos(contract) {
+                const list = Array.isArray(contract?.empenhos) ? contract.empenhos : [];
+                const seen = new Map();
+                return list.filter((item) => {
+                    const key = String(item?.numEmpenho || item?.numero || '').trim();
+                    if (!key) return true;
+                    if (seen.has(key)) return false;
+                    seen.set(key, true);
+                    return true;
+                });
+            },
             getUnitUsed(unitName, contract) {
-                const empenhos = Array.isArray(contract?.empenhos) ? contract.empenhos : [];
+                const empenhos = this.getUniqueEmpenhos(contract);
                 let total = 0;
                 empenhos.forEach((empenho) => {
                     const units = Array.isArray(empenho?.unidades) ? empenho.unidades.map((item) => String(item || '').trim()) : [];
@@ -1065,7 +1450,7 @@
                 return total;
             },
             getGlobalUsed(contract) {
-                return (Array.isArray(contract?.empenhos) ? contract.empenhos : []).reduce((sum, item) => sum + this.parseMoney(item?.valorEmpenho || 0), 0);
+                return this.getUniqueEmpenhos(contract).reduce((sum, item) => sum + this.parseMoney(item?.valorEmpenho || 0), 0);
             },
             getAllUnitNames() {
                 return Array.from(new Set(dashboardState.contratos.flatMap((contract) => this.getUnitEntries(contract).map((entry) => this.getUnitName(entry)).filter(Boolean)))).sort((a, b) => a.localeCompare(b));
@@ -1102,6 +1487,25 @@
                     });
                 });
                 return Array.from(usage.entries()).sort((a, b) => b[1] - a[1]);
+            },
+            groupEmpenhosByMonth() {
+                const months = new Map();
+                dashboardState.contratos.forEach((contract) => {
+                    this.getUniqueEmpenhos(contract).forEach((empenho) => {
+                        const date = this.parseSmartDate(empenho?.dataLancamento || empenho?.data || empenho?.dtEmpenho || empenho?.dataEmpenho);
+                        if (!date) return;
+                        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                        const value = this.parseMoney(empenho?.valorEmpenho || 0);
+                        months.set(key, (months.get(key) || 0) + value);
+                    });
+                });
+                const sorted = Array.from(months.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+                if (!sorted.length) {
+                    const now = new Date();
+                    const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                    return [[key, 0]];
+                }
+                return sorted;
             },
             getAlerts() {
                 return dashboardState.contratos
@@ -1417,10 +1821,14 @@
                 const alerts = utils.getAlerts();
                 const unitUsage = utils.groupUsageByUnit().slice(0, 8);
                 const statusCounts = ['Ativo', 'Vencendo', 'Encerrado'].map((status) => dashboardState.contratos.filter((contract) => utils.getStatus(contract) === status).length);
+                const topContracts = [...dashboardState.contratos]
+                    .sort((a, b) => utils.getContractValue(b) - utils.getContractValue(a))
+                    .slice(0, 7)
+                    .map((c) => ({ label: `${utils.getContractNumber(c)}`, value: utils.getContractValue(c) }));
 
                 this.content.innerHTML = `
                     <div class="kpi-grid">
-                        <div class="kpi-card">
+                        <div class="kpi-card pulse">
                             <div class="kpi-head">
                                 <div class="kpi-title">Valor Total Contratado</div>
                                 <div class="kpi-icon"><i data-lucide="wallet"></i></div>
@@ -1428,7 +1836,7 @@
                             <div class="kpi-value">${utils.formatMoney(calc.totalValue)}</div>
                             <div class="kpi-sub"><i data-lucide="layers" style="width:13px;height:13px;"></i> ${calc.totalContracts} contratos na carteira</div>
                         </div>
-                        <div class="kpi-card warning">
+                        <div class="kpi-card warning pulse-warning">
                             <div class="kpi-head">
                                 <div class="kpi-title">Valor Empenhado</div>
                                 <div class="kpi-icon" style="background:rgba(251,191,36,0.14); color:var(--warning);"><i data-lucide="trending-up"></i></div>
@@ -1458,12 +1866,36 @@
                     <div class="charts-grid">
                         <div class="card">
                             <div class="card-header"><div class="card-title"><i data-lucide="bar-chart-3"></i> Empenhos por Unidade</div></div>
-                            <div class="chart-box"><canvas id="chartOrgaos"></canvas></div>
+                            <div class="chart-box"><div id="chartOrgaos"></div></div>
                         </div>
                         <div class="card">
                             <div class="card-header"><div class="card-title"><i data-lucide="pie-chart"></i> Status de Vigência</div></div>
-                            <div class="chart-box"><canvas id="chartStatus"></canvas></div>
+                            <div class="chart-box" id="chartStatusWrap">
+                                <div id="chartStatus"></div>
+                            </div>
+                            <div class="chart-legend-custom">
+                                ${['Ativos', 'Vencendo', 'Encerrados'].map((label, i) => {
+                                    const colors = ['#34d399', '#fbbf24', '#f87171'];
+                                    return `<div class="chart-legend-item"><span class="chart-legend-dot" style="background:${colors[i]};"></span>${label}<span class="chart-legend-value">${statusCounts[i]}</span></div>`;
+                                }).join('')}
+                            </div>
                         </div>
+                    </div>
+
+                    <div class="charts-grid-3">
+                        <div class="card">
+                            <div class="card-header"><div class="card-title"><i data-lucide="trending-up"></i> Evolução de Empenhos</div></div>
+                            <div class="chart-box-sm"><div id="chartEvolucao"></div></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title"><i data-lucide="radar"></i> Força das Unidades</div></div>
+                            <div class="chart-box-sm"><div id="chartRadar"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"><div class="card-title"><i data-lucide="trophy"></i> Top Contratos por Valor Contratado</div></div>
+                        <div class="chart-box-sm" style="height:300px;"><div id="chartTopContratos"></div></div>
                     </div>
 
                     <div class="card">
@@ -1493,56 +1925,316 @@
                 refreshLucideIcons(this.content);
 
                 setTimeout(() => {
-                    Chart.defaults.color = '#8AA0BD';
-                    Chart.defaults.borderColor = 'rgba(148,163,184,0.16)';
+                    const moneyShort = (value) => new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(value);
+                    const moneyFull = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
-                    const chartUnits = document.getElementById('chartOrgaos');
-                    if (chartUnits) {
-                        this.charts.push(new Chart(chartUnits, {
-                            type: 'bar',
-                            data: {
-                                labels: unitUsage.map(([name]) => name),
-                                datasets: [{
-                                    label: 'Empenhado (R$)',
-                                    data: unitUsage.map(([, value]) => value),
-                                    backgroundColor: 'rgba(34,211,238,0.75)',
-                                    hoverBackgroundColor: 'rgba(59,130,246,0.9)',
-                                    borderRadius: 7,
-                                    maxBarThickness: 46
-                                }]
+                    const baseTheme = {
+                        family: "'Inter', 'Segoe UI', system-ui, sans-serif",
+                        foreColor: '#8AA0BD'
+                    };
+
+                    const chartUnitsEl = document.getElementById('chartOrgaos');
+                    if (chartUnitsEl && unitUsage.length) {
+                        const unitLabels = unitUsage.map(([name]) => name);
+                        const unitValues = unitUsage.map(([, value]) => value);
+                        const unitTotal = unitValues.reduce((a, b) => a + b, 0);
+                        const isHorizontal = unitUsage.length <= 7;
+                        const chartUnits = new ApexCharts(chartUnitsEl, {
+                            chart: {
+                                type: 'bar',
+                                height: '100%',
+                                fontFamily: baseTheme.family,
+                                foreColor: baseTheme.foreColor,
+                                toolbar: { show: false },
+                                animations: { enabled: true, easing: 'easeout', speed: 800 },
+                                background: 'transparent'
                             },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: { legend: { display: false, labels: { usePointStyle: true } } },
-                                scales: {
-                                    x: { grid: { display: false }, ticks: { maxRotation: 30, font: { size: 11 } } },
-                                    y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.1)' }, ticks: { callback: (value) => new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(value) } }
+                            series: [{ name: 'Empenhado (R$)', data: unitValues }],
+                            plotOptions: {
+                                bar: {
+                                    horizontal: isHorizontal,
+                                    borderRadius: isHorizontal ? 6 : 8,
+                                    borderRadiusApplication: 'end',
+                                    columnWidth: isHorizontal ? '58%' : '62%',
+                                    barHeight: '62%',
+                                    dataLabels: { position: isHorizontal ? 'top' : 'top' },
+                                    colors: {
+                                        ranges: [
+                                            { from: -Infinity, to: Infinity, color: undefined }
+                                        ]
+                                    }
+                                }
+                            },
+                            dataLabels: {
+                                enabled: !(unitUsage.length > 8),
+                                formatter: (value) => moneyShort(value || 0),
+                                style: { fontSize: '10px', fontWeight: 700, colors: ['#9AB9D7'] },
+                                offsetY: isHorizontal ? 0 : -2,
+                                offsetX: isHorizontal ? 6 : 0
+                            },
+                            grid: isHorizontal
+                                ? { xaxis: { lines: { show: true } }, borderColor: 'rgba(148,163,184,0.1)' }
+                                : { show: false, borderColor: 'rgba(148,163,184,0.1)' },
+                            xaxis: {
+                                categories: isHorizontal ? undefined : unitLabels,
+                                axisBorder: { show: !isHorizontal, color: 'rgba(148,163,184,0.2)' },
+                                axisTicks: { show: !isHorizontal },
+                                labels: { style: { fontSize: '10.5px', colors: ['#8AA0BD'] }, rotate: unitUsage.length > 8 ? -30 : 0, maxHeight: 60 }
+                            },
+                            yaxis: isHorizontal
+                                ? { labels: { style: { fontSize: '10.5px', colors: ['#8AA0BD'] } } }
+                                : {
+                                    labels: { formatter: (value) => moneyShort(value || 0), style: { fontSize: '11px' } },
+                                    axisBorder: { show: false },
+                                    axisTicks: { show: false }
+                                },
+                            fill: {
+                                type: 'gradient',
+                                gradient: { shadeIntensity: 1, opacityFrom: 0.95, opacityTo: 0.55, stops: [0, 100] },
+                                colors: ['#22d3ee', '#3b82f6']
+                            },
+                            colors: ['#22d3ee'],
+                            tooltip: {
+                                theme: 'dark',
+                                style: { fontFamily: baseTheme.family },
+                                y: { formatter: (value) => moneyFull(value || 0) },
+                                custom({ seriesIndex, dataPointIndex, w }) {
+                                    const raw = w.config.series[seriesIndex].data[dataPointIndex];
+                                    const pct = unitTotal > 0 ? (raw / unitTotal) * 100 : 0;
+                                    return `
+                                        <div class="apex-tooltip">
+                                            <div class="apex-tt-title">Empenhado por unidade</div>
+                                            <div class="apex-tt-value">${moneyFull(raw)}</div>
+                                            <div class="apex-tt-row"><span>Participação</span><b>${pct.toFixed(1)}%</b></div>
+                                        </div>`;
                                 }
                             }
-                        }));
+                        });
+                        chartUnits.render();
+                        this.charts.push(chartUnits);
                     }
 
-                    const chartStatus = document.getElementById('chartStatus');
-                    if (chartStatus) {
-                        this.charts.push(new Chart(chartStatus, {
-                            type: 'doughnut',
-                            data: {
-                                labels: ['Ativos', 'Vencendo', 'Encerrados'],
-                                datasets: [{
-                                    data: statusCounts,
-                                    backgroundColor: ['#34d399', '#fbbf24', '#f87171'],
-                                    hoverOffset: 6,
-                                    borderWidth: 0
-                                }]
+                    const chartStatusEl = document.getElementById('chartStatus');
+                    if (chartStatusEl) {
+                        const statusLabels = ['Ativos', 'Vencendo', 'Encerrados'];
+                        const totalContracts = statusCounts.reduce((a, b) => a + b, 0);
+                        const pctActive = totalContracts > 0 ? (statusCounts[0] || 0) / totalContracts * 100 : 0;
+                        const chartStatus = new ApexCharts(chartStatusEl, {
+                            chart: {
+                                type: 'donut',
+                                height: '100%',
+                                fontFamily: baseTheme.family,
+                                foreColor: baseTheme.foreColor,
+                                animations: { enabled: true, easing: 'easeout', speed: 900 },
+                                background: 'transparent'
                             },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                cutout: '72%',
-                                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, boxHeight: 12, usePointStyle: true } } }
+                            series: statusCounts,
+                            labels: statusLabels,
+                            colors: ['#34d399', '#fbbf24', '#f87171'],
+                            legend: { show: false },
+                            stroke: { colors: ['#0f172a'], width: 2 },
+                            plotOptions: {
+                                pie: {
+                                    donut: {
+                                        size: '70%',
+                                        labels: {
+                                            show: true,
+                                            name: { show: true, fontSize: '12px', fontFamily: baseTheme.family, color: '#8AA0BD', offsetY: 18 },
+                                            value: { show: true, fontSize: '28px', fontFamily: baseTheme.family, fontWeight: 800, color: '#fff', offsetY: -6, formatter: () => pctActive.toFixed(0) + '%' },
+                                            total: { show: true, label: 'ativos na carteira', color: '#8AA0BD', fontSize: '11px', fontWeight: 600 }
+                                        }
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                theme: 'dark',
+                                style: { fontFamily: baseTheme.family },
+                                y: { formatter: (value) => '' },
+                                custom({ seriesIndex }) {
+                                    const value = statusCounts[seriesIndex];
+                                    const pct = totalContracts > 0 ? (value / totalContracts) * 100 : 0;
+                                    return `
+                                        <div class="apex-tooltip">
+                                            <div class="apex-tt-title">${statusLabels[seriesIndex]}</div>
+                                            <div class="apex-tt-row"><span>Contratos</span><b>${value}</b></div>
+                                            <div class="apex-tt-row"><span>Participação</span><b>${pct.toFixed(1)}%</b></div>
+                                        </div>`;
+                                }
                             }
-                        }));
+                        });
+                        chartStatus.render();
+                        this.charts.push(chartStatus);
+                    }
+
+                    const chartEvolucaoEl = document.getElementById('chartEvolucao');
+                    if (chartEvolucaoEl) {
+                        const evoData = utils.groupEmpenhosByMonth();
+                        const evoLabels = evoData.map(([key]) => {
+                            const [y, m] = key.split('-');
+                            return `${m}/${y.slice(2)}`;
+                        });
+                        const evoValues = evoData.map(([, value]) => value);
+                        const evoCumulative = evoValues.map((sum => value => sum += value)(0));
+                        const chartEvolucao = new ApexCharts(chartEvolucaoEl, {
+                            chart: {
+                                type: 'area',
+                                height: '100%',
+                                fontFamily: baseTheme.family,
+                                foreColor: baseTheme.foreColor,
+                                toolbar: { show: false },
+                                animations: { enabled: true, easing: 'easeout', speed: 900 },
+                                background: 'transparent'
+                            },
+                            series: [{ name: 'Empenhado (R$)', data: evoValues }],
+                            stroke: { curve: 'smooth', width: 2.5, colors: ['#22d3ee'] },
+                            fill: {
+                                type: 'gradient',
+                                gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.02, stops: [0, 100] }
+                            },
+                            colors: ['#22d3ee'],
+                            markers: {
+                                size: evoValues.length ? (value => value === evoValues.length - 1 ? 5 : 2) : 2,
+                                hover: { size: 6 }
+                            },
+                            dataLabels: { enabled: false },
+                            grid: { borderColor: 'rgba(148,163,184,0.1)' },
+                            xaxis: {
+                                categories: evoLabels,
+                                axisBorder: { color: 'rgba(148,163,184,0.2)' },
+                                axisTicks: { show: false },
+                                labels: { style: { fontSize: '10.5px', colors: ['#8AA0BD'] }, rotate: -30, maxHeight: 60 }
+                            },
+                            yaxis: {
+                                labels: { formatter: (value) => moneyShort(value || 0), style: { fontSize: '11px' } },
+                                axisBorder: { show: false },
+                                axisTicks: { show: false }
+                            },
+                            tooltip: {
+                                theme: 'dark',
+                                style: { fontFamily: baseTheme.family },
+                                custom({ dataPointIndex }) {
+                                    return `
+                                        <div class="apex-tooltip">
+                                            <div class="apex-tt-title">${evoLabels[dataPointIndex] || ''}</div>
+                                            <div class="apex-tt-value">${moneyFull(evoValues[dataPointIndex] || 0)}</div>
+                                            <div class="apex-tt-row"><span>Acumulado</span><b>${moneyFull(evoCumulative[dataPointIndex] || 0)}</b></div>
+                                        </div>`;
+                                }
+                            }
+                        });
+                        chartEvolucao.render();
+                        this.charts.push(chartEvolucao);
+                    }
+
+                    const chartRadarEl = document.getElementById('chartRadar');
+                    if (chartRadarEl && unitUsage.length) {
+                        const radarUnits = unitUsage.slice(0, 6);
+                        const radarLabels = radarUnits.map(([name]) => String(name).split(' ').slice(0, 2).join(' '));
+                        const maxValue = Math.max(...radarUnits.map(([, value]) => value), 1);
+                        const radarValues = radarUnits.map(([, value]) => (value / maxValue) * 100);
+                        const chartRadar = new ApexCharts(chartRadarEl, {
+                            chart: {
+                                type: 'radar',
+                                height: '100%',
+                                fontFamily: baseTheme.family,
+                                foreColor: baseTheme.foreColor,
+                                toolbar: { show: false },
+                                animations: { enabled: true, easing: 'easeout', speed: 850 },
+                                background: 'transparent'
+                            },
+                            series: [{ name: 'Participação no total', data: radarValues }],
+                            labels: radarLabels,
+                            colors: ['#a78bfa'],
+                            stroke: { colors: ['#a78bfa'], width: 2 },
+                            fill: { opacity: 0.25, colors: ['#a78bfa'] },
+                            markers: { size: 3, strokeColors: '#0f172a', strokeWidth: 2 },
+                            dataLabels: { enabled: false },
+                            yaxis: { stepSize: 25, labels: { show: false } },
+                            xaxis: {
+                                labels: { style: { fontSize: '10px', colors: ['#8AA0BD'] } }
+                            },
+                            tooltip: {
+                                theme: 'dark',
+                                style: { fontFamily: baseTheme.family },
+                                custom({ dataPointIndex }) {
+                                    return `
+                                        <div class="apex-tooltip">
+                                            <div class="apex-tt-title">${radarLabels[dataPointIndex] || ''}</div>
+                                            <div class="apex-tt-value">${moneyFull(radarUnits[dataPointIndex]?.[1] || 0)}</div>
+                                            <div style="color:var(--muted); font-weight:700; font-size:11px; margin-top:4px;">${(radarValues[dataPointIndex] || 0).toFixed(1)}% do maior valor</div>
+                                        </div>`;
+                                }
+                            }
+                        });
+                        chartRadar.render();
+                        this.charts.push(chartRadar);
+                    }
+
+                    const chartTopEl = document.getElementById('chartTopContratos');
+                    if (chartTopEl && topContracts.length) {
+                        const topLabels = topContracts.map((c) => c.label);
+                        const topValues = topContracts.map((c) => c.value);
+                        const maxTopValue = Math.max(...topValues, 0);
+                        const chartTop = new ApexCharts(chartTopEl, {
+                            chart: {
+                                type: 'bar',
+                                height: '100%',
+                                fontFamily: baseTheme.family,
+                                foreColor: baseTheme.foreColor,
+                                toolbar: { show: false },
+                                animations: { enabled: true, easing: 'easeout', speed: 850 },
+                                background: 'transparent'
+                            },
+                            series: [{ name: 'Valor contratado (R$)', data: topValues }],
+                            plotOptions: {
+                                bar: {
+                                    horizontal: true,
+                                    borderRadius: 7,
+                                    borderRadiusApplication: 'end',
+                                    barHeight: '60%',
+                                    colors: {
+                                        ranges: [
+                                            { from: -Infinity, to: Infinity, color: undefined }
+                                        ]
+                                    }
+                                }
+                            },
+                            dataLabels: {
+                                enabled: true,
+                                formatter: (value) => moneyShort(value || 0),
+                                style: { fontSize: '10.5px', fontWeight: 700, colors: ['#9AB9D7'] },
+                                offsetX: 6
+                            },
+                            grid: { xaxis: { lines: { show: true } }, borderColor: 'rgba(148,163,184,0.1)' },
+                            xaxis: {
+                                labels: { formatter: (value) => moneyShort(value || 0), style: { fontSize: '11px' } },
+                                axisBorder: { show: false },
+                                axisTicks: { show: false }
+                            },
+                            yaxis: {
+                                labels: { style: { fontSize: '10.5px', colors: ['#8AA0BD'] } }
+                            },
+                            fill: {
+                                type: 'gradient',
+                                gradient: { shadeIntensity: 1, opacityFrom: 0.95, opacityTo: 0.5, stops: [0, 100] },
+                                colors: ['#a78bfa', '#3b82f6']
+                            },
+                            colors: ['#a78bfa'],
+                            tooltip: {
+                                theme: 'dark',
+                                style: { fontFamily: baseTheme.family },
+                                y: { formatter: (value) => moneyFull(value || 0) },
+                                custom({ dataPointIndex }) {
+                                    return `
+                                        <div class="apex-tooltip">
+                                            <div class="apex-tt-title">Contrato ${topLabels[dataPointIndex] || ''}</div>
+                                            <div class="apex-tt-value">${moneyFull(topValues[dataPointIndex] || 0)}</div>
+                                        </div>`;
+                                }
+                            }
+                        });
+                        chartTop.render();
+                        this.charts.push(chartTop);
                     }
                 }, 80);
             },

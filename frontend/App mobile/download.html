@@ -1,32 +1,392 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Download App COPAL SESP Mobile</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  body{ margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:#f3f6fb; font-family:'Inter',sans-serif; color:#1f2937; }
-  .container{ width:min(480px,100%); background:#fff; border-radius:24px; box-shadow:0 24px 80px rgba(15,23,42,0.12); padding:32px; text-align:center; }
-  h1{ margin:0 0 16px; font-size:24px; font-weight:800; }
-  p{ margin:0 0 24px; color:#475569; line-height:1.6; }
-  .button{ display:inline-flex; align-items:center; justify-content:center; gap:8px; text-decoration:none; background:#1d4ed8; color:#fff; padding:14px 20px; border-radius:999px; font-weight:700; box-shadow:0 12px 24px rgba(30,64,175,0.18); }
-  .button:hover{ background:#1e40af; }
-  .note{ margin-top:18px; color:#0f766e; font-size:13px; }
-  .qr{ width:170px; height:170px; margin:4px auto 22px; display:block; border-radius:14px; border:1px solid #dbeafe; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0c1a37">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Baixar App COPAL SESP</title>
+  <link rel="manifest" href="/app-mobile/manifest.json">
+  <link rel="apple-touch-icon" href="/app-mobile/icons/icon-192.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(160deg, #0c1a37 0%, #16294f 50%, #1e3a5f 100%);
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+      padding: 20px;
+    }
+    .container { width: min(440px, 100%); text-align: center; }
+
+    .logo {
+      width: 80px; height: 80px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Manrope', sans-serif;
+      font-weight: 800; font-size: 28px;
+      margin: 0 auto 20px;
+      backdrop-filter: blur(12px);
+    }
+    h1 { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+    .subtitle { font-size: 13px; color: #7fa8ff; margin-bottom: 28px; }
+
+    /* Features grid */
+    .features {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      margin-bottom: 28px; text-align: left;
+    }
+    .feature {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 12px;
+    }
+    .feature-icon { font-size: 18px; margin-bottom: 4px; }
+    .feature-title { font-weight: 700; font-size: 12px; margin-bottom: 2px; }
+    .feature-desc { font-size: 10.5px; color: #7fa8ff; line-height: 1.35; }
+
+    /* Install button */
+    .install-btn {
+      display: none;
+      width: 100%;
+      padding: 18px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 800;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      box-shadow: 0 16px 40px rgba(22,163,74,0.35);
+      transition: transform 0.2s;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .install-btn:active { transform: scale(0.97); }
+    .install-btn svg { width: 22px; height: 22px; }
+    .install-btn.visible { display: flex; }
+
+    .install-btn-secondary {
+      display: none;
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: transform 0.2s;
+    }
+    .install-btn-secondary:active { transform: scale(0.97); }
+    .install-btn-secondary.visible { display: block; }
+
+    /* Open app link (for mobile after install) */
+    .open-app {
+      display: none;
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, #635bff, #4c3ff0);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      box-shadow: 0 14px 36px rgba(76,63,240,0.3);
+      text-decoration: none;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+    .open-app:active { transform: scale(0.97); }
+    .open-app.visible { display: block; }
+
+    /* QR code section */
+    .qr-section {
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .qr-section.hidden { display: none; }
+    .qr-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .qr-sub { font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 14px; }
+    .qr-section img { border-radius: 14px; background: #fff; padding: 8px; }
+
+    /* Instructions */
+    .instructions {
+      margin-top: 24px;
+      text-align: left;
+    }
+    .instructions.hidden { display: none; }
+    .inst-title { font-size: 13px; font-weight: 800; margin-bottom: 12px; text-align: center; }
+    .inst-steps { display: flex; flex-direction: column; gap: 10px; }
+    .inst-step {
+      display: flex; align-items: flex-start; gap: 12px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 12px;
+    }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(99,95,255,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 13px; flex-shrink: 0;
+    }
+    .step-text { font-size: 12px; color: #c0c8e0; line-height: 1.45; }
+    .step-text strong { color: #fff; }
+
+    /* Success animation */
+    .success-check {
+      display: none;
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      margin: 0 auto 16px;
+      align-items: center; justify-content: center;
+      animation: popIn 0.4s ease;
+    }
+    .success-check.visible { display: flex; }
+    .success-check svg { width: 32px; height: 32px; stroke: #fff; }
+    @keyframes popIn { 0% { transform: scale(0); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
+
+    .success-msg { display: none; font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .success-msg.visible { display: block; }
+    .success-sub { display: none; font-size: 12px; color: #7fa8ff; margin-bottom: 20px; }
+    .success-sub.visible { display: block; }
+
+    .footer { margin-top: 24px; font-size: 10.5px; color: rgba(255,255,255,0.25); line-height: 1.4; }
+
+    /* Desktop-only QR hint */
+    .desktop-only { display: block; }
+    .mobile-only { display: none; }
+    @media (max-width: 600px) {
+      .desktop-only { display: none; }
+      .mobile-only { display: block; }
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h1>Baixar App COPAL SESP</h1>
-    <p>Abra este link no celular para acessar a versão mobile de consulta de contratos cadastrados no sistema COPAL SESP.</p>
-    <img class="qr" id="downloadQr" alt="QR Code do aplicativo COPAL SESP">
-    <a href="copal-sesp-mobile.html" class="button">Abrir App Mobile</a>
-    <p class="note">Aplicativo web somente para visualização. Não permite editar ou excluir dados.</p>
+    <div class="logo">CP</div>
+
+    <!-- Success state (shown after install) -->
+    <div class="success-check" id="success-check">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="success-msg" id="success-msg">App Instalado!</div>
+    <div class="success-sub" id="success-sub">O COPAL SESP foi adicionado à tela inicial do seu celular.</div>
+
+    <!-- Normal state -->
+    <div id="normal-state">
+      <h1>COPAL SESP Mobile</h1>
+      <p class="subtitle">Sistema de Gestão de Contratos<br>Governo de Mato Grosso</p>
+
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">&#128203;</div>
+          <div class="feature-title">Contratos</div>
+          <div class="feature-desc">Consulta completa de contratos</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">&#127970;</div>
+          <div class="feature-title">Unidades</div>
+          <div class="feature-desc">Unidades vinculadas ao sistema</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">&#128100;</div>
+          <div class="feature-title">Contatos</div>
+          <div class="feature-desc">Agenda por setor e unidade</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">&#128230;</div>
+          <div class="feature-title">Patrimonio</div>
+          <div class="feature-desc">Inventario de bens e equipamentos</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">&#128196;</div>
+          <div class="feature-title">Requisicoes</div>
+          <div class="feature-desc">Acompanhamento de empenhos</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">&#128200;</div>
+          <div class="feature-title">Dashboard</div>
+          <div class="feature-desc">Indicadores em tempo real</div>
+        </div>
+      </div>
+
+      <!-- Install button (PWA - mobile only) -->
+      <button class="install-btn" id="install-btn" onclick="installPWA()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Baixar e Instalar App
+      </button>
+
+      <!-- Fallback for iOS (manual add to homescreen) -->
+      <button class="install-btn-secondary" id="install-ios" onclick="showIOSInstructions()">
+        Adicionar à Tela Inicial (iOS)
+      </button>
+
+      <!-- Direct link to open the app -->
+      <a class="open-app" id="open-app" href="/app-mobile/">
+        Abrir App COPAL SESP
+      </a>
+
+      <!-- QR Code (shown on desktop) -->
+      <div class="qr-section desktop-only" id="qr-section">
+        <div class="qr-title">Escaneie com a camera do celular</div>
+        <div class="qr-sub">Aponte a camera do seu celular para o codigo QR abaixo</div>
+        <img id="qr" src="" alt="QR Code para baixar o app" width="180" height="180">
+      </div>
+
+      <!-- Instructions (shown on mobile) -->
+      <div class="instructions mobile-only" id="instructions-android" style="display:none;">
+        <div class="inst-title">Como instalar no Android</div>
+        <div class="inst-steps">
+          <div class="inst-step">
+            <div class="step-num">1</div>
+            <div class="step-text">Toque no botao <strong>"Baixar e Instalar App"</strong> acima</div>
+          </div>
+          <div class="inst-step">
+            <div class="step-num">2</div>
+            <div class="step-text">Confirme tocando em <strong>"Instalar"</strong> no popup</div>
+          </div>
+          <div class="inst-step">
+            <div class="step-num">3</div>
+            <div class="step-text">O app aparecera na <strong>tela inicial</strong> do seu celular</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="instructions mobile-only" id="instructions-ios" style="display:none;">
+        <div class="inst-title">Como instalar no iPhone / iPad</div>
+        <div class="inst-steps">
+          <div class="inst-step">
+            <div class="step-num">1</div>
+            <div class="step-text">Toque no botao <strong>"Compartilhar"</strong> (quadrado com seta) na barra inferior do Safari</div>
+          </div>
+          <div class="inst-step">
+            <div class="step-num">2</div>
+            <div class="step-text">Selecione <strong>"Adicionar à Tela de Inicio"</strong></div>
+          </div>
+          <div class="inst-step">
+            <div class="step-num">3</div>
+            <div class="step-text">Toque em <strong>"Adicionar"</strong> no canto superior direito</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      COPAL SESP &copy; 2026 &middot; Coordenadoria de Aquisicoes e Licitacoes<br>
+      Secretaria de Estado de Seguranca Publica de Mato Grosso
+    </div>
   </div>
+
   <script>
-    const appUrl = window.location.protocol === 'file:' ? 'https://sistema-geral-copal.vercel.app/frontend/App%20mobile/copal-sesp-mobile.html' : `${window.location.origin}/frontend/App%20mobile/copal-sesp-mobile.html`;
-    document.getElementById('downloadQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(appUrl)}`;
+    const APP_URL = window.location.origin + '/app-mobile/';
+    let deferredPrompt = null;
+    let isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    let isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    let isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    // Generate QR code
+    function generateQR() {
+      const qr = document.getElementById('qr');
+      if (qr) {
+        qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' +
+          encodeURIComponent(APP_URL) + '&bgcolor=ffffff&color=0c1a37';
+      }
+    }
+
+    // PWA install prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('install-btn').classList.add('visible');
+      if (!isMobile) {
+        document.getElementById('qr-section').classList.add('hidden');
+      }
+    });
+
+    // Detect if already installed
+    window.addEventListener('appinstalled', () => {
+      showSuccess();
+    });
+
+    async function installPWA() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          showSuccess();
+        }
+        deferredPrompt = null;
+      } else {
+        // Fallback: open app directly
+        window.location.href = APP_URL;
+      }
+    }
+
+    function showSuccess() {
+      document.getElementById('normal-state').style.display = 'none';
+      document.getElementById('success-check').classList.add('visible');
+      document.getElementById('success-msg').classList.add('visible');
+      document.getElementById('success-sub').classList.add('visible');
+
+      const openBtn = document.createElement('a');
+      openBtn.href = APP_URL;
+      openBtn.className = 'open-app visible';
+      openBtn.textContent = 'Abrir COPAL SESP';
+      openBtn.style.marginTop = '16px';
+      document.querySelector('.container').appendChild(openBtn);
+    }
+
+    function showIOSInstructions() {
+      alert(
+        'Para instalar no iPhone:\n\n' +
+        '1. Toque no botao de Compartilhar (quadrado com seta) na barra do Safari\n' +
+        '2. Selecione "Adicionar a Tela de Inicio"\n' +
+        '3. Toque em "Adicionar"\n\n' +
+        'O app aparecera na sua tela inicial!'
+      );
+    }
+
+    // Mobile detection - show appropriate UI
+    function setupMobileUI() {
+      if (isMobile) {
+        document.getElementById('qr-section').classList.add('hidden');
+        document.getElementById('open-app').classList.add('visible');
+        document.getElementById('open-app').href = APP_URL;
+
+        if (isIOS) {
+          document.getElementById('install-ios').classList.add('visible');
+          document.getElementById('instructions-ios').style.display = 'block';
+        } else {
+          document.getElementById('instructions-android').style.display = 'block';
+        }
+      }
+    }
+
+    // If already installed, redirect directly
+    if (isStandalone) {
+      window.location.href = APP_URL;
+    }
+
+    generateQR();
+    setupMobileUI();
   </script>
 </body>
 </html>

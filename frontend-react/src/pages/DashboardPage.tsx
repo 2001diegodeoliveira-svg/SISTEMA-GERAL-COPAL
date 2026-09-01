@@ -14,6 +14,7 @@ import {
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import { fallbackFuncionarios, loadDashboardData } from '../lib/api';
 import type { EmpresaLocalizacao, Funcionario, Kpi } from '../types/dashboard';
+import { Link002, Link003, Link005 } from '../components/ui/skiper-ui/skiper40';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler);
 
@@ -206,7 +207,7 @@ export default function DashboardPage() {
       <div className="relative z-10 p-2.5 grid gap-2.5">
         <header className="glass p-3 min-h-[84px] grid grid-cols-1 xl:grid-cols-[1.2fr_1fr_auto] gap-3 items-center">
           <div className="flex items-center gap-2.5">
-            <div className="w-14 h-14 rounded-xl border border-[rgba(120,190,255,0.44)] grid place-items-center font-rajdhani text-[22px] font-bold bg-[linear-gradient(145deg,rgba(39,116,210,0.6),rgba(32,182,208,0.38))] shadow-[0_0_22px_rgba(62,167,255,0.35)]">
+            <div className="logo-se w-14 h-14 rounded-xl border border-[rgba(120,190,255,0.44)] grid place-items-center font-rajdhani text-[22px] font-bold bg-[linear-gradient(145deg,rgba(39,116,210,0.6),rgba(32,182,208,0.38))] shadow-[0_0_22px_rgba(62,167,255,0.35)]">
               SE
             </div>
             <div>
@@ -223,6 +224,8 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-2.5 xl:pl-2 xl:border-l xl:border-[rgba(115,161,219,0.34)]">
+            <Link002 href="/" className="text-[#9cc7f0] text-sm whitespace-nowrap">Home</Link002>
+            <span className="w-px h-6 bg-[rgba(115,161,219,0.34)]" />
             <img className="w-10 h-10 rounded-full border border-[rgba(153,210,255,0.55)]" alt="Diego Henrique" src="https://i.pravatar.cc/80?img=12" />
             <div>
               <h2 className="text-base leading-none mb-1">Diego Henrique</h2>
@@ -233,7 +236,7 @@ export default function DashboardPage() {
 
         <section className="grid grid-cols-2 2xl:grid-cols-7 lg:grid-cols-4 gap-2.5">
           {kpis.map((item, index) => (
-            <article key={`${item.title}-${index}`} className={`kpi-card neon-${item.neon}`}>
+            <article key={`${item.title}-${index}`} className={`kpi-card neon-${item.neon} ${index === 1 ? 'kpi-pulse-warning' : index === 0 ? 'kpi-pulse-primary' : ''}`}>
               <div className="flex items-start justify-between gap-2 mb-1.5">
                 <div className="font-rajdhani text-[17px] leading-none font-bold">{item.title}</div>
                 <div className="kpi-icon">
@@ -247,6 +250,18 @@ export default function DashboardPage() {
               </div>
             </article>
           ))}
+        </section>
+
+        <section className="glass p-2.5 rise-in" style={{ animationDelay: '0.12s' }}>
+          <div className="panel-head"><h3>Atalhos do Sistema</h3><span className="badge">skiper-ui links</span></div>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-1">
+            <Link002 href="/contratos">Contratos</Link002>
+            <Link002 href="/empenhos">Empenhos</Link002>
+            <Link002 href="/funcionarios">Funcionarios</Link002>
+            <Link003 href="/relatorios">Relatorios</Link003>
+            <Link003 href="/alertas">Alertas</Link003>
+            <Link005 href="/config">Configuracoes</Link005>
+          </div>
         </section>
 
         <section className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr_0.9fr] gap-2.5">
@@ -369,7 +384,7 @@ export default function DashboardPage() {
           </article>
 
           <article className="glass p-2.5">
-            <div className="panel-head"><h3>Valores por Mes (R$)</h3><span className="badge">jan-ago</span></div>
+            <div className="panel-head"><h3>Valores por Mes (R$)</h3><span className="badge">empenhado</span></div>
             <div className="h-[240px]">
               <Bar
                 options={{
@@ -377,16 +392,30 @@ export default function DashboardPage() {
                   scales: {
                     x: { ticks: { color: '#9bb9d6' }, grid: { color: 'rgba(76, 120, 170, 0.2)' } },
                     y: { ticks: { color: '#9bb9d6' }, grid: { color: 'rgba(76, 120, 170, 0.2)' } }
+                  },
+                  plugins: {
+                    ...chartOptions.plugins,
+                    tooltip: {
+                      callbacks: {
+                        label: (ctx: any) => ` Empenhado: ${formatBRL(ctx.raw)}`
+                      }
+                    }
                   }
                 }}
                 data={{
                   labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'],
                   datasets: [{
-                    label: 'R$ (mil)',
-                    data: [60, 95, 130, 110, 145, 120, 155, 190],
+                    label: 'Empenhado',
+                    data: [600000, 950000, 1300000, 1100000, 1450000, 1200000, 1550000, 1900000],
                     borderRadius: 7,
                     borderSkipped: false,
-                    backgroundColor: '#2ef2ff'
+                    backgroundColor: (ctx: any) => {
+                      const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 240);
+                      g.addColorStop(0, '#2ef2ff');
+                      g.addColorStop(1, 'rgba(62,167,255,0.25)');
+                      return g;
+                    },
+                    hoverBackgroundColor: '#6df7ff'
                   }]
                 }}
               />

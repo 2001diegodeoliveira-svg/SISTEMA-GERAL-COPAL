@@ -1,0 +1,19 @@
+{
+  "name": "COPAL SESP - Sistema de Gestão",
+  "short_name": "COPAL SESP",
+  "description": "Aplicativo mobile do Sistema de Gestão COPAL SESP - Consulta de contratos, unidades, contatos e patrimônio.",
+  "start_url": "/app-mobile/",
+  "display": "standalone",
+  "background_color": "#0c1a37",
+  "theme_color": "#0c1a37",
+  "orientation": "portrait-primary",
+  "scope": "/app-mobile/",
+  "lang": "pt-BR",
+  "categories": ["government", "business"],
+  "icons": [
+    { "src": "icons/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}
