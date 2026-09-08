@@ -355,6 +355,10 @@
       }
     } else {
       const snippet = text.trim().slice(0, 120).replace(/\s+/g, ' ');
+      const proxyError = /ROUTER_EXTERNAL_TARGET_ERROR|An error occurred with this application|502|503|Bad Gateway|Service Unavailable/i.test(text);
+      if (proxyError) {
+        throw new Error('O servidor de dados está temporariamente indisponível. Tente novamente em alguns instantes.');
+      }
       throw new Error(snippet ? `O backend respondeu com HTML/texto inesperado: ${snippet}` : 'O backend não retornou JSON.');
     }
 
