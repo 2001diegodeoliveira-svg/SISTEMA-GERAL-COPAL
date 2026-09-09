@@ -108,13 +108,15 @@ function resolvePoolConfig(scope) {
   const dbPassword = resolveWithScope(scope, ['DB_PASSWORD', 'PGPASSWORD', 'POSTGRES_PASSWORD']);
 
   if (!hasConnectionString && isProductionLike && !host) {
-    const urlLikeKeys = Object.keys(process.env)
-      .filter((key) => /url/i.test(key) && /(postgres|database|pg)/i.test(key))
-      .sort();
-
-    throw new Error(
-      `Banco '${normalizeScope(scope)}' não configurado para produção. Defina ${scopePrefix(scope) ? `${scopePrefix(scope)}_DATABASE_URL` : 'DATABASE_URL'} (ou *_POSTGRES_INTERNAL_URL) no ambiente do Render. Variáveis URL detectadas: ${urlLikeKeys.join(', ') || 'nenhuma'}.`
+    console.error(
+      `[DB] Banco '${normalizeScope(scope)}' não configurado para produção. Defina ${scopePrefix(scope) ? `${scopePrefix(scope)}_DATABASE_URL` : 'DATABASE_URL'} (ou *_POSTGRES_INTERNAL_URL). O servidor continuará no ar em modo degradado até a URL ser fornecida.`
     );
+
+    return {
+      connectionString: 'postgresql://invalid:invalid@127.0.0.1:1/invalid',
+      connectionTimeoutMillis: 2000,
+      max: 2,
+    };
   }
 
   if (hasConnectionString) {

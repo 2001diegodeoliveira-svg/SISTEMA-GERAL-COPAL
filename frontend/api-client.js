@@ -363,12 +363,13 @@
     }
 
     if (!response.ok) {
-      const message = data && typeof data === 'object' && data.message
-        ? data.message
+      const payload = data && typeof data === 'object' ? data : {};
+      const message = payload.message || payload.error
+        ? String(payload.message || payload.error || '').trim()
         : response.status >= 500
           ? 'O servidor da API está indisponível no momento. Verifique o serviço de backend e tente novamente.'
           : 'Falha na requisição.';
-      throw new Error(message);
+      throw new Error(message || 'Falha na requisição.');
     }
 
     return data;
