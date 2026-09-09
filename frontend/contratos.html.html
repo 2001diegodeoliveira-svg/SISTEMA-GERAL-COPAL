@@ -3343,6 +3343,12 @@ if (content) content.style.display = shouldShow ? '' : 'none';
             } else {
                 atualizarInterface(false);
             }
+
+            const contractsLoginBtn = document.getElementById('contractsLoginBtn');
+            if (contractsLoginBtn) {
+                contractsLoginBtn.addEventListener('click', handleContractsLogin);
+            }
+
             const tokenFromStorage = localStorage.getItem('accessToken') || '';
 
             if (!tokenFromStorage) {
