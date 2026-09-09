@@ -508,6 +508,15 @@ app.use('/uploads', express.static(UPLOAD_DIR));
 app.use('/app-mobile', express.static(path.join(ROOT_DIR, 'app-mobile')));
 app.use(express.static(FRONTEND_DIR));
 
+const dbReady = { value: false };
+function dbGate(req, res, next) {
+  if (dbReady.value) return next();
+  if (req.path === '/health') return next();
+  res.status(503).json({ error: 'O servidor de dados está temporariamente indisponível. Tente novamente em alguns instantes.' });
+}
+app.use('/api', dbGate);
+app.use('/auth', dbGate);
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(FRONTEND_DIR, 'introdução.html'));
 });
@@ -2357,13 +2366,22 @@ app.post('/api/chat', async (req, res) => {
 });
 
 app.get('/api/health', async (req, res) => {
+  let dbOk = false;
+  try {
+    await db.pool.query('SELECT 1 AS ok');
+    dbOk = true;
+  } catch (err) {
+    dbOk = false;
+  }
+  let lmOk = false;
   try {
     const response = await fetchApi(iaGovMtConfig.lmStudioModelsUrl, { method: 'GET' });
-    res.json({ backend: true, lmStudio: response.ok });
+    lmOk = response.ok;
   } catch (err) {
     console.error('[IA GOV MT health] erro:', err.message);
-    res.json({ backend: true, lmStudio: false });
+    lmOk = false;
   }
+  res.json({ backend: true, db: dbOk, lmStudio: lmOk });
 });
 
 // ============================================================
@@ -2619,16 +2637,28 @@ app.post('/api/dev/alerts/:id/resolve', devAuthCheck, async (req, res) => {
   }
 });
 
-(async () => {
-  try {
-    await initDatabase();
-    app.listen(PORT, () => {
-      console.log(`Servidor iniciado em http://localhost:${PORT}`);
-    });
-  } catch (error) {
-    console.error('Erro ao inicializar o banco PostgreSQL:', error?.message || error);
-    console.error('Defina DATABASE_URL (ou POSTGRES_INTERNAL_URL) no Render. O backend também tenta detectar automaticamente outras variáveis *_URL de Postgres.');
-    console.error('Sem URL, informe ao menos DB_HOST/PGHOST e credenciais do banco no ambiente.');
-    process.exit(1);
+const DB_RETRY_DELAYS = [10000, 10000, 30000, 60000, 120000, 300000];
+
+async function ensureDatabaseReady() {
+  let attempt = 0;
+  for (;;) {
+    try {
+      await initDatabase();
+      dbReady.value = true;
+      console.log(`[DB] Banco conectado e esquema pronto (tentativa ${attempt + 1}).`);
+      return;
+    } catch (error) {
+      attempt++;
+      dbReady.value = false;
+      const delay = DB_RETRY_DELAYS[Math.min(attempt - 1, DB_RETRY_DELAYS.length - 1)];
+      console.error(`[DB] Falha ao inicializar o banco (tentativa ${attempt}). Nova tentativa em ${delay / 1000}s:`, error?.message || error);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
   }
-})();
+}
+
+app.listen(PORT, () => {
+  console.log(`Servidor iniciado em http://localhost:${PORT}`);
+});
+
+ensureDatabaseReady();
